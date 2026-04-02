@@ -104,7 +104,7 @@ export default function CallStudentToHadas()
                 noValidate
                 autoComplete="off">
                 <FormGroup className="gap-2 w-full">
-                    <FormGroup row className="flex flex-row items-center w-full flex-nowrap" style={ { flexWrap: 'nowrap' } }>
+                    <FormGroup row className="flex flex-row items-center w-full flex-nowrap">
                         <Autocomplete
                             className="grow"
                             color="primary"
@@ -118,7 +118,7 @@ export default function CallStudentToHadas()
                         />
                         <AlarmClockTimePickerForm time={ expirationTime } setTime={ setExpirationTime } />
                     </FormGroup>
-                    <FormGroup row className="flex flex-row items-center w-full flex-nowrap" style={ { flexWrap: 'nowrap' } }>
+                    <FormGroup row className="flex flex-row items-center w-full flex-nowrap">
                         <TextField name="reason" label='סיבה' className="grow shrink-0" value={ reason } onChange={ reasonValueChangeCallback } />
                         <Tooltip title="קרא לחניכים" className="shrink grow-0">
                             <IconButton type='submit' loading={ loading }>

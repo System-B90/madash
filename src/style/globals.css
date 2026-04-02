@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "./schedule-editor.css";
 
 :root {
   --background: #0f0f23;

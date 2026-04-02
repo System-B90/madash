@@ -2,9 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { addStudentCalledToHadas, getStudentsCalledToHadas, removeStudentCalledToHadas, updateStateStudentCallToHadas } from "@/api-server/datastore";
-import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { CallStudentToHadasParams, RemoveStudentCallToHadasParams, UpdateStateStudentCallToHadasParams } from "@/api-shared/types";
-import { MessageTypes } from "@/settings";
 import { NextRequest } from "next/server";
 
 export async function GET(

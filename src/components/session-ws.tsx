@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
-import { MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../session-server/src/common";
+import { COMBO_DATA_KEY, MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../session-common";
+import assert from "assert";
 
-export type MessageHandlerType = (messageType: MessageTypes, data: any) => void;
+export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });
 export default function useSessionWebSocketContext()
 {
@@ -21,13 +22,28 @@ export default function useSessionWebSocketContext()
 
     const webSocketMessageHandler = useCallback((ev: MessageEvent<any>) =>
     {
-        const content = JSON.parse(ev.data);
-        const { type, data }: { type: MessageTypes, data: any; } = content;
+        const data = JSON.parse(ev.data);
+        const { type, target }: { type: MessageTypes, target: string; } = data;
         console.log(`[WS] Message type: ${type}`);
 
-        // Call all registered message handlers
-        messageHandlers.current.forEach(handler => handler(type, data));
-
+        if (type === MessageTypes.COMBO)
+        {
+            console.log(data);
+            const comboData: MessageTypes[] = data[ COMBO_DATA_KEY ];
+            assert(comboData !== undefined);
+            messageHandlers.current.forEach(
+                handler =>
+                    comboData.forEach(
+                        comboDataMessageType =>
+                            handler(comboDataMessageType, target, data)
+                    )
+            );
+        }
+        else
+        {
+            // Call all registered message handlers
+            messageHandlers.current.forEach(handler => handler(type, target, data));
+        }
     }, []);
 
     const waitForSocketConnection = useCallback((socket: WebSocket, callback: (() => void) | null) =>

@@ -16,7 +16,7 @@ export async function getMadratText()
 export async function modifyMadratText(newText: string)
 {
     data[ 'madratText' ] = newText;
-    SendServerRequestToSessionServer(MessageTypes.MADRAT_TEXT_UPDATE, newText);
+    SendServerRequestToSessionServer({ type: MessageTypes.MADRAT_TEXT_UPDATE, data: newText });
 }
 
 export async function getStudentsCalledToHadas()
@@ -27,13 +27,13 @@ export async function getStudentsCalledToHadas()
 export function addStudentCalledToHadas(name: StudentName, reason: string, expirationTime: Dayjs)
 {
     data[ 'studentsCalledToHadas' ].push({ name, reason, expirationTime, state: 'requested' });
-    SendServerRequestToSessionServer(MessageTypes.STUDENTS_TO_HADAS_UPDATE);
+    SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
 }
 
 export function removeStudentCalledToHadas(name: StudentName)
 {
     data[ 'studentsCalledToHadas' ] = data[ 'studentsCalledToHadas' ].filter((v: { name: StudentName; }) => v.name !== name);
-    SendServerRequestToSessionServer(MessageTypes.STUDENTS_TO_HADAS_UPDATE);
+    SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
 }
 
 export function updateStateStudentCallToHadas(name: StudentName, state: string)
@@ -42,6 +42,6 @@ export function updateStateStudentCallToHadas(name: StudentName, state: string)
     if (student)
     {
         student.state = state;
-        SendServerRequestToSessionServer(MessageTypes.STUDENTS_TO_HADAS_UPDATE);
+        SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
     }
 }

@@ -8,7 +8,7 @@ import React, {
     useMemo,
     useState,
 } from 'react';
-import { MessageTypes } from '../session-server/src/common';
+import { MessageTypes } from '../session-common';
 import { StudentData, StudentToHadasData, } from '@/api-shared/types';
 import { useAuth } from '@/components/auth-provider';
 import { useStudents } from '@/components/students-provider';

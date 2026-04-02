@@ -64,10 +64,9 @@ function RoomItem({ room }: { room: Room; })
     return (
         <Card className="flex flex-col p-1">
             <Chip
-                className="grow m-1 box-border"
+                className={`grow m-1 box-border font-bold`} style={{ backgroundColor: room.color }}
                 key={ `room-chip-${room.name}` }
                 label={ room.name }
-                style={ { backgroundColor: room.color, fontWeight: 700 } }
                 color={ room.color as ChipProps[ 'color' ] }
                 size='small'
             />

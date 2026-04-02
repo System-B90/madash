@@ -72,11 +72,11 @@ export function enqueueSnackbarWithSubtext(
     {
         if (typeof subText === 'string')
         {
-            enqueueSnackbar(<div className='flex flex-col'><p>{ mainText }</p><p style={ { fontSize: '0.7em' } }>{ subText }</p></div>, options);
+            enqueueSnackbar(<div className='flex flex-col'><p>{ mainText }</p><p className='text-xs'>{ subText }</p></div>, options);
         }
         else
         {
-            enqueueSnackbar(<div className='flex flex-col'><p>{ mainText }</p><div style={ { fontSize: '0.7em' } }>{ subText }</div></div>, options);
+            enqueueSnackbar(<div className='flex flex-col'><p>{ mainText }</p><div className='text-xs'>{ subText }</div></div>, options);
         }
     }
     else

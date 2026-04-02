@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 export default function manifest(): MetadataRoute.Manifest
 {
     return {
-        name: 'Bis Helpi',
-        short_name: 'BisLli',
+        name: 'מדש',
+        short_name: 'מדש',
         description: 'Madrat & Mevuzarim dashboard',
         start_url: '/',
         display: 'standalone',
@@ -12,9 +12,9 @@ export default function manifest(): MetadataRoute.Manifest
         theme_color: '#000',
         icons: [
             {
-                src: '/favicon.ico',
+                src: '/Madash.svg',
                 sizes: 'any',
-                type: 'image/x-icon',
+                type: 'image/svg+xml',
             },
         ],
     };
