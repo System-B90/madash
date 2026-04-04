@@ -5,8 +5,8 @@ import React, {
     useCallback,
     useContext,
     useEffect,
-    useState,
-    useRef
+    useRef,
+    useMemo
 } from 'react';
 import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '../session-common';
@@ -29,9 +29,10 @@ const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export const AuthProvider = ({ children, userData }: { children: React.ReactNode; userData: AuthSessionUser; }) =>
 {
-    const [ canEdit, setCanEdit ] = useState<boolean>(true);
     const { ws, addMessageHandler } = useSessionWebSocketContext();
     const messageQueue = useRef<WebSocketSessionMessage[]>([]);
+
+    const canEdit: boolean = !!userData;
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: unknown) =>
     {
@@ -82,24 +83,21 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
         };
     }, [ ws ]);
 
-    useEffect(() =>
-    {
-        setCanEdit(!!userData);
-    }, [ userData ]);
+    const contextValue = useMemo<AuthContextState>(() => ({
+        userData,
+        canEdit,
+        addMessageHandler,
+        sendMessage,
+    }), [ userData, canEdit, addMessageHandler, sendMessage ]);
 
     return (
-        <AuthContext.Provider value={ {
-            userData,
-            canEdit,
-            addMessageHandler,
-            sendMessage,
-        } }>
+        <AuthContext.Provider value={ contextValue }>
             { children }
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () =>
+export const useAuth = (): AuthContextState =>
 {
     const context = useContext(AuthContext);
 

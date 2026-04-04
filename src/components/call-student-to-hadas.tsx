@@ -31,7 +31,7 @@ import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useSnackbar } from "notistack";
-import React, { ChangeEventHandler, Dispatch, SetStateAction, useCallback, useMemo, useRef, useState } from "react";
+import React, { ChangeEventHandler, Dispatch, SetStateAction, useCallback, useMemo, useState } from "react";
 
 dayjs.extend(relativeTime);
 dayjs.locale("he");
@@ -45,11 +45,18 @@ interface AlarmClockTimePickerFormProps extends BoxProps
 
 function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePickerFormProps)
 {
-    const [ open, setOpen ] = useState(false);
-    const anchorRef = useRef<HTMLButtonElement>(null);
+    const [ anchorEl, setAnchorEl ] = useState<HTMLButtonElement | null>(null);
+    const open = Boolean(anchorEl);
 
-    const handleOpen = useCallback(() => setOpen(true), []);
-    const handleClose = useCallback(() => setOpen(false), []);
+    const handleOpen = useCallback((event: React.MouseEvent<HTMLButtonElement>) =>
+    {
+        setAnchorEl(event.currentTarget);
+    }, []);
+
+    const handleClose = useCallback(() =>
+    {
+        setAnchorEl(null);
+    }, []);
 
     const expiryStatus = useMemo(() =>
     {
@@ -66,7 +73,6 @@ function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePic
             <LocalizationProvider dateAdapter={ AdapterDayjs }>
                 <Tooltip title="קבע זמן פקיעה" placement="top">
                     <IconButton
-                        ref={ anchorRef }
                         onClick={ handleOpen }
                         color={ time ? "primary" : "default" }
                         sx={ { border: '1px solid', borderColor: 'divider' } }
@@ -87,7 +93,7 @@ function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePic
                     </Typography>
                 ) }
 
-                <Popper open={ open } anchorEl={ anchorRef.current } placement="bottom-end" style={ { zIndex: 1300 } }>
+                <Popper open={ open } anchorEl={ anchorEl } placement="bottom-end" style={ { zIndex: 1300 } }>
                     <ClickAwayListener onClickAway={ handleClose }>
                         <Paper elevation={ 3 } sx={ { p: 1 } }>
                             <TimePicker
@@ -106,7 +112,7 @@ function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePic
                                 closeOnSelect
                                 slotProps={ {
                                     textField: { style: { display: 'none' } },
-                                    popper: { anchorEl: anchorRef.current, open: open },
+                                    popper: { anchorEl: anchorEl, open: open },
                                 } }
                             />
                         </Paper>
@@ -189,7 +195,6 @@ function CallHadasActionRow({
 {
     return (
         <Box className="flex flex-row items-start w-full gap-3 flex-nowrap">
-            {/* Reason Input */ }
             <TextField
                 label="סיבה"
                 name="reason"
@@ -209,7 +214,6 @@ function CallHadasActionRow({
                 } }
             />
 
-            {/* Actions Column (Button + Checkbox) */ }
             <Box className="flex flex-col items-center shrink-0 gap-1">
                 <Tooltip title={ reason.length > 0 ? "שלח קריאה" : "ככה בלי סיבה?" } placement="top">
                     <span>
@@ -235,7 +239,6 @@ function CallHadasActionRow({
                     control={
                         <Checkbox
                             size="small"
-                            // Visually uncheck if the user drops below 2 selected students
                             checked={ isGroupCall && hasMultipleStudents }
                             onChange={ onGroupCallChange }
                             color="primary"

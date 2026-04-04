@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, Avatar, Skeleton } from '@mui/material';
 
-// Adjust imports based on your exact file structure
 import { useAuth } from '@/components/auth-provider';
 import { apiGetUserAvatar } from '@/api-client/user';
 
@@ -12,21 +11,23 @@ export default function UserAccessBar()
     const { userData } = useAuth();
     const [ avatarUrl, setAvatarUrl ] = useState<string | null>(null);
     const [ loading, setLoading ] = useState<boolean>(true);
+    const [ prevUserId, setPrevUserId ] = useState<string | undefined>(userData?.id);
 
-    useEffect(() =>
+    if (userData?.id !== prevUserId)
     {
-        if (!userData?.id)
-        {
-            setLoading(false);
-            return;
-        }
+        setPrevUserId(userData?.id);
+        setLoading(true);
+        setAvatarUrl(null);
+    }
+
+    const fetchAvatar = useCallback((userId: string | undefined) =>
+    {
+        if (!userId) return;
 
         let isMounted = true;
         let objectUrl: string | null = null;
 
-        setLoading(true);
-
-        apiGetUserAvatar(userData.id)
+        apiGetUserAvatar(userId)
             .then((blob) =>
             {
                 if (!isMounted) return;
@@ -53,15 +54,22 @@ export default function UserAccessBar()
         return () =>
         {
             isMounted = false;
-            // CRITICAL: Prevent memory leaks by revoking the blob URL
             if (objectUrl)
             {
                 URL.revokeObjectURL(objectUrl);
             }
         };
-    }, [ userData?.id ]);
+    }, []);
 
-    // Do not render if the user data hasn't loaded yet
+    useEffect(() =>
+    {
+        const cleanup = fetchAvatar(userData?.id);
+        return () =>
+        {
+            if (cleanup) cleanup();
+        };
+    }, [ userData?.id, fetchAvatar ]);
+
     if (!userData) return null;
 
     return (

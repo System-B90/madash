@@ -28,11 +28,9 @@ const StudentsContext = createContext<StudentsContextState | undefined>(undefine
 
 export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    // Store raw data from APIs
     const [ rawStudents, setRawStudents ] = useState<Array<CourseUser>>([]);
     const [ classes, setClasses ] = useState<Array<Class>>([]);
 
-    // Track loading states for initial fetching
     const [ isClassesLoading, setIsClassesLoading ] = useState<boolean>(true);
     const [ isStudentsLoading, setIsStudentsLoading ] = useState<boolean>(true);
 
@@ -41,29 +39,28 @@ export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =
 
     const fetchClasses = useCallback(async () =>
     {
-        setIsClassesLoading(true);
-        apiGetClasses()
+        return apiGetClasses()
             .then(setClasses)
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על כיתות נכשלה!', error))
             .finally(() => setIsClassesLoading(false));
     }, [ enqueueSnackbar ]);
 
-    const fetchRawStudents = useCallback(() =>
+    const fetchRawStudents = useCallback(async () =>
     {
-        setIsStudentsLoading(true);
-        apiGetStudents()
+        return apiGetStudents()
             .then(setRawStudents)
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על חניכים נכשלה!', error))
             .finally(() => setIsStudentsLoading(false));
     }, [ enqueueSnackbar ]);
 
-    // WebSocket Listener
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes) =>
     {
         if (messageType === MessageTypes.SHUFFLE_MOVE)
         {
+            setIsClassesLoading(true);
+            setIsStudentsLoading(true);
             fetchRawStudents();
-            fetchClasses(); // Re-fetch classes in case room assignments changed
+            fetchClasses();
         }
     }, [ fetchRawStudents, fetchClasses ]);
 
@@ -72,17 +69,11 @@ export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =
         return addMessageHandler(onWebSocketMessage);
     }, [ addMessageHandler, onWebSocketMessage ]);
 
-    // Initial Mount Data Fetching
     useEffect(() =>
     {
         fetchClasses();
         fetchRawStudents();
     }, [ fetchClasses, fetchRawStudents ]);
-
-    // ---------------------------------------------------------------------------
-    // Derived States: Automatically recalculate when either raw API state updates
-    // This perfectly eliminates the race condition.
-    // ---------------------------------------------------------------------------
 
     const isLoading = isClassesLoading || isStudentsLoading;
 
@@ -109,27 +100,27 @@ export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =
         });
     }, [ rawStudents, classes ]);
 
-    // ---------------------------------------------------------------------------
-
     const getStudent = useCallback((studentResolveableData: ResolvableStudent | number): StudentData | undefined =>
     {
         const hiveId = typeof studentResolveableData === 'number' ? studentResolveableData : studentResolveableData.hiveId;
         return students.find((student) => student.hiveId === hiveId);
     }, [ students ]);
 
+    const contextValue = useMemo<StudentsContextState>(() => ({
+        isLoading,
+        students,
+        rooms,
+        getStudent,
+    }), [ isLoading, students, rooms, getStudent ]);
+
     return (
-        <StudentsContext.Provider value={ {
-            isLoading,
-            students,
-            rooms,
-            getStudent,
-        } }>
+        <StudentsContext.Provider value={ contextValue }>
             { children }
         </StudentsContext.Provider>
     );
 };
 
-export const useStudents = () =>
+export const useStudents = (): StudentsContextState =>
 {
     const context = useContext(StudentsContext);
 
