@@ -5,9 +5,10 @@ Created: 2026-04-03
 Author: Michael K. Steinberg
 """
 
-import os
 import secrets
 from pathlib import Path
+from typing import Dict
+
 import typer
 from InquirerPy import inquirer
 from InquirerPy.validator import EmptyInputValidator
@@ -32,7 +33,7 @@ def load_tmp_state() -> dict[str, str]:
     Returns:
         dict[str, str]: A dictionary containing the loaded key-value pairs.
     """
-    state = {}
+    state: Dict[str, str] = {}
     if TMP_ENV_FILE.exists():
         with open(TMP_ENV_FILE, "r", encoding="utf-8") as f:
             for line in f:

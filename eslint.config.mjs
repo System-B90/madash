@@ -1,22 +1,26 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextConfig from "eslint-config-next/core-web-vitals";
+import { defineConfig } from "eslint/config";
 
 const __filename = fileURLToPath( import.meta.url );
 const __dirname = dirname( __filename );
 
-const compat = new FlatCompat( {
-  baseDirectory: __dirname,
-} );
+export default defineConfig( [
+  // 1. Load the native flat config provided by Next.js 16
+  // This replaces both 'next/core-web-vitals' and 'next/typescript'
+  nextConfig,
 
-const eslintConfig = [
-  ...compat.extends( "next/core-web-vitals", "next/typescript" ),
+  // 2. Your custom overrides
   {
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",  // disable globally
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
-];
 
-export default eslintConfig;
+  // 3. Global ignores (Next.js 16 handles .next, but add extras here)
+  {
+    ignores: [ ".next/*", "out/*", "dist/*" ],
+  }
+] );

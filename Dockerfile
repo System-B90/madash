@@ -1,5 +1,5 @@
 # Base image for installing dependencies
-FROM node:20-alpine AS deps
+FROM node:25-alpine AS deps
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --prefer-offline --no-audit --progress=false --omit-dev
 
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ COPY . .
 RUN npm run build
 
 # Final stage for running the app
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 ENV NODE_ENV=production
