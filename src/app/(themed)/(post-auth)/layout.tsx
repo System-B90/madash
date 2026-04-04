@@ -1,5 +1,9 @@
+'use server';
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
 import { AuthProvider } from "@/components/auth-provider";
-import { headers } from "next/headers";
+import { authOptions } from "@/api-server/hive/sso";
+import { AuthSessionUser } from "@/api-shared/session";
 
 export default async function PostAuthLayout({
     children,
@@ -7,13 +11,16 @@ export default async function PostAuthLayout({
     children: React.ReactNode;
 }>)
 {
-    const headersList = await headers();
-    const username = headersList.get('x-authenticated-user') || 'Guest';
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user)
+    {
+        redirect("/login");
+    }
 
     return (
-        <AuthProvider username={ username }>
+        <AuthProvider userData={ session.user as AuthSessionUser }>
             { children }
         </AuthProvider>
     );
 }
-

@@ -1,103 +1,128 @@
 'use client';
-import { MessageHandlerType } from '@/components/session-ws';
+
 import React, {
     createContext,
-    use,
     useCallback,
     useContext,
     useEffect,
     useMemo,
     useState,
 } from 'react';
+import { useSnackbar } from 'notistack';
+import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '../session-common';
-import { StudentData } from '@/api-shared/types';
+import { CalledToHadasEntityType, ResolvableStudent, StudentData } from '@/api-shared/types';
 import { useAuth } from '@/components/auth-provider';
 import { apiGetClasses, apiGetStudents } from '@/api-client/hive';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { enqueueSnackbar } from 'notistack';
-import { Class, ClassTypeEnum, CourseUser } from '@/api-server/hive/types';
-import { Room } from '@/components/side-bar';
+import { Room, Class, ClassTypeEnum, CourseUser } from '@/api-shared/hive-types';
 
 export type StudentsContextState = {
-    default: boolean;
+    isLoading: boolean;
     students: Array<StudentData>;
     rooms: Array<Room>;
+    getStudent: (studentResolveableData: ResolvableStudent | number) => StudentData | undefined;
 };
 
-const StudentsContext = createContext<StudentsContextState | undefined>({
-    default: true,
-    students: [],
-    rooms: [],
-});
+const StudentsContext = createContext<StudentsContextState | undefined>(undefined);
 
 export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ students, setStudents ] = useState<Array<StudentData>>([]);
+    // Store raw data from APIs
+    const [ rawStudents, setRawStudents ] = useState<Array<CourseUser>>([]);
     const [ classes, setClasses ] = useState<Array<Class>>([]);
-    const [ rooms, setRooms ] = useState<Array<Room>>([]);
-    const { addMessageHandler } = useAuth();
 
+    // Track loading states for initial fetching
+    const [ isClassesLoading, setIsClassesLoading ] = useState<boolean>(true);
+    const [ isStudentsLoading, setIsStudentsLoading ] = useState<boolean>(true);
+
+    const { addMessageHandler } = useAuth();
+    const { enqueueSnackbar } = useSnackbar();
 
     const fetchClasses = useCallback(async () =>
     {
-        const data = await apiGetClasses();
-        setClasses(data);
-        setRooms(data.filter((classItem) => classItem.type === ClassTypeEnum.Room).map((classItem) => ({
-            name: classItem.name,
-            color: 'blue',
-        })));
-    }, [ setClasses ]);
+        setIsClassesLoading(true);
+        apiGetClasses()
+            .then(setClasses)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על כיתות נכשלה!', error))
+            .finally(() => setIsClassesLoading(false));
+    }, [ enqueueSnackbar ]);
 
-    const getRoomForStudent = useCallback((student: CourseUser): string =>
+    const fetchRawStudents = useCallback(() =>
     {
-        const studentClass = classes.find((classItem) => classItem.users.includes(student.id) && classItem.type === ClassTypeEnum.Room);
-        return studentClass ? studentClass.name : 'Unknown';
-    }, [ classes ]);
-
-    const fetchStudentInfo = useCallback(() =>
-    {
+        setIsStudentsLoading(true);
         apiGetStudents()
-            .then((data) =>
-            {
-                const parsedData = data.map((student): StudentData => ({
-                    id: student.id,
-                    name: student.display_name,
-                    room: getRoomForStudent(student),
-                }));
-                setStudents(parsedData);
-            })
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על חניכים נכשלה!', error));
-    }, [ getRoomForStudent, setStudents ]);
+            .then(setRawStudents)
+            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על חניכים נכשלה!', error))
+            .finally(() => setIsStudentsLoading(false));
+    }, [ enqueueSnackbar ]);
 
-    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
+    // WebSocket Listener
+    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes) =>
     {
-        if (messageType !== MessageTypes.SHUFFLE_MOVE) { return; }
-        fetchStudentInfo();
-    }, [ fetchStudentInfo ]);
+        if (messageType === MessageTypes.SHUFFLE_MOVE)
+        {
+            fetchRawStudents();
+            fetchClasses(); // Re-fetch classes in case room assignments changed
+        }
+    }, [ fetchRawStudents, fetchClasses ]);
 
     useEffect(() =>
     {
-        if (typeof window === 'undefined') { return; }
-
         return addMessageHandler(onWebSocketMessage);
     }, [ addMessageHandler, onWebSocketMessage ]);
 
+    // Initial Mount Data Fetching
     useEffect(() =>
     {
         fetchClasses();
-    }, [ fetchClasses ]);
+        fetchRawStudents();
+    }, [ fetchClasses, fetchRawStudents ]);
 
-    // First mount
-    useMemo(() =>
+    // ---------------------------------------------------------------------------
+    // Derived States: Automatically recalculate when either raw API state updates
+    // This perfectly eliminates the race condition.
+    // ---------------------------------------------------------------------------
+
+    const isLoading = isClassesLoading || isStudentsLoading;
+
+    const rooms = useMemo(() =>
     {
-        fetchStudentInfo();
-    }, [ fetchStudentInfo ]);
+        return classes.filter((classItem) => classItem.type === ClassTypeEnum.Room) as Array<Room>;
+    }, [ classes ]);
+
+    const students = useMemo(() =>
+    {
+        return rawStudents.map((student): StudentData =>
+        {
+            const studentRoom = classes.find((classItem) =>
+                classItem.type === ClassTypeEnum.Room && classItem.users.includes(student.id)
+            );
+
+            return {
+                hiveId: student.id,
+                name: student.display_name,
+                room: studentRoom ? studentRoom.name : 'Unknown',
+                bisId: student.number as number,
+                type: CalledToHadasEntityType.Student,
+            };
+        });
+    }, [ rawStudents, classes ]);
+
+    // ---------------------------------------------------------------------------
+
+    const getStudent = useCallback((studentResolveableData: ResolvableStudent | number): StudentData | undefined =>
+    {
+        const hiveId = typeof studentResolveableData === 'number' ? studentResolveableData : studentResolveableData.hiveId;
+        return students.find((student) => student.hiveId === hiveId);
+    }, [ students ]);
 
     return (
         <StudentsContext.Provider value={ {
-            default: false,
+            isLoading,
             students,
             rooms,
+            getStudent,
         } }>
             { children }
         </StudentsContext.Provider>
@@ -108,9 +133,9 @@ export const useStudents = () =>
 {
     const context = useContext(StudentsContext);
 
-    if (context === undefined || context.default)
+    if (context === undefined)
     {
-        throw new Error('useStudents must be used within an StudentsProvider');
+        throw new Error('useStudents must be used within a StudentsProvider');
     }
 
     return context;

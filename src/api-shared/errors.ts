@@ -39,7 +39,6 @@ export class ClientApiError extends ClientError
     }
 }
 
-
 export class UserNotLoggedInError extends ClientApiError
 {
     constructor(message?: string)
@@ -62,3 +61,22 @@ export class ApiNotImplementedError extends ClientApiError
         this.name = 'ApiNotImplementedError';
     }
 };
+
+export class CallToHadasError extends ClientApiError
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'CallToHadasError';
+    }
+};
+
+export class HiveClientError extends ClientApiError
+{
+    constructor(message?: string)
+    {
+        super(message);
+        this.name = 'HiveClientError';
+    }
+};
+

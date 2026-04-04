@@ -1,5 +1,5 @@
 'use client';
-import { MessageHandlerType } from '@/components/session-ws';
+
 import React, {
     createContext,
     useCallback,
@@ -8,85 +8,104 @@ import React, {
     useMemo,
     useState,
 } from 'react';
-import { MessageTypes } from '../session-common';
-import { StudentData, StudentToHadasData, } from '@/api-shared/types';
-import { useAuth } from '@/components/auth-provider';
-import { useStudents } from '@/components/students-provider';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
 import { apiGetStudentsCalledToHadas } from '@/api-client/call-to-hadas';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { enqueueSnackbar } from 'notistack';
-import dayjs, { Dayjs } from 'dayjs';
-import assert from 'assert';
+import
+{
+    CalledToHadasData,
+    CalledToHadasEntityType,
+    GroupToHadasData,
+    StudentData,
+    StudentToHadasData
+} from '@/api-shared/types';
+import { useAuth } from '@/components/auth-provider';
+import { MessageHandlerType } from '@/components/session-ws';
+import { useStudents } from '@/components/students-provider';
+import { MessageTypes } from '../session-common';
 
-export type CalledStudentsContextState = {
-    default: boolean;
-    students: Array<StudentData>;
+export type CalledEntitiesContextState = {
+    students: Array<StudentToHadasData>;
+    groups: Array<GroupToHadasData>;
 };
 
-const CalledStudentsContext = createContext<CalledStudentsContextState | undefined>({
-    default: true,
-    students: [],
-});
+const CalledEntitiesContext = createContext<CalledEntitiesContextState | undefined>(undefined);
 
-export const CalledStudentsProvider = ({ children }: { children: React.ReactNode; }) =>
+export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ studentsData, setStudentsData ] = useState<Array<StudentToHadasData>>([]);
+    const [ entitiesData, setEntitiesData ] = useState<Array<CalledToHadasData>>([]);
 
     const { addMessageHandler } = useAuth();
-    const { students: allStudentInfo } = useStudents();
+    const { getStudent } = useStudents();
+    const { enqueueSnackbar } = useSnackbar();
 
     const loadStudentsCalledToHadas = useCallback(() =>
     {
         apiGetStudentsCalledToHadas()
-            .then(setStudentsData)
+            .then(setEntitiesData)
             .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת החניכים שצריכים להגיע לחד"ס נכשלה!`, error));
-    }, [ setStudentsData ]);
+    }, [ setEntitiesData, enqueueSnackbar ]);
 
-    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes, data: any) =>
+    const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes) =>
     {
-        if (messageType !== MessageTypes.STUDENTS_TO_HADAS_UPDATE) { return; }
-        loadStudentsCalledToHadas();
+        if (messageType === MessageTypes.STUDENTS_TO_HADAS_UPDATE)
+        {
+            loadStudentsCalledToHadas();
+        }
     }, [ loadStudentsCalledToHadas ]);
 
     useEffect(() =>
     {
-        if (typeof window === 'undefined') { return; }
-
         return addMessageHandler(onWebSocketMessage);
     }, [ addMessageHandler, onWebSocketMessage ]);
 
-    const students = useMemo(() =>
-        studentsData.filter((x) => allStudentInfo.filter((v) => v.name === x.name).length === 1).map((studentToHadasData) =>
-        {
-            const staticData = allStudentInfo.filter((v) => v.name === studentToHadasData.name)[ 0 ];
-            assert(!!staticData, 'Static student data must be available!');
-            staticData.callToHadas = studentToHadasData;
-            staticData.callToHadas.expirationTime = dayjs(staticData.callToHadas.expirationTime);
-            return staticData;
-        }), [ studentsData, allStudentInfo ]);
-
     useEffect(() =>
     {
         loadStudentsCalledToHadas();
     }, [ loadStudentsCalledToHadas ]);
 
+    const { students, groups } = useMemo(() =>
+    {
+        const parsedStudents: Array<StudentToHadasData> = [];
+        const parsedGroups: Array<GroupToHadasData> = [];
+
+        entitiesData.forEach((entityToHadasData) =>
+        {
+            if (entityToHadasData.type === CalledToHadasEntityType.Student)
+            {
+                parsedStudents.push({
+                    ...entityToHadasData,
+                    expirationTime: dayjs(entityToHadasData.expirationTime)
+                }
+                );
+            }
+            else if (entityToHadasData.type === CalledToHadasEntityType.Group)
+            {
+                parsedGroups.push({
+                    ...entityToHadasData,
+                    expirationTime: dayjs(entityToHadasData.expirationTime)
+                });
+            }
+        });
+
+        return { students: parsedStudents, groups: parsedGroups };
+    }, [ entitiesData, getStudent ]);
+
     return (
-        <CalledStudentsContext.Provider value={ {
-            default: false,
-            students,
-        } }>
+        <CalledEntitiesContext.Provider value={ { students, groups } }>
             { children }
-        </CalledStudentsContext.Provider>
+        </CalledEntitiesContext.Provider>
     );
 };
 
-export const useCalledStudents = () =>
+export const useCalledEntities = () =>
 {
-    const context = useContext(CalledStudentsContext);
+    const context = useContext(CalledEntitiesContext);
 
-    if (context === undefined || context.default)
+    if (context === undefined)
     {
-        throw new Error('useCalledStudents must be used within an CalledStudentsProvider');
+        throw new Error('useCalledEntities must be used within a CalledEntitiesProvider');
     }
 
     return context;

@@ -1,3 +1,4 @@
+export const HIVE_URL = process.env.HIVE_URL || 'https://hive.org';
 
 export interface ApiResponseJson
 {

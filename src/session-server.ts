@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { WEBSOCKET_SESSION_SERVER_INTERNAL_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from './session-common';
+import { NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from './session-common';
 import assert from 'assert';
 
 const GC_INTERVAL_MS = 3600 * 1000; // One hour
@@ -21,9 +21,9 @@ function updateSessionLastContact<T extends ConnectedSession>(session: T)
     session.abandonedMark = false;
 }
 
-console.log(`WEBSOCKET_SESSION_SERVER_INTERNAL_PORT: ${WEBSOCKET_SESSION_SERVER_INTERNAL_PORT}`);
+console.log(`NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT: ${NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT}`);
 const wss = new WebSocketServer({
-    port: WEBSOCKET_SESSION_SERVER_INTERNAL_PORT,
+    port: NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT,
     perMessageDeflate: {
         zlibDeflateOptions: {
             // See zlib defaults.
@@ -127,7 +127,6 @@ function validateServerMessage(data: { [ x: string ]: any; })
 {
     if (!('authKey' in data)) { throw Error(`Missing "authKey" in server data!`); }
     if (data[ 'authKey' ] !== WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY) { throw Error(`Invalid "authKey" in server data!`); };
-    assert('targets' in data, 'Server message must contain valid targets!');
 }
 
 function handleServerMessage(data: { [ x: string ]: any; }) 

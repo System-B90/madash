@@ -1,8 +1,7 @@
 import assert from 'assert';
 
 export const SECURE_CONTEXT_ONLY = false; //process.env.NODE_ENV !== 'development' && (!process.env.HTTP_ONLY);
-export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT = process.env.NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT;
-export const WEBSOCKET_SESSION_SERVER_INTERNAL_PORT = parseInt(process.env.WEBSOCKET_SESSION_SERVER_INTERNAL_PORT ?? '8089');
+export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT = parseInt(process.env.NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT ?? '8089');
 export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST = process.env.NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST;
 export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING = `${SECURE_CONTEXT_ONLY ? 'wss' : 'ws'}://${NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST}:${NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT}/`;
 
@@ -21,7 +20,5 @@ export enum MessageTypes
     SYNC_OBJECT_UPDATE = 'sync-object-update',
     DEREGISTER_SYNC_PROVIDER = 'deregister-sync-provider',
     COMBO = 'combo',
-    AMOUNT_OF_WEEKS = 'amount-of-weeks',
-    WEEK_UPDATE = 'week-update',
 };
 export const COMBO_DATA_KEY = 'combo-data';

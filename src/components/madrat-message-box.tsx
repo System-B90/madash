@@ -6,7 +6,7 @@ import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '@/session-common';
 import '@/style/madrat-message-box.css';
-import { TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import { enqueueSnackbar } from 'notistack';
 import { ChangeEventHandler, useCallback, useEffect, useRef, useState } from "react";
 
@@ -95,21 +95,20 @@ export default function MadratMessageBox()
     }, []);
 
     return (
-        <div className="relative max-w-full max-y-full w-full h-full p-4 box-border overflow-hidden" dir='rtl'>
-            <div className="relative rounded-sm bg-[rgba(20,20,20,0.9)] w-full h-full box-border overflow-hidden flex flex-wrap p-4" dir='rtl'>
-                <TextField
-                    id="madrat-message-box"
-                    type="text"
-                    className="madrat-message-box w-full h-full"
-                    sx={ { overflowWrap: "break-word", overflowX: "hidden" } }
-                    disabled={ !canEdit }
-                    onChange={ onTextChange }
-                    multiline
-                    autoFocus
-                    minRows={ 20 }
-                    value={ message }
-                />
-            </div>
-        </div>
+        <Box className="relative rounded-sm w-full h-full box-border overflow-hidden flex flex-wrap p-4" dir='rtl'>
+            <TextField
+                id="madrat-message-box"
+                type="text"
+                className="madrat-message-box w-full h-full"
+                sx={ { overflowWrap: "break-word", overflowX: "hidden" } }
+                disabled={ !canEdit }
+                onChange={ onTextChange }
+                multiline
+                autoFocus
+                minRows={ 20 }
+                value={ message }
+                placeholder="אין הודעות..."
+            />
+        </Box>
     );
 }

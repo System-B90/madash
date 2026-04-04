@@ -28,7 +28,6 @@ export default function useSessionWebSocketContext()
 
         if (type === MessageTypes.COMBO)
         {
-            console.log(data);
             const comboData: MessageTypes[] = data[ COMBO_DATA_KEY ];
             assert(comboData !== undefined);
             messageHandlers.current.forEach(

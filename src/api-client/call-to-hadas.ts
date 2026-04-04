@@ -1,26 +1,25 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { CallStudentToHadasParams, RemoveStudentCallToHadasParams, StudentToHadasData, UpdateStateStudentCallToHadasParams } from "@/api-shared/types";
-import { Update } from "next/dist/build/swc/types";
+import { CallStudentToHadasParams, RemoveEntityCallToHadasParams, CalledToHadasData, UpdateStateEntityCallToHadasParams } from "@/api-shared/types";
 
 
 export async function apiGetStudentsCalledToHadas()
 {
     const data = (await safeApiFetcher('/api/call-to-hadas'));
-    return data as Array<StudentToHadasData>;
+    return data as Array<CalledToHadasData>;
 }
 
 export async function apiCallStudentToHadas({ ...params }: CallStudentToHadasParams)
 {
-    await safeApiFetcher('/api/call-to-hadas', {
+    const response = await safeApiFetcher('/api/call-to-hadas', {
         method: 'PUT',
         body: JSON.stringify({
             ...params
         })
     });
-    return;
+    return response as string;
 }
 
-export async function apiRemoveStudentCallToHadas({ ...params }: RemoveStudentCallToHadasParams)
+export async function apiRemoveStudentCallToHadas({ ...params }: RemoveEntityCallToHadasParams)
 {
     await safeApiFetcher('/api/call-to-hadas', {
         method: 'DELETE',
@@ -31,7 +30,7 @@ export async function apiRemoveStudentCallToHadas({ ...params }: RemoveStudentCa
     return;
 }
 
-export async function apiUpdateStateStudentCallToHadas({ ...params }: UpdateStateStudentCallToHadasParams)
+export async function apiUpdateStateStudentCallToHadas({ ...params }: UpdateStateEntityCallToHadasParams)
 {
     await safeApiFetcher('/api/call-to-hadas', {
         method: 'POST',
