@@ -1,5 +1,5 @@
 import { HIVE_URL } from "@/api-shared/common";
-import { GenderEnum } from "@/api-shared/hive-types";
+import { Clearance, GenderEnum } from "@/api-shared/hive-types";
 import { AuthSessionData } from "@/api-shared/session";
 import { AuthOptions, CallbacksOptions, Profile } from "next-auth";
 import { OAuthConfig } from "next-auth/providers/index";
@@ -36,7 +36,6 @@ interface HiveSsoProfile extends Profile
     exp: number;
     auth_time: number;
     jti: string;
-    // Define the expected API token payload
     api_token?: {
         access_token: string;
         refresh_token: string;
@@ -55,13 +54,10 @@ interface HiveUser
     gender: GenderEnum;
     display_name: string;
     is_teacher: boolean;
-    // Temporary properties to transport the SimpleJWT tokens to the jwt callback
     temp_access_token?: string;
     temp_refresh_token?: string;
     temp_expires_at?: number;
 }
-
-// We don't need HiveAccount anymore because we are ignoring DOT's tokens entirely.
 
 const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     id: "hive",
@@ -74,7 +70,6 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     issuer: `${HIVE_URL}/sso/`,
     wellKnown: `${HIVE_URL}/sso/.well-known/openid-configuration`,
     authorization: {
-        // Re-added 'api' to the scope to ensure CustomOAuth2Validator includes it
         params: { scope: "openid profile clearance extended_profile api" }
     },
     clientId: process.env.HIVE_CLIENT_ID,
@@ -92,21 +87,34 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
             gender: profile.gender,
             display_name: profile.display_name,
             is_teacher: profile.is_teacher,
-            // Extract the SimpleJWT tokens from the ID Token claims
             temp_access_token: profile.api_token?.access_token,
             temp_refresh_token: profile.api_token?.refresh_token,
         };
     },
 };
 
+const signInCallback: CallbacksOptions[ 'signIn' ] = async ({ user }) =>
+{
+    const hiveUser = user as HiveUser;
+
+    const isAuthorized = hiveUser.clearance === Clearance.Segel || hiveUser.clearance === Clearance.Admin;
+
+    if (!isAuthorized)
+    {
+        // Returning false rejects the login and redirects to the signIn page with an error parameter.
+        // Alternatively, return a string (e.g., '/unauthorized') to explicitly redirect them to a custom page.
+        return false;
+    }
+
+    return true;
+};
+
 const jwtCallback: CallbacksOptions[ 'jwt' ] = async ({ token, user }) =>
 {
-    // 'user' is the object returned from the profile() function above
     if (user)
     {
         const hiveUser = user as HiveUser;
 
-        // Lock the SimpleJWT tokens inside the encrypted NextAuth JWT state
         const extraData: JwtTokenData = {
             user: {
                 id: hiveUser.id,
@@ -138,7 +146,6 @@ const sessionCallback: CallbacksOptions[ 'session' ] = async ({ session, token }
 
         authSessionData.user = tokenData.user;
         authSessionData.accessToken = tokenData.accessToken;
-        // Refresh token intentionally omitted from client exposure
 
         session = authSessionData;
     }
@@ -153,6 +160,7 @@ export const authOptions: AuthOptions = {
         signIn: '/login',
     },
     callbacks: {
+        signIn: signInCallback,
         jwt: jwtCallback,
         session: sessionCallback,
     },
