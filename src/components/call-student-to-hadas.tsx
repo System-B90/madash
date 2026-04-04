@@ -124,7 +124,7 @@ function CallHadasHeader()
             <Box sx={ { px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1 } }>
                 <TalkIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
-                    קריאה לחד"ס
+                    קריאה לחד&quot;ס
                 </Typography>
             </Box>
             <Divider />

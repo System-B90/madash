@@ -40,6 +40,7 @@ export interface GroupToHadasData extends CalledToHadasDataBase
     groupId: string;
     students: Array<ResolvableStudent>;
     type: CalledToHadasEntityType.Group;
+    groupName?: string;
 };
 export type CalledToHadasData = StudentToHadasData | GroupToHadasData;
 

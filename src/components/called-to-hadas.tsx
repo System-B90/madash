@@ -33,9 +33,10 @@ function EntityRoomItem({ entityToHadasData }: { entityToHadasData: StudentToHad
     const isGroup = entityToHadasData.type === CalledToHadasEntityType.Group;
     const isRequested = entityToHadasData?.state === 'requested';
 
-    const resolvableEntity: ResolvableGroup | ResolvableStudent = isGroup
+    const resolvableEntity: ResolvableGroup | ResolvableStudent = useMemo(() => isGroup
         ? { type: CalledToHadasEntityType.Group, groupId: (entityToHadasData as GroupToHadasData).groupId }
-        : { type: CalledToHadasEntityType.Student, hiveId: (entityToHadasData as StudentToHadasData).student.hiveId, name: (entityToHadasData as StudentToHadasData).student.name };
+        : { type: CalledToHadasEntityType.Student, hiveId: (entityToHadasData as StudentToHadasData).student.hiveId, name: (entityToHadasData as StudentToHadasData).student.name },
+        [ isGroup, entityToHadasData ]);
 
     const deleteCallback = useCallback(() =>
     {
@@ -221,7 +222,7 @@ function UnassignedRoomItem({ entities }: { entities: Array<StudentToHadasData |
                 color="text.secondary"
                 sx={ { display: 'block', mb: 1.5, fontWeight: 'bold' } }
             >
-                לא משויכים לחדר
+                לא משויכים לכיתה
             </Typography>
             <Box
                 component="ul"

@@ -90,7 +90,7 @@ export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode
         });
 
         return { students: parsedStudents, groups: parsedGroups };
-    }, [ entitiesData, getStudent ]);
+    }, [ entitiesData ]);
 
     return (
         <CalledEntitiesContext.Provider value={ { students, groups } }>

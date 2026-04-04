@@ -1,5 +1,5 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { Class, CourseUser } from "@/api-server/hive/types";
+import { CourseUser, Class } from "@/api-shared/hive-types";
 
 export async function apiGetStudents()
 {

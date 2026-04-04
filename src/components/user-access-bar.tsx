@@ -102,7 +102,7 @@ export default function UserAccessBar()
                     מחובר כ-
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" color="text.primary" lineHeight={ 1.2 } mt={ 0.25 }>
-                    { userData.username }
+                    { userData.display_name }
                 </Typography>
             </Box>
         </Box>
