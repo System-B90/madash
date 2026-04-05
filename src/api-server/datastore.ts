@@ -1,18 +1,12 @@
 import { SendServerRequestToSessionServer } from "@/api-server/web-socket-utils";
 import { CallToHadasError } from "@/api-shared/errors";
-import { CalledToHadasEntityType, GroupToHadasData, ResolvableGroup, ResolvableStudent, EntityCallToHadasState, StudentToHadasData } from "@/api-shared/types";
+import { CalledToHadasEntityType, ResolvableStudent, EntityCallToHadasState, entityUid, CalledToHadasDataBase, Data } from "@/api-shared/types";
 import { MessageTypes } from "@/settings";
-import { randomUUID } from "crypto";
 import { Dayjs } from "dayjs";
-
-type Data = {
-    madratText: string;
-    calledToHadas: Array<StudentToHadasData | GroupToHadasData>;
-};
 
 const data: Data = {
     madratText: '',
-    calledToHadas: [],
+    calledToHadas: {},
 };
 
 export async function getMadratText()
@@ -26,108 +20,84 @@ export async function modifyMadratText(newText: string)
     SendServerRequestToSessionServer({ type: MessageTypes.MADRAT_TEXT_UPDATE, data: newText });
 }
 
-export async function getStudentsCalledToHadas()
+export async function getCallsToHadas()
 {
     return data.calledToHadas;
 }
 
-export function addStudentCalledToHadas(student: ResolvableStudent, reason: string, expirationTime: Dayjs)
+export function addStudentCallToHadas(student: ResolvableStudent, reason: string, expirationTime: Dayjs)
 {
-    const isDuplicate = data.calledToHadas.some((v) =>
-        v.type === CalledToHadasEntityType.Student &&
-        v.student.hiveId === student.hiveId &&
-        v.reason === reason &&
-        v.expirationTime.isSame(expirationTime)
-    );
+    const newId = entityUid({ type: CalledToHadasEntityType.Student, student, reason, expirationTime });
+    const isDuplicate = newId in data.calledToHadas;
 
     if (isDuplicate)
     {
         throw new CallToHadasError("הקריאה הזו כבר קיימת עבור חניך זה עם אותו הסיבה וזמן בדיוק.");
     }
 
-    data.calledToHadas.push({
+    data.calledToHadas[ newId ] = {
+        callId: newId,
         student,
         reason,
         expirationTime,
         state: 'requested',
         type: CalledToHadasEntityType.Student
-    });
+    };
 
     SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
+
+    return newId;
 }
 
-export function addGroupCalledToHadas(students: ResolvableStudent[], reason: string, expirationTime: Dayjs)
+export function addGroupCallToHadas(students: ResolvableStudent[], reason: string, expirationTime: Dayjs)
 {
-    const isDuplicate = data.calledToHadas.some((v) =>
-    {
-        if (v.type !== CalledToHadasEntityType.Group) return false;
-        if (v.reason !== reason) return false;
-        if (!v.expirationTime.isSame(expirationTime)) return false;
-        if (v.students.length !== students.length) return false;
-
-        const existingIds = new Set(v.students.map((s) => s.hiveId));
-        return students.every((s) => existingIds.has(s.hiveId));
-    });
+    const groupId = entityUid({ type: CalledToHadasEntityType.Group, students, reason, expirationTime });
+    const isDuplicate = groupId in data.calledToHadas;
 
     if (isDuplicate)
     {
         throw new CallToHadasError("הקריאה הזו כבר קיימת עבור קבוצה זו עם אותה הסיבה וזמן בדיוק.");
     }
 
-    const groupId = `g-${randomUUID()}`;
-
-    data.calledToHadas.push({
-        groupId,
+    data.calledToHadas[ groupId ] = {
+        callId: groupId,
         students,
         reason,
         expirationTime,
         state: 'requested',
         type: CalledToHadasEntityType.Group
-    });
+    };
 
     SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
+
+    return groupId;
 }
 
-export function removeEntityCalledToHadas(entity: ResolvableStudent | ResolvableGroup)
+export function removeCallToHadas(callId: CalledToHadasDataBase[ 'callId' ])
 {
-    switch (entity.type)
+    if (!(callId in data.calledToHadas)) 
     {
-        case CalledToHadasEntityType.Student:
-            data.calledToHadas = data.calledToHadas
-                .filter((x) => x.type === CalledToHadasEntityType.Student)
-                .filter((v: { student: ResolvableStudent; }) => v.student.hiveId !== entity.hiveId);
-            break;
-        case CalledToHadasEntityType.Group:
-            data.calledToHadas = data.calledToHadas
-                .filter((x) => x.type === CalledToHadasEntityType.Group)
-                .filter((v: { groupId: string; }) => v.groupId !== entity.groupId);
-            break;
+        throw new CallToHadasError("הקריאה לא קיימת.");
     }
+    const entityToRemove = data.calledToHadas[ callId ];
+    delete data.calledToHadas[ callId ];
     SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
+    return entityToRemove;
 }
 
-export function updateStateEntityCallToHadas(
-    entity: ResolvableStudent | ResolvableGroup,
+export function updateCallToHadasState(
+    callId: CalledToHadasDataBase[ 'callId' ],
     state: EntityCallToHadasState
-): void
+)
 {
-    const entityToUpdate = data.calledToHadas.find((v) =>
+
+    const entityToUpdate = data.calledToHadas[ callId ];
+    if (!entityToUpdate) 
     {
-        if (entity.type === CalledToHadasEntityType.Student && v.type === CalledToHadasEntityType.Student)
-        {
-            return v.student?.hiveId === entity.hiveId;
-        }
-
-        if (entity.type === CalledToHadasEntityType.Group && v.type === CalledToHadasEntityType.Group)
-        {
-            return v.groupId === entity.groupId;
-        }
-
-        return false;
-    });
-
-    if (!entityToUpdate) return;
-
+        throw new CallToHadasError("הקריאה לא קיימת.");
+    }
     entityToUpdate.state = state;
     SendServerRequestToSessionServer({ type: MessageTypes.STUDENTS_TO_HADAS_UPDATE });
+
+    return entityToUpdate;
 }

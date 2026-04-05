@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { ApiSuccess, catchHandler } from "@/api-server/common";
-import { addGroupCalledToHadas, addStudentCalledToHadas, getStudentsCalledToHadas, removeEntityCalledToHadas, updateStateEntityCallToHadas } from "@/api-server/datastore";
+import { addGroupCallToHadas, addStudentCallToHadas, getCallsToHadas, removeCallToHadas, updateCallToHadasState } from "@/api-server/datastore";
 import { CallStudentToHadasParams, RemoveEntityCallToHadasParams, UpdateStateEntityCallToHadasParams } from "@/api-shared/types";
 import dayjs from "dayjs";
 import { NextRequest } from "next/server";
@@ -12,7 +12,7 @@ export async function GET(
 {
     try
     {
-        return ApiSuccess(await getStudentsCalledToHadas());
+        return ApiSuccess(await getCallsToHadas());
     }
     catch (e)
     {
@@ -30,12 +30,12 @@ export async function PUT(
 
         if (!groupCall)
         {
-            students.forEach((v) => addStudentCalledToHadas(v, reason, dayjs(expirationTime)));
+            students.forEach((v) => addStudentCallToHadas(v, reason, dayjs(expirationTime)));
         }
         else
         {
             // For group calls, we create a single entry with all students and a shared reason/expiration
-            addGroupCalledToHadas(students, reason, dayjs(expirationTime));
+            addGroupCallToHadas(students, reason, dayjs(expirationTime));
         }
 
         return ApiSuccess(
@@ -54,10 +54,10 @@ export async function DELETE(
 {
     try
     {
-        const { entity }: RemoveEntityCallToHadasParams = await request.json();
+        const { callId }: RemoveEntityCallToHadasParams = await request.json();
 
-        removeEntityCalledToHadas(entity);
-        const successMessage = entity.type === 'student' ? `הוסר קריאה לחד"ס עבור החניך ${entity.name}` : `הוסר קריאה לחד"ס עבור קבוצה עם מזהה ${entity.groupId}`;
+        const entity = removeCallToHadas(callId);
+        const successMessage = entity.type === 'student' ? `הוסר קריאה לחד"ס עבור החניך ${entity.student.name}` : `הוסר קריאה לחד"ס עבור קבוצה ${entity.groupName}`;
         return ApiSuccess(
             successMessage
         );
@@ -74,11 +74,11 @@ export async function POST(
 {
     try
     {
-        const { entity, state }: UpdateStateEntityCallToHadasParams = await request.json();
+        const { callId, state }: UpdateStateEntityCallToHadasParams = await request.json();
 
-        updateStateEntityCallToHadas(entity, state);
+        const entity = updateCallToHadasState(callId, state);
 
-        const successMessage = entity.type === 'student' ? `הוחלף מצב החניך ${entity.name} ל-${state}` : `מצב הקבוצה הווחלפה ל-${state}`;
+        const successMessage = entity.type === 'student' ? `הוחלף מצב החניך ${entity.student.name} ל-${state}` : `מצב הקבוצה הווחלפה ל-${state}`;
         return ApiSuccess(
             successMessage
         );

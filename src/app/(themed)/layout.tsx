@@ -3,7 +3,7 @@
 import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
-import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import { createTheme, CssBaseline, GlobalStyles, ThemeProvider } from "@mui/material";
 import { SnackbarProvider } from 'notistack';
 import { prefixer } from 'stylis';
 
@@ -66,6 +66,24 @@ export default function ThemedLayout({
         <CacheProvider value={ rtlCache }>
             <ThemeProvider theme={ darkTheme }>
                 <CssBaseline />
+                <GlobalStyles
+                    styles={ (theme) => ({
+                        '*::-webkit-scrollbar': {
+                            width: '8px',
+                            height: '8px',
+                        },
+                        '*::-webkit-scrollbar-track': {
+                            background: 'transparent',
+                        },
+                        '*::-webkit-scrollbar-thumb': {
+                            backgroundColor: theme.palette.action.disabledBackground,
+                            borderRadius: '8px',
+                        },
+                        '*::-webkit-scrollbar-thumb:hover': {
+                            backgroundColor: theme.palette.primary.main,
+                        },
+                    }) }
+                />
                 <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
                     { children }
                 </SnackbarProvider>

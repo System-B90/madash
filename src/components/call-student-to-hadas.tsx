@@ -2,6 +2,7 @@
 
 import { apiCallStudentToHadas } from "@/api-client/call-to-hadas";
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
+import CollapsableCard from "@/components/collapsable-card";
 import TalkIcon from "@/components/icons/talk";
 import { useStudents } from "@/components/students-provider";
 import StudentsSelector from "@/components/students-selector";
@@ -130,7 +131,7 @@ function CallHadasHeader()
             <Box sx={ { px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1 } }>
                 <TalkIcon color="primary" fontSize="small" />
                 <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
-                    קריאה לחד&quot;ס
+
                 </Typography>
             </Box>
             <Divider />
@@ -271,7 +272,7 @@ export default function CallStudentToHadas()
     const [ selectedStudents, setSelectedStudents ] = useState<Array<number>>([]);
     const [ reason, setReason ] = useState<string>('');
     const [ expirationTime, setExpirationTime ] = useState<Dayjs | null>(
-        dayjs().add(1, 'hour').minute(dayjs().minute() + 4 - ((dayjs().minute() + 4) % 5))
+        dayjs().add(6, 'hour').minute(dayjs().minute() + 4 - ((dayjs().minute() + 4) % 5))
     );
 
     const { getStudent } = useStudents();
@@ -310,33 +311,30 @@ export default function CallStudentToHadas()
     }, []);
 
     return (
-        <Paper elevation={ 2 } sx={ { overflow: 'hidden', borderRadius: 3, border: '1px solid', borderColor: 'divider' } }>
-            <CallHadasHeader />
-            <Box
-                component="form"
-                className="flex flex-col gap-4 p-4"
-                dir="rtl"
-                onSubmit={ formSubmitCallback }
-                noValidate
-                autoComplete="off"
-                sx={ { bgcolor: 'background.default' } }
-            >
-                <CallHadasStudentRow
-                    selectedStudents={ selectedStudents }
-                    setSelectedStudents={ setSelectedStudents }
-                    expirationTime={ expirationTime }
-                    setExpirationTime={ setExpirationTime }
-                />
-                <CallHadasActionRow
-                    reason={ reason }
-                    onReasonChange={ reasonValueChangeCallback }
-                    loading={ loading }
-                    isSubmitDisabled={ loading || selectedStudents.length === 0 }
-                    hasMultipleStudents={ selectedStudents.length > 1 }
-                    isGroupCall={ isGroupCall }
-                    onGroupCallChange={ (event) => setIsGroupCall(event.target.checked) }
-                />
-            </Box>
-        </Paper>
+        <CollapsableCard name={ "קריאה לחד\"ס" } icon={ TalkIcon } mainColor={ 'primary' } content={ <Box
+            component="form"
+            className="flex flex-col gap-4 p-4"
+            dir="rtl"
+            onSubmit={ formSubmitCallback }
+            noValidate
+            autoComplete="off"
+            sx={ { bgcolor: 'background.default' } }
+        >
+            <CallHadasStudentRow
+                selectedStudents={ selectedStudents }
+                setSelectedStudents={ setSelectedStudents }
+                expirationTime={ expirationTime }
+                setExpirationTime={ setExpirationTime }
+            />
+            <CallHadasActionRow
+                reason={ reason }
+                onReasonChange={ reasonValueChangeCallback }
+                loading={ loading }
+                isSubmitDisabled={ loading || selectedStudents.length === 0 }
+                hasMultipleStudents={ selectedStudents.length > 1 }
+                isGroupCall={ isGroupCall }
+                onGroupCallChange={ (event) => setIsGroupCall(event.target.checked) }
+            />
+        </Box> } />
     );
 }

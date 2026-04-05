@@ -16,6 +16,7 @@ import
 {
     CalledToHadasData,
     CalledToHadasEntityType,
+    Data,
     GroupToHadasData,
     StudentData,
     StudentToHadasData
@@ -34,7 +35,7 @@ const CalledEntitiesContext = createContext<CalledEntitiesContextState | undefin
 
 export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ entitiesData, setEntitiesData ] = useState<Array<CalledToHadasData>>([]);
+    const [ entitiesData, setEntitiesData ] = useState<Data[ 'calledToHadas' ]>({});
 
     const { addMessageHandler } = useAuth();
     const { getStudent } = useStudents();
@@ -70,7 +71,7 @@ export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode
         const parsedStudents: Array<StudentToHadasData> = [];
         const parsedGroups: Array<GroupToHadasData> = [];
 
-        entitiesData.forEach((entityToHadasData) =>
+        Object.values(entitiesData).forEach((entityToHadasData) =>
         {
             if (entityToHadasData.type === CalledToHadasEntityType.Student)
             {

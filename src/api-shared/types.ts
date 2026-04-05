@@ -25,6 +25,7 @@ export enum CalledToHadasEntityType
 }
 export interface CalledToHadasDataBase
 {
+    callId: string;
     reason: string;
     expirationTime: Dayjs;
     state: EntityCallToHadasState;
@@ -37,7 +38,6 @@ export interface StudentToHadasData extends CalledToHadasDataBase
 };
 export interface GroupToHadasData extends CalledToHadasDataBase
 {
-    groupId: string;
     students: Array<ResolvableStudent>;
     type: CalledToHadasEntityType.Group;
     groupName?: string;
@@ -54,10 +54,10 @@ export interface StudentData extends ResolvableStudent
 };
 
 export type CallStudentToHadasParams = { students: Array<ResolvableStudent>; reason: StudentToHadasData[ 'reason' ]; expirationTime: StudentToHadasData[ 'expirationTime' ]; groupCall: boolean; };
-export type UpdateStateEntityCallToHadasParams = { entity: ResolvableStudent | ResolvableGroup; state: StudentToHadasData[ 'state' ]; };
-export type RemoveEntityCallToHadasParams = { entity: ResolvableStudent | ResolvableGroup; };
+export type UpdateStateEntityCallToHadasParams = { callId: CalledToHadasDataBase[ 'callId' ]; state: StudentToHadasData[ 'state' ]; };
+export type RemoveEntityCallToHadasParams = { callId: CalledToHadasDataBase[ 'callId' ]; };
 
-export function entityUid(entity: CalledToHadasDataBase): string
+export function entityUid(entity: Omit<StudentToHadasData, 'callId' | 'state'> | Omit<GroupToHadasData, 'callId' | 'state'>): string
 {
     const reasonHash = createHash('md5').update(entity.reason).digest('hex');
     const expirationTimeHash = createHash('md5').update(entity.expirationTime.toISOString()).digest('hex');
@@ -73,3 +73,8 @@ export function entityUid(entity: CalledToHadasDataBase): string
             return `${entity.type}-${reasonHash}-${expirationTimeHash}-${studentsHash}`;
     }
 }
+
+export type Data = {
+    madratText: string;
+    calledToHadas: Record<string, StudentToHadasData | GroupToHadasData>;
+};

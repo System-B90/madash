@@ -1,11 +1,11 @@
 import { safeApiFetcher } from "@/api-client/common";
-import { CallStudentToHadasParams, RemoveEntityCallToHadasParams, CalledToHadasData, UpdateStateEntityCallToHadasParams } from "@/api-shared/types";
+import { CallStudentToHadasParams, RemoveEntityCallToHadasParams, CalledToHadasData, UpdateStateEntityCallToHadasParams, Data } from "@/api-shared/types";
 
 
 export async function apiGetStudentsCalledToHadas()
 {
     const data = (await safeApiFetcher('/api/call-to-hadas'));
-    return data as Array<CalledToHadasData>;
+    return data as Data[ 'calledToHadas' ];
 }
 
 export async function apiCallStudentToHadas({ ...params }: CallStudentToHadasParams)

@@ -7,7 +7,7 @@ export default function SideBar()
 {
 
     return (
-        <Box className="flex flex-col h-full w-[20%] space-y-2 px-2 py-4">
+        <Box className="flex flex-col h-full w-[20%] min-w-80 space-y-2 px-2 py-4">
             <UserAccessBar />
             <CallStudentToHadas />
             <CalledToHadas />

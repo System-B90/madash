@@ -4,6 +4,7 @@ import { apiRemoveStudentCallToHadas, apiUpdateStateStudentCallToHadas } from "@
 import { Room } from "@/api-shared/hive-types";
 import { CalledToHadasEntityType, entityUid, GroupToHadasData, ResolvableGroup, ResolvableStudent, StudentToHadasData } from "@/api-shared/types";
 import { useCalledEntities } from "@/components/called-students-provider";
+import CollapsableCard from "@/components/collapsable-card";
 import { useStudents } from "@/components/students-provider";
 import
 {
@@ -30,24 +31,21 @@ function EntityRoomItem({ entityToHadasData }: { entityToHadasData: StudentToHad
 {
     const { getStudent } = useStudents();
 
+    const callId = entityToHadasData.callId;
+
     const isGroup = entityToHadasData.type === CalledToHadasEntityType.Group;
     const isRequested = entityToHadasData?.state === 'requested';
-
-    const resolvableEntity: ResolvableGroup | ResolvableStudent = useMemo(() => isGroup
-        ? { type: CalledToHadasEntityType.Group, groupId: (entityToHadasData as GroupToHadasData).groupId }
-        : { type: CalledToHadasEntityType.Student, hiveId: (entityToHadasData as StudentToHadasData).student.hiveId, name: (entityToHadasData as StudentToHadasData).student.name },
-        [ isGroup, entityToHadasData ]);
 
     const deleteCallback = useCallback(() =>
     {
         if (isRequested)
         {
-            apiUpdateStateStudentCallToHadas({ entity: resolvableEntity, state: 'told' });
+            apiUpdateStateStudentCallToHadas({ callId, state: 'told' });
         } else if (entityToHadasData.state === 'told')
         {
-            apiRemoveStudentCallToHadas({ entity: resolvableEntity });
+            apiRemoveStudentCallToHadas({ callId });
         }
-    }, [ entityToHadasData, isRequested, resolvableEntity ]);
+    }, [ callId, entityToHadasData.state, isRequested ]);
 
     const tooltipContent = (
         <Box className="flex flex-col items-center" sx={ { p: 0.5 } }>
@@ -331,17 +329,9 @@ export default function CalledToHadas()
     const totalCalledEntities = (studentsCalledToHadas?.length || 0) + (groupsCalledToHadas?.length || 0);
 
     return (
-        <Paper elevation={ 2 } sx={ { overflow: 'hidden', borderRadius: 3, border: '1px solid', borderColor: 'divider' } }>
-            <Box sx={ { px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1 } }>
-                <ListIcon color="info" fontSize="small" />
-                <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
-                    סטטוס קריאות
-                </Typography>
-            </Box>
-            <Divider />
-
-            <Box sx={ { display: 'flex', flexDirection: 'column', bgcolor: 'background.default', minHeight: 120 } }>
-                { isLoading ? (
+        <CollapsableCard
+            name={ "סטטוס קריאות" } icon={ ListIcon } mainColor={ 'info' } content={
+                isLoading ? (
                     <>
                         <RoomSkeleton />
                         <RoomSkeleton />
@@ -363,8 +353,7 @@ export default function CalledToHadas()
                             </Box>
                         ) }
                     </>
-                ) }
-            </Box>
-        </Paper>
+                )
+            } />
     );
 }
