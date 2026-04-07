@@ -169,7 +169,7 @@ def setup() -> None:
         )
 
         hive_api_url = prompt_and_save(
-            "NEXT_PUBLIC_HIVE_API_URL", "Hive API URL:", "https://hive.org"
+            "NEXT_PUBLIC_HIVE_URL", "Hive API URL:", "https://hive.org"
         )
         reject_unauthorized = prompt_and_save(
             "NODE_TLS_REJECT_UNAUTHORIZED",
@@ -213,7 +213,7 @@ def setup() -> None:
         f"NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT={state['NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT']}\n"
         f"NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST={state['NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST']}\n"
         f"WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY={state['WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY']}\n"
-        f"NEXT_PUBLIC_HIVE_API_URL={state['NEXT_PUBLIC_HIVE_API_URL']}\n"
+        f"NEXT_PUBLIC_HIVE_URL={state['NEXT_PUBLIC_HIVE_URL']}\n"
         f"NODE_TLS_REJECT_UNAUTHORIZED={state['NODE_TLS_REJECT_UNAUTHORIZED']}\n"
         f"HIVE_CLIENT_ID={state['HIVE_CLIENT_ID']}\n"
         f"HIVE_CLIENT_SECRET={state['HIVE_CLIENT_SECRET']}\n"

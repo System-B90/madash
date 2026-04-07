@@ -14,7 +14,7 @@ export class HiveClient
 
     private buildUrl(path: string): string
     {
-        return `${process.env.NEXT_PUBLIC_HIVE_API_URL}${path}`;
+        return `${process.env.NEXT_PUBLIC_HIVE_URL}${path}`;
     }
 
     private async refreshAccessToken(): Promise<void>

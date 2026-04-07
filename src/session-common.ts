@@ -20,5 +20,7 @@ export enum MessageTypes
     SYNC_OBJECT_UPDATE = 'sync-object-update',
     DEREGISTER_SYNC_PROVIDER = 'deregister-sync-provider',
     COMBO = 'combo',
+    PING = 'ping',
+    PONG = 'pong',
 };
 export const COMBO_DATA_KEY = 'combo-data';

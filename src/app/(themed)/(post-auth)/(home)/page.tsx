@@ -3,6 +3,8 @@ import { CalledEntitiesProvider } from "@/components/called-students-provider";
 import MadratMessageBox from "@/components/madrat-message-box";
 import SideBar from "@/components/side-bar";
 import { StudentsProvider } from "@/components/students-provider";
+import SystemStatusBoard from "@/components/system-status-board";
+import { Box } from "@mui/material";
 
 export default function Home()
 {
@@ -13,7 +15,12 @@ export default function Home()
                     <SideBar />
                 </CalledEntitiesProvider>
             </StudentsProvider>
-            <MadratMessageBox />
+            <Box
+                className='w-full gap-4 flex-col flex px-2 py-4'
+            >
+                <SystemStatusBoard />
+                <MadratMessageBox />
+            </Box>
         </div>
     );
 }

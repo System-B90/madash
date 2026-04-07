@@ -11,6 +11,7 @@ import React, {
 import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
 import { MessageTypes } from '../session-common';
 import { AuthSessionUser } from '@/api-shared/session';
+import { signOut } from "next-auth/react";
 
 export interface WebSocketSessionMessage
 {
@@ -20,6 +21,7 @@ export interface WebSocketSessionMessage
 
 export type AuthContextState = {
     userData: AuthSessionUser;
+    logout: () => void;
     canEdit: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
@@ -83,8 +85,15 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
         };
     }, [ ws ]);
 
+    const logout = useCallback(() =>
+    {
+        signOut({ callbackUrl: '/login' });
+    }, []);
+
+
     const contextValue = useMemo<AuthContextState>(() => ({
         userData,
+        logout,
         canEdit,
         addMessageHandler,
         sendMessage,

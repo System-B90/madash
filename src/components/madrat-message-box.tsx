@@ -95,7 +95,7 @@ export default function MadratMessageBox()
     }, []);
 
     return (
-        <Box className="relative rounded-sm w-full h-full box-border overflow-hidden flex flex-wrap p-4" dir='rtl'>
+        <Box className="relative rounded-sm w-full h-full box-border overflow-hidden flex flex-wrap" dir='rtl'>
             <TextField
                 id="madrat-message-box"
                 type="text"

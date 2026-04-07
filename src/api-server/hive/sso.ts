@@ -1,4 +1,3 @@
-import { HIVE_URL } from "@/api-shared/common";
 import { Clearance, GenderEnum } from "@/api-shared/hive-types";
 import { AuthSessionData } from "@/api-shared/session";
 import { AuthOptions, CallbacksOptions, Profile } from "next-auth";
@@ -58,20 +57,27 @@ interface HiveUser
     temp_refresh_token?: string;
     temp_expires_at?: number;
 }
-
+const NEXT_PUBLIC_HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL;
+console.log("NEXT_PUBLIC_HIVE_URL:", NEXT_PUBLIC_HIVE_URL);
 const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     id: "hive",
     name: "Hive",
     type: "oauth",
     checks: [ "pkce", "state" ],
+
+    // Force NextAuth to send credentials in the request body
     client: {
         token_endpoint_auth_method: "client_secret_post",
     },
-    issuer: `${HIVE_URL}/sso/`,
-    wellKnown: `${HIVE_URL}/sso/.well-known/openid-configuration`,
+
+    issuer: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso`,
+    wellKnown: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/.well-known/openid-configuration`,
+    // jwks_endpoint: '${NEXT_PUBLIC_HIVE_URL}/api/core/sso/.well-known/jwks.json',
+
     authorization: {
-        params: { scope: "openid profile clearance extended_profile api" }
+        params: { scope: `openid profile clearance extended_profile api` },
     },
+
     clientId: process.env.HIVE_CLIENT_ID,
     clientSecret: process.env.HIVE_CLIENT_SECRET,
 
@@ -87,17 +93,17 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
             gender: profile.gender,
             display_name: profile.display_name,
             is_teacher: profile.is_teacher,
-            temp_access_token: profile.api_token?.access_token,
-            temp_refresh_token: profile.api_token?.refresh_token,
         };
     },
 };
 
-const signInCallback: CallbacksOptions[ 'signIn' ] = async ({ user }) =>
+const signInCallback: CallbacksOptions[ "signIn" ] = async ({ user }) =>
 {
     const hiveUser = user as HiveUser;
 
-    const isAuthorized = hiveUser.clearance === Clearance.Segel || hiveUser.clearance === Clearance.Admin;
+    const isAuthorized =
+        hiveUser.clearance === Clearance.Segel ||
+        hiveUser.clearance === Clearance.Admin;
 
     if (!isAuthorized)
     {
@@ -109,7 +115,7 @@ const signInCallback: CallbacksOptions[ 'signIn' ] = async ({ user }) =>
     return true;
 };
 
-const jwtCallback: CallbacksOptions[ 'jwt' ] = async ({ token, user }) =>
+const jwtCallback: CallbacksOptions[ "jwt" ] = async ({ token, user }) =>
 {
     if (user)
     {
@@ -137,7 +143,10 @@ const jwtCallback: CallbacksOptions[ 'jwt' ] = async ({ token, user }) =>
     return token;
 };
 
-const sessionCallback: CallbacksOptions[ 'session' ] = async ({ session, token }) =>
+const sessionCallback: CallbacksOptions[ "session" ] = async ({
+    session,
+    token,
+}) =>
 {
     if (token && token.data)
     {
@@ -153,11 +162,9 @@ const sessionCallback: CallbacksOptions[ 'session' ] = async ({ session, token }
 };
 
 export const authOptions: AuthOptions = {
-    providers: [
-        HIVE_PROVIDER
-    ],
+    providers: [ HIVE_PROVIDER ],
     pages: {
-        signIn: '/login',
+        signIn: "/login",
     },
     callbacks: {
         signIn: signInCallback,

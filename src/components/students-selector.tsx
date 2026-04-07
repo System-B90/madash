@@ -72,7 +72,7 @@ export default function StudentsSelector({ selected, setSelected, ...props }: St
                             flexWrap: 'wrap',
                             gap: 0.5,
                             // Ensure there is vertical padding even when stretched
-                            py: 1
+                            py: 0
                         }
                     } }
                     renderValue={ (selectedIds) => (
