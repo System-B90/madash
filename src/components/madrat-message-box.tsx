@@ -95,19 +95,40 @@ export default function MadratMessageBox()
     }, []);
 
     return (
-        <Box className="relative rounded-sm w-full h-full box-border overflow-hidden flex flex-wrap" dir='rtl'>
+        <Box
+            className="relative rounded-sm w-full min-h-0 flex-1 box-border overflow-hidden flex flex-col"
+            dir="rtl"
+        >
             <TextField
                 id="madrat-message-box"
                 type="text"
-                className="madrat-message-box w-full h-full"
-                sx={ { overflowWrap: "break-word", overflowX: "hidden" } }
-                disabled={ !canEdit }
-                onChange={ onTextChange }
+                className="madrat-message-box"
+                fullWidth
                 multiline
                 autoFocus
-                minRows={ 20 }
+                minRows={ 5 }
                 value={ message }
                 placeholder="אין הודעות..."
+                disabled={ !canEdit }
+                onChange={ onTextChange }
+                sx={ {
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    minHeight: 0,
+                    overflowWrap: 'break-word',
+                    overflowX: 'hidden',
+                    '& .MuiInputBase-root': {
+                        flex: 1,
+                        alignItems: 'stretch',
+                        minHeight: 0,
+                    },
+                    '& textarea': {
+                        height: '100% !important',
+                        overflow: 'auto !important',
+                        boxSizing: 'border-box',
+                    },
+                } }
             />
         </Box>
     );

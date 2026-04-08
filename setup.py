@@ -196,6 +196,13 @@ def setup() -> None:
             "Successfully generated Hive SSO credentials.", fg=typer.colors.GREEN
         )
 
+        hive_prometheus_url = inquirer.text(
+            message="Hive Prometheus base URL (optional, for status dashboard; Enter to skip):",
+            default=state.get("HIVE_PROMETHEUS_URL", ""),
+        ).execute()
+        state["HIVE_PROMETHEUS_URL"] = hive_prometheus_url.strip()
+        save_tmp_state(state)
+
     except (KeyboardInterrupt, Exception) as e:
         typer.secho(f"\nSetup interrupted or failed: {e}", fg=typer.colors.RED)
         typer.secho(
@@ -217,6 +224,7 @@ def setup() -> None:
         f"NODE_TLS_REJECT_UNAUTHORIZED={state['NODE_TLS_REJECT_UNAUTHORIZED']}\n"
         f"HIVE_CLIENT_ID={state['HIVE_CLIENT_ID']}\n"
         f"HIVE_CLIENT_SECRET={state['HIVE_CLIENT_SECRET']}\n"
+        f"HIVE_PROMETHEUS_URL={state.get('HIVE_PROMETHEUS_URL', '')}\n"
     )
 
     FINAL_ENV_FILE.write_text(env_content)

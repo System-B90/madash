@@ -1,0 +1,160 @@
+[
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "secrets",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "secrets",
+        "description": "secrets",
+        "detail": "secrets",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "Dict",
+        "importPath": "typing",
+        "description": "typing",
+        "isExtraImport": true,
+        "detail": "typing",
+        "documentation": {}
+    },
+    {
+        "label": "typer",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "typer",
+        "description": "typer",
+        "detail": "typer",
+        "documentation": {}
+    },
+    {
+        "label": "inquirer",
+        "importPath": "InquirerPy",
+        "description": "InquirerPy",
+        "isExtraImport": true,
+        "detail": "InquirerPy",
+        "documentation": {}
+    },
+    {
+        "label": "EmptyInputValidator",
+        "importPath": "InquirerPy.validator",
+        "description": "InquirerPy.validator",
+        "isExtraImport": true,
+        "detail": "InquirerPy.validator",
+        "documentation": {}
+    },
+    {
+        "label": "_Known",
+        "kind": 6,
+        "importPath": "node_modules.flatted.python.flatted",
+        "description": "node_modules.flatted.python.flatted",
+        "peekOfCode": "class _Known:\n    def __init__(self):\n        self.key = []\n        self.value = []\nclass _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i",
+        "detail": "node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "_String",
+        "kind": 6,
+        "importPath": "node_modules.flatted.python.flatted",
+        "description": "node_modules.flatted.python.flatted",
+        "peekOfCode": "class _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i\ndef _object_keys(value):\n    for key in value:\n        yield key\ndef _is_array(value):",
+        "detail": "node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "parse",
+        "kind": 2,
+        "importPath": "node_modules.flatted.python.flatted",
+        "description": "node_modules.flatted.python.flatted",
+        "peekOfCode": "def parse(value, *args, **kwargs):\n    json = _json.loads(value, *args, **kwargs)\n    wrapped = []\n    for value in json:\n        wrapped.append(_wrap(value))\n    input = []\n    for value in wrapped:\n        if isinstance(value, _String):\n            input.append(value.value)\n        else:",
+        "detail": "node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "stringify",
+        "kind": 2,
+        "importPath": "node_modules.flatted.python.flatted",
+        "description": "node_modules.flatted.python.flatted",
+        "peekOfCode": "def stringify(value, *args, **kwargs):\n    known = _Known()\n    input = []\n    output = []\n    i = int(_index(known, input, value))\n    while i < len(input):\n        output.append(_transform(known, input, input[i]))\n        i += 1\n    return _json.dumps(output, *args, **kwargs)",
+        "detail": "node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "load_tmp_state",
+        "kind": 2,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "def load_tmp_state() -> dict[str, str]:\n    \"\"\"\n    Loads the temporary environment state from disk.\n    Args:\n        None\n    Returns:\n        dict[str, str]: A dictionary containing the loaded key-value pairs.\n    \"\"\"\n    state: Dict[str, str] = {}\n    if TMP_ENV_FILE.exists():",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "save_tmp_state",
+        "kind": 2,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "def save_tmp_state(state: dict[str, str]) -> None:\n    \"\"\"\n    Saves the current environment state to the temporary file.\n    Args:\n        state (dict[str, str]): The dictionary of key-value pairs to save.\n    Returns:\n        None\n    \"\"\"\n    with open(TMP_ENV_FILE, \"w\", encoding=\"utf-8\") as f:\n        for key, value in state.items():",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "generate_hive_credentials",
+        "kind": 2,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "def generate_hive_credentials(\n    api_url: str, app_name: str, redirect_uri: str, verify: bool\n) -> tuple[str, str]:\n    \"\"\"\n    Registers the service with Hive SSO and retrieves client keys.\n    Args:\n        api_url (str): The base URL of the Hive API.\n        app_name (str): The name of the application to register.\n        redirect_uri (str): The redirect URI for the OAuth callback.\n        verify (bool): Whether to verify SSL certificates during registration.",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "setup",
+        "kind": 2,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "def setup() -> None:\n    \"\"\"\n    Interactively prompts the user for configuration values, managing state persistence.\n    Args:\n        None\n    Returns:\n        None\n    \"\"\"\n    typer.secho(\"Starting MADASH Environment Setup...\", fg=typer.colors.CYAN, bold=True)\n    if FINAL_ENV_FILE.exists():",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "app",
+        "kind": 5,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "app = typer.Typer(help=\"MADASH Environment Setup CLI\")\nTMP_ENV_FILE = Path(\".env.tmp\")\nFINAL_ENV_FILE = Path(\".env\")\ndef load_tmp_state() -> dict[str, str]:\n    \"\"\"\n    Loads the temporary environment state from disk.\n    Args:\n        None\n    Returns:\n        dict[str, str]: A dictionary containing the loaded key-value pairs.",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "TMP_ENV_FILE",
+        "kind": 5,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "TMP_ENV_FILE = Path(\".env.tmp\")\nFINAL_ENV_FILE = Path(\".env\")\ndef load_tmp_state() -> dict[str, str]:\n    \"\"\"\n    Loads the temporary environment state from disk.\n    Args:\n        None\n    Returns:\n        dict[str, str]: A dictionary containing the loaded key-value pairs.\n    \"\"\"",
+        "detail": "setup",
+        "documentation": {}
+    },
+    {
+        "label": "FINAL_ENV_FILE",
+        "kind": 5,
+        "importPath": "setup",
+        "description": "setup",
+        "peekOfCode": "FINAL_ENV_FILE = Path(\".env\")\ndef load_tmp_state() -> dict[str, str]:\n    \"\"\"\n    Loads the temporary environment state from disk.\n    Args:\n        None\n    Returns:\n        dict[str, str]: A dictionary containing the loaded key-value pairs.\n    \"\"\"\n    state: Dict[str, str] = {}",
+        "detail": "setup",
+        "documentation": {}
+    }
+]

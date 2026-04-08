@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MuiEmotionCacheProvider } from "@/components/mui-emotion-cache-provider";
 import "@/style/globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export default function RootLayout({
             <body
                 className='antialiased w-screen h-screen overflow-hidden' dir="rtl"
             >
-                { children }
+                <MuiEmotionCacheProvider>{ children }</MuiEmotionCacheProvider>
             </body>
         </html>
     );

@@ -1,11 +1,7 @@
 'use client';
 
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import rtlPlugin from 'stylis-plugin-rtl';
 import { createTheme, CssBaseline, GlobalStyles, ThemeProvider } from "@mui/material";
 import { SnackbarProvider } from 'notistack';
-import { prefixer } from 'stylis';
 
 const darkTheme = createTheme({
     direction: 'rtl',
@@ -51,11 +47,6 @@ const darkTheme = createTheme({
     }
 });
 
-const rtlCache = createCache({
-    key: 'muirtl',
-    stylisPlugins: [ prefixer, rtlPlugin ],
-});
-
 export default function ThemedLayout({
     children,
 }: Readonly<{
@@ -63,31 +54,29 @@ export default function ThemedLayout({
 }>)
 {
     return (
-        <CacheProvider value={ rtlCache }>
-            <ThemeProvider theme={ darkTheme }>
-                <CssBaseline />
-                <GlobalStyles
-                    styles={ (theme) => ({
-                        '*::-webkit-scrollbar': {
-                            width: '8px',
-                            height: '8px',
-                        },
-                        '*::-webkit-scrollbar-track': {
-                            background: 'transparent',
-                        },
-                        '*::-webkit-scrollbar-thumb': {
-                            backgroundColor: theme.palette.action.disabledBackground,
-                            borderRadius: '8px',
-                        },
-                        '*::-webkit-scrollbar-thumb:hover': {
-                            backgroundColor: theme.palette.primary.main,
-                        },
-                    }) }
-                />
-                <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
-                    { children }
-                </SnackbarProvider>
-            </ThemeProvider>
-        </CacheProvider>
+        <ThemeProvider theme={ darkTheme }>
+            <CssBaseline />
+            <GlobalStyles
+                styles={ (theme) => ({
+                    '*::-webkit-scrollbar': {
+                        width: '8px',
+                        height: '8px',
+                    },
+                    '*::-webkit-scrollbar-track': {
+                        background: 'transparent',
+                    },
+                    '*::-webkit-scrollbar-thumb': {
+                        backgroundColor: theme.palette.action.disabledBackground,
+                        borderRadius: '8px',
+                    },
+                    '*::-webkit-scrollbar-thumb:hover': {
+                        backgroundColor: theme.palette.primary.main,
+                    },
+                }) }
+            />
+            <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
+                { children }
+            </SnackbarProvider>
+        </ThemeProvider>
     );
 }

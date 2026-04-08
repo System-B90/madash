@@ -66,7 +66,7 @@ export default function StudentsSelector({ selected, setSelected, ...props }: St
                     sx={ {
                         height: '100%',
                         '& .MuiSelect-select': {
-                            height: '100%',
+                            height: '100% !important', // There is some MUI style class which overides this for some reason
                             display: 'flex',
                             alignItems: 'center',
                             flexWrap: 'wrap',

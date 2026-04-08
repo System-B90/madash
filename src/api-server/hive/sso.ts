@@ -57,8 +57,8 @@ interface HiveUser
     temp_refresh_token?: string;
     temp_expires_at?: number;
 }
-const NEXT_PUBLIC_HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL;
-console.log("NEXT_PUBLIC_HIVE_URL:", NEXT_PUBLIC_HIVE_URL);
+
+const NEXT_PUBLIC_HIVE_URL = process.env.NEXT_PUBLIC_HIVE_URL ?? '';
 const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
     id: "hive",
     name: "Hive",
@@ -72,7 +72,6 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
 
     issuer: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso`,
     wellKnown: `${NEXT_PUBLIC_HIVE_URL}/api/core/sso/.well-known/openid-configuration`,
-    // jwks_endpoint: '${NEXT_PUBLIC_HIVE_URL}/api/core/sso/.well-known/jwks.json',
 
     authorization: {
         params: { scope: `openid profile clearance extended_profile api` },
@@ -96,7 +95,6 @@ const HIVE_PROVIDER: OAuthConfig<HiveSsoProfile> = {
         };
     },
 };
-
 const signInCallback: CallbacksOptions[ "signIn" ] = async ({ user }) =>
 {
     const hiveUser = user as HiveUser;
@@ -107,37 +105,63 @@ const signInCallback: CallbacksOptions[ "signIn" ] = async ({ user }) =>
 
     if (!isAuthorized)
     {
-        // Returning false rejects the login and redirects to the signIn page with an error parameter.
-        // Alternatively, return a string (e.g., '/unauthorized') to explicitly redirect them to a custom page.
         return false;
     }
 
     return true;
 };
 
-const jwtCallback: CallbacksOptions[ "jwt" ] = async ({ token, user }) =>
+const jwtCallback: CallbacksOptions[ "jwt" ] = async ({ token, user, account }) =>
 {
-    if (user)
+    // account is only defined during the very first sign-in step
+    if (user && account)
     {
         const hiveUser = user as HiveUser;
 
-        const extraData: JwtTokenData = {
-            user: {
-                id: hiveUser.id,
-                name: hiveUser.name,
-                email: hiveUser.email,
-                username: hiveUser.username,
-                clearance: hiveUser.clearance,
-                program: hiveUser.program,
-                gender: hiveUser.gender,
-                display_name: hiveUser.display_name,
-                is_teacher: hiveUser.is_teacher,
-            },
-            expires_at: hiveUser.temp_expires_at ?? 0,
-            accessToken: hiveUser.temp_access_token ?? "",
-            refreshToken: hiveUser.temp_refresh_token ?? "",
-        };
-        token.data = extraData;
+        try
+        {
+            // Exchange the opaque DOT token for a SimpleJWT pair
+            const exchangeResponse = await fetch(`${NEXT_PUBLIC_HIVE_URL.replace(/\/$/, "")}/api/core/sso/exchange/`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${account.access_token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!exchangeResponse.ok)
+            {
+                throw new Error(`Token exchange failed with status: ${exchangeResponse.status}`);
+            }
+
+            const jwtData = await exchangeResponse.json();
+
+            const extraData: JwtTokenData = {
+                user: {
+                    id: hiveUser.id,
+                    name: hiveUser.name,
+                    email: hiveUser.email,
+                    username: hiveUser.username,
+                    clearance: hiveUser.clearance,
+                    program: hiveUser.program,
+                    gender: hiveUser.gender,
+                    display_name: hiveUser.display_name,
+                    is_teacher: hiveUser.is_teacher,
+                },
+                // Use the returned SimpleJWT data
+                expires_at: jwtData.expires_at,
+                accessToken: jwtData.access_token,
+                refreshToken: jwtData.refresh_token,
+            };
+            token.data = extraData;
+
+        } catch (error)
+        {
+            console.error("SSO Token Exchange Error:", error);
+            // If exchange fails, you must decide whether to reject the token entirely
+            // or return a token with empty access flags to force a re-login.
+            throw new Error("Authentication failed during token exchange.");
+        }
     }
 
     return token;

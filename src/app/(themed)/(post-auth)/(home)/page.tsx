@@ -16,7 +16,7 @@ export default function Home()
                 </CalledEntitiesProvider>
             </StudentsProvider>
             <Box
-                className='w-full gap-4 flex-col flex px-2 py-4'
+                className='w-full min-h-0 gap-4 flex-col flex px-2 py-4 h-full grow'
             >
                 <SystemStatusBoard />
                 <MadratMessageBox />
