@@ -3,24 +3,14 @@ export const dynamic = 'force-dynamic';
 import { UserNotLoggedInError } from '@/api-shared/errors';
 import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
 import { ApiSuccess, catchHandler } from '@/api-server/common';
+import { HiveClient } from '@/api-server/hive/client';
+import { createHiveClientFromSession } from '@/api-server/hive/session-client';
 import { authOptions } from '@/api-server/hive/sso';
+import type { AuthSessionData } from '@/api-shared/session';
 import { getServerSession } from 'next-auth/next';
 import { NextRequest } from 'next/server';
 
 const FETCH_TIMEOUT_MS = 8000;
-
-function prometheusHeaders(): HeadersInit
-{
-    const headers: Record<string, string> = {
-        Accept: 'text/plain, application/json',
-    };
-    const token = process.env.HIVE_PROMETHEUS_BEARER_TOKEN?.trim();
-    if (token)
-    {
-        headers.Authorization = `Bearer ${token}`;
-    }
-    return headers;
-}
 
 function overloadThreshold(): number
 {
@@ -33,16 +23,20 @@ function overloadThreshold(): number
     return Number.isFinite(n) && n > 0 ? n : 20;
 }
 
-async function probePrometheus(base: string): Promise<{ reachable: boolean; overloaded: boolean; }>
+async function probePrometheus(
+    base: string,
+    hiveClient: HiveClient,
+): Promise<{ reachable: boolean; overloaded: boolean; }>
 {
-    const headers = prometheusHeaders();
     const signal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
 
     try
     {
-        const readyRes = await fetch(`${base}/-/ready`, {
+        const readyRes = await hiveClient.fetchWithTokenCookie(`${base}/-/ready`, {
             method: 'GET',
-            headers,
+            headers: {
+                Accept: 'text/plain, application/json',
+            },
             cache: 'no-store',
             signal,
         });
@@ -54,8 +48,11 @@ async function probePrometheus(base: string): Promise<{ reachable: boolean; over
 
         const threshold = overloadThreshold();
         const q = encodeURIComponent('sum(prometheus_engine_queries)');
-        const queryRes = await fetch(`${base}/api/v1/query?query=${q}`, {
-            headers: { ...headers, Accept: 'application/json' },
+        const queryRes = await hiveClient.fetchWithTokenCookie(`${base}/api/v1/query?query=${q}`, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+            },
             cache: 'no-store',
             signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
         });
@@ -107,8 +104,9 @@ export async function GET(request: NextRequest)
             return ApiSuccess(payload);
         }
 
+        const hiveClient = await createHiveClientFromSession(session as AuthSessionData);
         const base = raw.replace(/\/$/, '');
-        const { reachable, overloaded } = await probePrometheus(base);
+        const { reachable, overloaded } = await probePrometheus(base, hiveClient);
         const payload: HivePrometheusStatus = {
             configured: true,
             reachable,

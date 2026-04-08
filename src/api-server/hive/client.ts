@@ -81,6 +81,32 @@ export class HiveClient
         return response.json();
     }
 
+    /**
+     * Hive-hosted services such as Prometheus expect `Cookie: token=<access_token>`
+     * instead of (or in addition to) Bearer auth.
+     */
+    async fetchWithTokenCookie(url: string, init: RequestInit = {}, isRetry = false): Promise<Response>
+    {
+        const headers = new Headers(init.headers);
+        headers.set('Cookie', `token=${this.accessToken}`);
+
+        const response = await fetch(url, {
+            ...init,
+            headers,
+        });
+
+        if (response.status === 401)
+        {
+            if (!isRetry && this.refreshTokenValue)
+            {
+                await this.refreshAccessToken();
+                return this.fetchWithTokenCookie(url, init, true);
+            }
+        }
+
+        return response;
+    }
+
     async getUsers(params: Record<string, string>): Promise<Array<CourseUser>>
     {
         const queryString = new URLSearchParams(params).toString();
@@ -90,5 +116,21 @@ export class HiveClient
     async getClasses(): Promise<Array<Class>>
     {
         return this._get<Array<Class>>(this.buildUrl('/api/core/management/classes/'));
+    }
+
+    /** Open help tickets (Hive `/api/core/help/` list); returns total `count` from the JSON body. */
+    async getOpenHelpsCount(): Promise<number>
+    {
+        const params = new URLSearchParams({
+            limit: '1',
+            help_status__in: 'Open',
+        });
+        const data = await this._get<{ count?: unknown; }>(this.buildUrl(`/api/core/help/?${params.toString()}`));
+        const count = data.count;
+        if (typeof count !== 'number' || !Number.isFinite(count))
+        {
+            throw new HiveClientError('תגובת הייב לעזרות פתוחות לא תקינה');
+        }
+        return count;
     }
 }

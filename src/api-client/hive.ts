@@ -10,3 +10,8 @@ export async function apiGetClasses()
 {
     return (await safeApiFetcher('/api/hive/classes')) as Array<Class>;
 }
+
+export async function apiGetOpenHelpsCount(): Promise<{ count: number; }>
+{
+    return (await safeApiFetcher('/api/status/hive/open-helps')) as { count: number; };
+}
