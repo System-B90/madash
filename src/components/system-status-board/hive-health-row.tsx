@@ -42,10 +42,10 @@ function HiveHealthGlyph({ state }: { state: ReturnType<typeof mapHiveStatus>; }
     switch (state)
     {
         case 'loading': return <StatusGlyph icon={ HourglassEmptyIcon } title="בודק…" color="action" pulse />;
-        case 'unconfigured': return <StatusGlyph icon={ HelpOutlineIcon } title="ניטור Hive לא הוגדר בשרת" color="action" />;
-        case 'ok': return <StatusGlyph icon={ CheckCircleIcon } title="Hive זמין" color="success" />;
-        case 'overloaded': return <StatusGlyph icon={ SpeedIcon } title="Hive עמוס" color="warning" />;
-        case 'down': return <StatusGlyph icon={ SignalWifiStatusbarConnectedNoInternet4Icon } title="Hive לא זמין" color="error" />;
+        case 'unconfigured': return <StatusGlyph icon={ HelpOutlineIcon } title="ניטור הייב לא הוגדר בשרת" color="action" />;
+        case 'ok': return <StatusGlyph icon={ CheckCircleIcon } title="הייב זמין" color="success" />;
+        case 'overloaded': return <StatusGlyph icon={ SpeedIcon } title="הייב עמוס" color="warning" />;
+        case 'down': return <StatusGlyph icon={ SignalWifiStatusbarConnectedNoInternet4Icon } title="הייב לא זמין" color="error" />;
     }
 }
 
