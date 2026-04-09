@@ -97,7 +97,7 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
         canEdit,
         addMessageHandler,
         sendMessage,
-    }), [ userData, canEdit, addMessageHandler, sendMessage ]);
+    }), [ logout, userData, canEdit, addMessageHandler, sendMessage ]);
 
     return (
         <AuthContext.Provider value={ contextValue }>

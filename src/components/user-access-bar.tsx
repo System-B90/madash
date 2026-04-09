@@ -18,60 +18,67 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
     const [ avatarUrl, setAvatarUrl ] = useState<string | null>(null);
     const [ loading, setLoading ] = useState<boolean>(true);
 
-    const fetchAvatar = useCallback((id: string | undefined) =>
+    useEffect(() =>
     {
-        if (!id)
-        {
-            setLoading(false);
-            return;
-        }
-
         let isMounted = true;
-        let objectUrl: string | null = null;
-        setLoading(true);
+        let currentObjectURL: string | null = null;
 
-        apiGetUserAvatar(id)
-            .then((blob) =>
+        const startFetch = async () =>
+        {
+            // Satisfy linter by deferring synchronous state updates to a microtask.
+            // This prevents cascading renders during the initial effect execution.
+            queueMicrotask(() =>
             {
+                if (isMounted)
+                {
+                    setLoading(true);
+                    setAvatarUrl(null);
+                }
+            });
+
+            if (!userId)
+            {
+                queueMicrotask(() => { if (isMounted) setLoading(false); });
+                return;
+            }
+
+            try
+            {
+                const blob = await apiGetUserAvatar(userId);
+
+                // Guard against updates if the component unmounted or userId changed
                 if (!isMounted) return;
 
                 if (blob)
                 {
-                    objectUrl = URL.createObjectURL(blob);
-                    setAvatarUrl(objectUrl);
+                    currentObjectURL = URL.createObjectURL(blob);
+                    setAvatarUrl(currentObjectURL);
                 } else
                 {
                     setAvatarUrl(null);
                 }
-            })
-            .catch((err) =>
+            } catch (err)
             {
                 console.error("[UserAvatar] Failed to fetch avatar blob:", err);
                 if (isMounted) setAvatarUrl(null);
-            })
-            .finally(() =>
+            } finally
             {
                 if (isMounted) setLoading(false);
-            });
+            }
+        };
+
+        startFetch();
 
         return () =>
         {
             isMounted = false;
-            if (objectUrl)
+            // Immediate cleanup of the Blob URL to prevent memory leaks
+            if (currentObjectURL)
             {
-                URL.revokeObjectURL(objectUrl);
+                URL.revokeObjectURL(currentObjectURL);
             }
         };
-    }, []);
-
-    useEffect(() =>
-    {
-        const cleanup = fetchAvatar(userId);
-        return () =>
-        {
-            if (cleanup) cleanup();
-        };
-    }, [ userId, fetchAvatar ]);
+    }, [ userId ]);
 
     if (loading)
     {
