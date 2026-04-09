@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  madash:
+  fe:
     image: ghcr.io/System-B15/madash/fe:${MADASH_VERSION:-latest}
     build:
       context: .
@@ -15,7 +15,7 @@ services:
     networks:
       - madash_net
       
-  websocket:
+  ws:
     image: ghcr.io/System-B15/madash/ws:${MADASH_VERSION:-latest}
     build:
       context: .
@@ -27,19 +27,16 @@ services:
     networks:
       - madash_net
 
-  nginx:
+  proxy:
     image: ghcr.io/System-B15/madash/proxy:${MADASH_VERSION:-latest}
-    container_name: proxy
+    container_name: madash_proxy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - madash
-      - websocket
+      - fe
+      - ws
     networks:
       - madash_net
 

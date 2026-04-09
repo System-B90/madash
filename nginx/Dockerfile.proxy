@@ -1,0 +1,12 @@
+FROM nginx:1.25-alpine
+
+# Install OpenSSL for dynamic certificate generation
+RUN apk add --no-cache openssl
+
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy and configure the entrypoint script
+COPY entrypoint.sh /docker-entrypoint.d/99-generate-ssl.sh
+RUN chmod +x /docker-entrypoint.d/99-generate-ssl.sh
+
+EXPOSE 80 443
