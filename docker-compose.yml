@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  madash:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: madash_ui
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - madash_net
+
+  websocket:
+    # Replace with the explicit image and version tag for your WebSocket server
+    image: madash-websocket-server:1.0.0 
+    container_name: madash_ws
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - madash_net
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: madash_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - madash
+      - websocket
+    networks:
+      - madash_net
+
+networks:
+  madash_net:
+    driver: bridge
+    
