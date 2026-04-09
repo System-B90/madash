@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   madash:
+    image: ghcr.io/System-B15/madash/fe:${MADASH_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,6 +16,7 @@ services:
       - madash_net
       
   websocket:
+    image: ghcr.io/System-B15/madash/ws:${MADASH_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile.websocket

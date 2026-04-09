@@ -1,15 +1,13 @@
 #!/bin/bash
 set -e
 
-ORG_NAME="System-B15"
-
 echo -e "\033[1;36m=========================================\033[0m"
 echo -e "\033[1;36m      Madash Linux Bootstrapper          \033[0m"
 echo -e "\033[1;36m=========================================\033[0m"
 
 # 1. Validate Prerequisites
 if ! command -v docker &> /dev/null; then
-    echo -e "\033[1;31m[ERROR] Docker is not installed.\033[0m"
+    echo -e "\033[1;31m[ERROR] Docker is not installed or not in PATH.\033[0m"
     exit 1
 fi
 
@@ -31,20 +29,42 @@ else
     echo -e "\n\033[1;32m[OK] Existing .env found. Skipping configuration wizard.\033[0m"
 fi
 
-# 3. Image Resolution (Offline vs Online)
+# 3. Image Resolution & Versioning (Offline vs Online)
+DETECTED_TAG="latest"
+IS_OFFLINE=false
+
 echo -e "\n\033[1;33m[WAIT] Resolving Docker images...\033[0m"
 if ls images/*.tar 1> /dev/null 2>&1; then
+    IS_OFFLINE=true
     echo -e "\033[1;34m>> Offline bundle detected. Loading local image archives...\033[0m"
+    
     for img in images/*.tar; do
         echo "   Loading $img..."
-        docker load -i "$img"
+        LOAD_OUT=$(docker load -i "$img")
+        
+        # Extract the version tag from the docker load output (e.g., "Loaded image: ...:v1.0.0")
+        if [[ "$LOAD_OUT" =~ :([a-zA-Z0-9.-]+)$ ]]; then
+            DETECTED_TAG="${BASH_REMATCH[1]}"
+        fi
     done
+    echo -e "\033[1;32m[OK] Successfully loaded offline images (Tag: $DETECTED_TAG).\033[0m"
 else
-    echo -e "\033[1;34m>> No local images found. Pulling latest from GHCR...\033[0m"
+    echo -e "\033[1;34m>> No local images found. Assuming Online Mode.\033[0m"
+fi
+
+# 4. Inject Version Tag into .env
+if grep -q "^MADASH_VERSION=" .env; then
+    sed -i "s/^MADASH_VERSION=.*/MADASH_VERSION=$DETECTED_TAG/" .env
+else
+    echo "MADASH_VERSION=$DETECTED_TAG" >> .env
+fi
+
+# 5. Boot Application
+if [ "$IS_OFFLINE" = false ]; then
+    echo -e "\n\033[1;33m[WAIT] Pulling latest containers from GHCR...\033[0m"
     docker compose pull
 fi
 
-# 4. Boot Application
 echo -e "\n\033[1;33m[WAIT] Starting Madash services...\033[0m"
 docker compose up -d
 
