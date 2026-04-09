@@ -117,8 +117,8 @@ jobs:
       - name: Build and push Proxy Image
         uses: docker/build-push-action@v5
         with:
-          context: . # Changed from nginx/ to the root directory
-          file: Dockerfile.proxy # Removed the nginx/ prefix
+          context: nginx/
+          file: nginx/Dockerfile.proxy
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta-proxy.outputs.tags }}
           labels: ${{ steps.meta-proxy.outputs.labels }}
