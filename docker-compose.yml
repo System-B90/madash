@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: madash_ui
+    container_name: fe
     restart: unless-stopped
     env_file:
       - .env
@@ -18,7 +18,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.websocket
-    container_name: madash_ws
+    container_name: ws
     restart: unless-stopped
     env_file:
       - .env
@@ -27,11 +27,11 @@ services:
 
   nginx:
     image: nginx:1.25-alpine
-    container_name: madash_proxy
+    container_name: proxy
     restart: unless-stopped
     ports:
-      - "127.0.0.2:80:80"
-      - "127.0.0.2:443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
