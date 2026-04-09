@@ -2,10 +2,10 @@ name: Build Madash Images
 
 on:
   push:
-    branches: ["master"]
+    branches: ["**"]
     tags: ["v*.*.*"]
   pull_request:
-    branches: ["master"]
+    branches: ["**"]
 
 env:
   REGISTRY: ghcr.io
@@ -13,7 +13,30 @@ env:
   IMAGE_NAME_WS: ${{ github.repository_owner }}/madash-ws
 
 jobs:
+  lint:
+    name: Lint Codebase
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
   build-and-push:
+    name: Docker Build and Push
+    needs: lint
+    # Execute build ONLY on master branch OR when a version tag is pushed
+    if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -26,9 +49,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Only login and push if this is a merge/push to master or a tag
+      # Only log in to the registry if a tag is pushed (since we only push on tags)
       - name: Log in to GitHub Container Registry
-        if: github.event_name != 'pull_request'
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -50,7 +73,8 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
+          # Push ONLY if the workflow was triggered by a tag
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta-ui.outputs.tags }}
           labels: ${{ steps.meta-ui.outputs.labels }}
           cache-from: type=gha
@@ -71,7 +95,8 @@ jobs:
         with:
           context: .
           file: Dockerfile.websocket
-          push: ${{ github.event_name != 'pull_request' }}
+          # Push ONLY if the workflow was triggered by a tag
+          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta-ws.outputs.tags }}
           labels: ${{ steps.meta-ws.outputs.labels }}
           cache-from: type=gha
