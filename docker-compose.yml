@@ -9,12 +9,15 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    extra_hosts:
+      - "hive.org:host-gateway"
     networks:
       - madash_net
-
+      
   websocket:
-    # Replace with the explicit image and version tag for your WebSocket server
-    image: madash-websocket-server:1.0.0 
+    build:
+      context: .
+      dockerfile: Dockerfile.websocket
     container_name: madash_ws
     restart: unless-stopped
     env_file:
@@ -27,8 +30,8 @@ services:
     container_name: madash_proxy
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.2:80:80"
+      - "127.0.0.2:443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
@@ -41,4 +44,3 @@ services:
 networks:
   madash_net:
     driver: bridge
-    

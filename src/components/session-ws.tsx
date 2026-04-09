@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { COMBO_DATA_KEY, MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../session-common";
+import { COMBO_DATA_KEY, MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../session-server/session-common";
 import assert from "assert";
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;

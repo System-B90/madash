@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { useSnackbar } from 'notistack';
 import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '../session-common';
+import { MessageTypes } from '../session-server/session-common';
 import { CalledToHadasEntityType, ResolvableStudent, StudentData } from '@/api-shared/types';
 import { useAuth } from '@/components/auth-provider';
 import { apiGetClasses, apiGetStudents } from '@/api-client/hive';

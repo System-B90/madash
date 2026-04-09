@@ -24,7 +24,7 @@ import
 import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
 import { useStudents } from '@/components/students-provider';
-import { MessageTypes } from '../session-common';
+import { MessageTypes } from '../session-server/session-common';
 
 export type CalledEntitiesContextState = {
     students: Array<StudentToHadasData>;

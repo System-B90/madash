@@ -9,7 +9,7 @@ import React, {
     useMemo
 } from 'react';
 import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '../session-common';
+import { MessageTypes } from '../session-server/session-common';
 import { AuthSessionUser } from '@/api-shared/session';
 import { signOut } from "next-auth/react";
 

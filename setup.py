@@ -5,7 +5,10 @@ Created: 2026-04-09
 Author: Michael K. Steinberg
 """
 
+import re
 import secrets
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,11 +30,116 @@ except ImportError:
 app = typer.Typer(help="Madash interactive environment setup utility.")
 
 
+def get_cert_cn(cert_path: Path) -> str:
+    """
+    Extracts the Common Name (CN) from an X.509 certificate using OpenSSL.
+
+    Args:
+        cert_path (Path): Path to the certificate file.
+
+    Returns:
+        str: The extracted Common Name, or an empty string if extraction fails.
+    """
+    if not shutil.which("openssl"):
+        return ""
+
+    try:
+        result = subprocess.run(
+            ["openssl", "x509", "-noout", "-subject", "-in", str(cert_path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        match = re.search(r"CN\s*=\s*([^,\n]+)", result.stdout)
+        if match:
+            return match.group(1).strip()
+    except subprocess.CalledProcessError:
+        pass
+
+    return ""
+
+
+def handle_ssl_certs(domain_name: str):
+    """
+    Manages the creation and validation of SSL certificates for the provided domain.
+
+    Args:
+        domain_name (str): The expected domain name for the certificate CN.
+    """
+    ssl_dir = Path("ssl")
+    ssl_dir.mkdir(exist_ok=True)
+
+    cert_path = ssl_dir / "cert.pem"
+    key_path = ssl_dir / "key.pem"
+    needs_cert = True
+
+    if cert_path.exists() and key_path.exists():
+        existing_cn = get_cert_cn(cert_path)
+        if existing_cn == domain_name:
+            typer.secho(
+                f"Valid certificates found for {domain_name}.", fg=typer.colors.GREEN
+            )
+            needs_cert = False
+        else:
+            typer.secho(
+                f"Warning: Existing certificate CN ('{existing_cn}') does not match expected domain ('{domain_name}').",
+                fg=typer.colors.YELLOW,
+            )
+
+    if needs_cert:
+        generate = inquirer.confirm(
+            message=f"Generate self-signed SSL certificates for {domain_name}?",
+            default=True,
+        ).execute()
+
+        if generate:
+            if not shutil.which("openssl"):
+                typer.secho(
+                    "Error: 'openssl' command not found. Cannot generate certificates.",
+                    fg=typer.colors.RED,
+                )
+                return
+
+            typer.echo("Generating certificates...")
+            try:
+                subprocess.run(
+                    [
+                        "openssl",
+                        "req",
+                        "-x509",
+                        "-newkey",
+                        "rsa:4096",
+                        "-keyout",
+                        str(key_path),
+                        "-out",
+                        str(cert_path),
+                        "-sha256",
+                        "-days",
+                        "365",
+                        "-nodes",
+                        "-subj",
+                        f"/CN={domain_name}",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
+                typer.secho(
+                    "Successfully generated self-signed certificates.",
+                    fg=typer.colors.GREEN,
+                )
+            except subprocess.CalledProcessError as e:
+                typer.secho(
+                    f"Failed to generate certificates: {e.stderr.decode()}",
+                    fg=typer.colors.RED,
+                )
+
+
 @app.command()
 def generate_env():
     """
     Interactively prompts for configuration values, generates secure secrets,
-    registers the SSO service with Hive, and writes the variables to a local .env file.
+    registers the SSO service with Hive, validates/generates SSL certs,
+    and writes the variables to a local .env file.
     """
     typer.echo("Starting Madash interactive environment setup...")
 
@@ -51,6 +159,9 @@ def generate_env():
         message="Enter the domain name for Madash (e.g., madash.example.com):",
         default=default_domain,
     ).execute()
+
+    # Handle SSL Validation and Generation
+    handle_ssl_certs(domain_name)
 
     hive_url = inquirer.text(
         message="Enter Hive URL (NEXT_PUBLIC_HIVE_URL):", default=default_hive_url

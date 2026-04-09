@@ -23,7 +23,7 @@ function updateSessionLastContact<T extends ConnectedSession>(session: T)
 
 console.log(`NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT: ${NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT}`);
 const wss = new WebSocketServer({
-    port: NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT,
+    port: 28199, // NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT,
     perMessageDeflate: {
         zlibDeflateOptions: {
             // See zlib defaults.
