@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   fe:
-    image: ghcr.io/System-B15/madash/fe:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b15/madash/fe:${MADASH_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,7 +14,7 @@ services:
       - madash_net
       
   ws:
-    image: ghcr.io/System-B15/madash/ws:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b15/madash/ws:${MADASH_VERSION:-latest}
     build:
       context: .
       dockerfile: Dockerfile.websocket
@@ -28,8 +26,8 @@ services:
       - madash_net
 
   proxy:
-    image: ghcr.io/System-B15/madash/proxy:${MADASH_VERSION:-latest}
-    container_name: madash_proxy
+    image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
+    container_name: proxy
     restart: unless-stopped
     ports:
       - "80:80"
