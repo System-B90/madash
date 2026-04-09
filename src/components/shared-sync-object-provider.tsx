@@ -2,7 +2,7 @@
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useAuth, WebSocketSessionMessage } from "@/components/auth-provider";
 import { MessageHandlerType } from "@/components/session-ws";
-import { MessageTypes } from "@/session-server/session-common";
+import { MessageTypes } from "../../session-server/session-common";
 import assert from "assert";
 import { useSnackbar } from "notistack";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";

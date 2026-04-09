@@ -16,7 +16,7 @@ services:
   ws:
     image: ghcr.io/system-b15/madash/ws:${MADASH_VERSION:-latest}
     build:
-      context: .
+      context: session-server
       dockerfile: Dockerfile.websocket
     container_name: ws
     restart: unless-stopped

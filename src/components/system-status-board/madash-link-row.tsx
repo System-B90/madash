@@ -7,7 +7,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 
 import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '@/session-server/session-common';
+import { MessageTypes } from '../../../session-server/session-common';
 import { ServiceStatusTile, StatusGlyph } from './shared-ui';
 
 type LinkHealth = 'ok' | 'degraded' | 'error';
