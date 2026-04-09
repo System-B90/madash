@@ -9,8 +9,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_UI: ${{ github.repository_owner }}/madash-ui
-  IMAGE_NAME_WS: ${{ github.repository_owner }}/madash-ws
+  IMAGE_NAME_UI: ${{ github.repository_owner }}/madash/fe
+  IMAGE_NAME_WS: ${{ github.repository_owner }}/madash/ws
 
 jobs:
   lint:
@@ -103,3 +103,59 @@ jobs:
           labels: ${{ steps.meta-ws.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  create-release:
+    name: Craft Release Packages
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare Workspace
+        run: |
+          mkdir -p release-online/images
+          mkdir -p release-offline/images
+          # Copy core scripts to both packages
+          cp install.sh docker-compose.yml setup.py requirements.txt release-online/
+          cp install.sh docker-compose.yml setup.py requirements.txt release-offline/
+
+      - name: Export Offline Images
+        run: |
+          echo "Pulling images for export..."
+          docker pull ghcr.io/System-B15/madash/fe:latest
+          docker pull ghcr.io/System-B15/madash/ws:latest
+          docker pull ghcr.io/System-B15/madash/proxy:latest
+
+          echo "Saving images to archives..."
+          docker save ghcr.io/System-B15/madash/fe:latest -o release-offline/images/madash/fe.tar
+          docker save ghcr.io/System-B15/madash/ws:latest -o release-offline/images/madash/ws.tar
+          docker save ghcr.io/System-B15/madash/proxy:latest -o release-offline/images/madash/proxy.tar
+
+      - name: Compress Packages
+        run: |
+          tar -czvf madash-online-${{ github.ref_name }}.tar.gz -C release-online .
+          tar -czvf madash-offline-${{ github.ref_name }}.tar.gz -C release-offline .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            madash-online-${{ github.ref_name }}.tar.gz
+            madash-offline-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+          draft: false
+          prerelease: false
