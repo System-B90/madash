@@ -9,9 +9,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_UI: ${{ github.repository_owner }}/madash/fe
-  IMAGE_NAME_WS: ${{ github.repository_owner }}/madash/ws
-  IMAGE_NAME_PROXY: ${{ github.repository_owner }}/madash/proxy
+  IMAGE_NAME_UI: system-b15/madash/fe
+  IMAGE_NAME_WS: system-b15/madash/ws
+  IMAGE_NAME_PROXY: system-b15/madash/proxy
 
 jobs:
   lint:
