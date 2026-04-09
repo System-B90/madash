@@ -73,10 +73,12 @@ jobs:
         with:
           context: .
           file: Dockerfile
-          # Push ONLY if the workflow was triggered by a tag
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta-ui.outputs.tags }}
           labels: ${{ steps.meta-ui.outputs.labels }}
+          # Pass build arguments here
+          build-args: |
+            WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_build_placeholder
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
