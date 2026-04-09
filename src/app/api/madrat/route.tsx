@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { getMadratText, modifyMadratText } from "@/api-server/datastore";
 import { NextRequest } from "next/server";
