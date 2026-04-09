@@ -28,7 +28,7 @@ services:
       - madash_net
 
   nginx:
-    image: nginx:1.25-alpine
+    image: ghcr.io/System-B15/madash/proxy:${MADASH_VERSION:-latest}
     container_name: proxy
     restart: unless-stopped
     ports:
