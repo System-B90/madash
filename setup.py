@@ -218,8 +218,8 @@ def generate_env():
                 hive_client_id = "MANUAL_ENTRY_REQUIRED"
                 hive_client_secret = "MANUAL_ENTRY_REQUIRED"
 
-    env_content = f"""NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT={ws_port}
-NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST={ws_host}
+    env_content = f"""WEBSOCKET_SESSION_SERVER_PORT={ws_port}
+WEBSOCKET_SESSION_SERVER_HOST={ws_host}
 WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY={ws_auth_key}
 NEXT_PUBLIC_HIVE_URL={hive_url}
 NODE_TLS_REJECT_UNAUTHORIZED={node_tls}

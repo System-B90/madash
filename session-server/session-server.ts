@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from './session-common';
+import { WEBSOCKET_SESSION_SERVER_PORT, MessageTypes, WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY, WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC, COMBO_DATA_KEY } from './session-common';
 import assert from 'assert';
 
 const GC_INTERVAL_MS = 3600 * 1000; // One hour
@@ -21,9 +21,9 @@ function updateSessionLastContact<T extends ConnectedSession>(session: T)
     session.abandonedMark = false;
 }
 
-console.log(`NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT: ${NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT}`);
+console.log(`WEBSOCKET_SESSION_SERVER_PORT: ${WEBSOCKET_SESSION_SERVER_PORT}`);
 const wss = new WebSocketServer({
-    port: 28199, // NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT,
+    port: 28199, // WEBSOCKET_SESSION_SERVER_PORT,
     perMessageDeflate: {
         zlibDeflateOptions: {
             // See zlib defaults.

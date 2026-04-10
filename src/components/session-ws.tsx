@@ -1,12 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
 import { COMBO_DATA_KEY, MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../../session-server/session-common";
 import assert from "assert";
+import { useWebSocketConfig } from "@/components/websocket-config-provider";
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });
 
 export default function useSessionWebSocketContext()
 {
+    const { connectionString } = useWebSocketConfig();
+
     const ws = useRef<WebSocket | null>(null);
     const messageHandlers = useRef<MessageHandlerType[]>([]);
 
@@ -59,7 +62,7 @@ export default function useSessionWebSocketContext()
     {
         if (ws.current == null)
         {
-            ws.current = new WebSocket(NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING);
+            ws.current = new WebSocket(connectionString);
         }
 
         const socket = ws.current;
@@ -87,7 +90,7 @@ export default function useSessionWebSocketContext()
             socket.onmessage = null;
             socket.onclose = null;
         };
-    }, [ webSocketMessageHandler, registerCurrentSession ]);
+    }, [ connectionString, webSocketMessageHandler, registerCurrentSession ]);
 
     return { ws, addMessageHandler };
 }
