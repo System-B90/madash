@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MuiEmotionCacheProvider } from "@/components/mui-emotion-cache-provider";
 import { WebSocketConfigProvider } from "@/components/websocket-config-provider";
 import "@/style/globals.css";
+import { WEBSOCKET_PORT_SUFFIX, WEBSOCKET_PROTOCOL } from "@/settings";
 
 export const metadata: Metadata = {
     title: "מדש",
@@ -16,8 +17,8 @@ export default function RootLayout({
 {
     // Read the runtime environment variable securely on the server
     const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "localhost";
-    const wsProtcol = process.env.WEBSOCKET_PROTOCOL || "ws";
-    const wsPortSuffix = process.env.WEBSOCKET_PORT_SUFFIX || ":28199";
+    const wsProtcol = WEBSOCKET_PROTOCOL || "ws";
+    const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || ":28199";
 
     return (
         <html lang="he" className="dark" data-theme="dark" dir="rtl">
