@@ -7,8 +7,8 @@ services:
       context: ../nginx
       dockerfile: Dockerfile.proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:80:80"
+      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:443:443"
     volumes:
       - ../ssl:/etc/nginx/ssl:ro
       - ../nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
