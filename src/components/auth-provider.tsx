@@ -31,8 +31,7 @@ const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export const AuthProvider = ({ children, userData }: { children: React.ReactNode; userData: AuthSessionUser; }) =>
 {
-    const { ws, addMessageHandler } = useSessionWebSocketContext();
-    const messageQueue = useRef<WebSocketSessionMessage[]>([]);
+    const { addMessageHandler, sendMessage } = useSessionWebSocketContext();
 
     const canEdit: boolean = !!userData;
 
@@ -45,45 +44,6 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
     {
         return addMessageHandler(onWebSocketMessage);
     }, [ addMessageHandler, onWebSocketMessage ]);
-
-    const sendMessage = useCallback((data: WebSocketSessionMessage) =>
-    {
-        if (!ws?.current) return;
-
-        if (ws.current.readyState === WebSocket.OPEN)
-        {
-            ws.current.send(JSON.stringify(data));
-        } else if (ws.current.readyState === WebSocket.CONNECTING)
-        {
-            messageQueue.current.push(data);
-        } else
-        {
-            console.error('WebSocket is closed. Cannot send message.');
-        }
-    }, [ ws ]);
-
-    useEffect(() =>
-    {
-        if (!ws?.current) return;
-
-        const socketInstance = ws.current;
-
-        const handleSocketOpen = () =>
-        {
-            while (messageQueue.current.length > 0)
-            {
-                const msg = messageQueue.current.shift();
-                if (msg) socketInstance.send(JSON.stringify(msg));
-            }
-        };
-
-        socketInstance.addEventListener('open', handleSocketOpen);
-
-        return () =>
-        {
-            socketInstance.removeEventListener('open', handleSocketOpen);
-        };
-    }, [ ws ]);
 
     const logout = useCallback(() =>
     {

@@ -1,0 +1,7 @@
+- `[x]` Update `docs/spec.css` with `@page` print margin, `img` width limit, and `@media print` body rules
+- `[x]` Compile `docs/PRODUCT_SPECIFICATION.pdf`
+- `[x]` Verify text margins and image scaling in the compiled PDF using python script
+- `[x]` Fix RTL alignment for html, table, lists, and headings in CSS and print media
+- `[x]` Compile final PDF with RTL fixes
+- `[x]` Verify RTL table column alignment in the compiled PDF
+- `[x]` Update walkthrough.md summary

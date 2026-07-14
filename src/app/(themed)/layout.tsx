@@ -1,51 +1,8 @@
 'use client';
 
-import { createTheme, CssBaseline, GlobalStyles, ThemeProvider } from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { SnackbarProvider } from 'notistack';
-
-const darkTheme = createTheme({
-    direction: 'rtl',
-    palette: {
-        mode: 'dark',
-        primary: {
-            main: '#00E676', // Vibrant Green
-            light: '#66FFA6',
-            dark: '#00B248',
-            contrastText: '#000000',
-        },
-        secondary: {
-            main: '#D500F9', // Neon Purple
-            light: '#FA51FF',
-            dark: '#9E00C5',
-            contrastText: '#FFFFFF',
-        },
-        info: {
-            main: '#00E5FF', // Cyan/Blue
-            light: '#6EFFFF',
-            dark: '#00B2CC',
-            contrastText: '#000000',
-        },
-        background: {
-            default: '#0B0F19', // Deep Blue-Tinted Background
-            paper: '#131B2F',   // Elevated Blue-Gray for cards and surfaces
-        },
-        text: {
-            primary: '#F8FAFC',
-            secondary: '#94A3B8',
-        }
-    },
-    components: {
-        MuiPaper: {
-            styleOverrides: {
-                root: {
-                    // Removes the default MUI white overlay on elevated dark surfaces 
-                    // to keep the custom background colors pure.
-                    backgroundImage: 'none',
-                }
-            }
-        }
-    }
-});
 
 export default function ThemedLayout({
     children,
@@ -54,29 +11,10 @@ export default function ThemedLayout({
 }>)
 {
     return (
-        <ThemeProvider theme={ darkTheme }>
-            <CssBaseline />
-            <GlobalStyles
-                styles={ (theme) => ({
-                    '*::-webkit-scrollbar': {
-                        width: '8px',
-                        height: '8px',
-                    },
-                    '*::-webkit-scrollbar-track': {
-                        background: 'transparent',
-                    },
-                    '*::-webkit-scrollbar-thumb': {
-                        backgroundColor: theme.palette.action.disabledBackground,
-                        borderRadius: '8px',
-                    },
-                    '*::-webkit-scrollbar-thumb:hover': {
-                        backgroundColor: theme.palette.primary.main,
-                    },
-                }) }
-            />
+        <LocalizationProvider adapterLocale="he" dateAdapter={ AdapterDayjs }>
             <SnackbarProvider anchorOrigin={ { horizontal: 'right', vertical: 'bottom' } }>
                 { children }
             </SnackbarProvider>
-        </ThemeProvider>
+        </LocalizationProvider>
     );
 }

@@ -1,0 +1,22 @@
+services:
+  proxy:
+    image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
+    container_name: proxy-local
+    restart: unless-stopped
+    build:
+      context: ../nginx
+      dockerfile: Dockerfile.proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../ssl:/etc/nginx/ssl:ro
+      - ../nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - madash_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  madash_net:
+    driver: bridge

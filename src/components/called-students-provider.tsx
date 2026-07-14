@@ -1,12 +1,10 @@
-'use client';
-
 import React, {
     createContext,
     useCallback,
     useContext,
     useEffect,
     useMemo,
-    useState,
+    useReducer,
 } from 'react';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -29,13 +27,39 @@ import { MessageTypes } from '../../session-server/session-common';
 export type CalledEntitiesContextState = {
     students: Array<StudentToHadasData>;
     groups: Array<GroupToHadasData>;
+    isLoading: boolean;
 };
+
+type CalledEntitiesState = {
+    entitiesData: Data[ 'calledToHadas' ];
+    isLoading: boolean;
+};
+
+type CalledEntitiesAction =
+    | { type: 'SET_ENTITIES'; payload: Data[ 'calledToHadas' ] }
+    | { type: 'SET_LOADING'; payload: boolean };
+
+function calledEntitiesReducer(state: CalledEntitiesState, action: CalledEntitiesAction): CalledEntitiesState
+{
+    switch (action.type)
+    {
+        case 'SET_ENTITIES':
+            return { ...state, entitiesData: action.payload, isLoading: false };
+        case 'SET_LOADING':
+            return { ...state, isLoading: action.payload };
+        default:
+            return state;
+    }
+}
 
 const CalledEntitiesContext = createContext<CalledEntitiesContextState | undefined>(undefined);
 
 export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ entitiesData, setEntitiesData ] = useState<Data[ 'calledToHadas' ]>({});
+    const [ state, dispatch ] = useReducer(calledEntitiesReducer, {
+        entitiesData: {},
+        isLoading: true,
+    });
 
     const { addMessageHandler } = useAuth();
     const { getStudent } = useStudents();
@@ -43,10 +67,14 @@ export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode
 
     const loadStudentsCalledToHadas = useCallback(() =>
     {
+        dispatch({ type: 'SET_LOADING', payload: true });
         apiGetStudentsCalledToHadas()
-            .then(setEntitiesData)
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת החניכים שצריכים להגיע לחד"ס נכשלה!`, error));
-    }, [ setEntitiesData, enqueueSnackbar ]);
+            .then((data) => dispatch({ type: 'SET_ENTITIES', payload: data }))
+            .catch((error) => {
+                dispatch({ type: 'SET_LOADING', payload: false });
+                enqueueApiErrorSnackbar(enqueueSnackbar, `טעינת החניכים שצריכים להגיע לחד"ס נכשלה!`, error);
+            });
+    }, [ enqueueSnackbar ]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes) =>
     {
@@ -71,7 +99,7 @@ export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode
         const parsedStudents: Array<StudentToHadasData> = [];
         const parsedGroups: Array<GroupToHadasData> = [];
 
-        Object.values(entitiesData).forEach((entityToHadasData) =>
+        Object.values(state.entitiesData).forEach((entityToHadasData) =>
         {
             if (entityToHadasData.type === CalledToHadasEntityType.Student)
             {
@@ -91,10 +119,10 @@ export const CalledEntitiesProvider = ({ children }: { children: React.ReactNode
         });
 
         return { students: parsedStudents, groups: parsedGroups };
-    }, [ entitiesData ]);
+    }, [ state.entitiesData ]);
 
     return (
-        <CalledEntitiesContext.Provider value={ { students, groups } }>
+        <CalledEntitiesContext.Provider value={ { students, groups, isLoading: state.isLoading } }>
             { children }
         </CalledEntitiesContext.Provider>
     );

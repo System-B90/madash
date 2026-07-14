@@ -2,12 +2,12 @@ services:
   fe:
     image: ghcr.io/system-b15/madash/fe:${MADASH_VERSION:-latest}
     build:
-      context: .
+      context: ../
       dockerfile: Dockerfile
     container_name: fe
     restart: unless-stopped
     env_file:
-      - .env
+      - ../.env
     extra_hosts:
       - "hive.org:host-gateway"
     networks:
@@ -16,24 +16,27 @@ services:
   ws:
     image: ghcr.io/system-b15/madash/ws:${MADASH_VERSION:-latest}
     build:
-      context: session-server
+      context: ../session-server
       dockerfile: Dockerfile.websocket
     container_name: ws
     restart: unless-stopped
     env_file:
-      - .env
+      - ../.env
     networks:
       - madash_net
 
   proxy:
     image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
+    build:
+      context: ../nginx
+      dockerfile: Dockerfile.proxy
     container_name: proxy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./ssl:/etc/nginx/ssl:ro
+      - ../ssl:/etc/nginx/ssl:ro
     depends_on:
       - fe
       - ws

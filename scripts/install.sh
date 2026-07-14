@@ -21,8 +21,25 @@ if [ ! -f ".env" ]; then
     echo -e "\n\033[1;33m[WAIT] Initializing environment configuration wizard...\033[0m"
     python3 -m venv .venv
     source .venv/bin/activate
-    pip install -r requirements.txt --quiet
-    python3 setup.py
+    
+    if [ -f "requirements.txt" ]; then
+        pip install -r requirements.txt --quiet
+    elif [ -f "scripts/requirements.txt" ]; then
+        pip install -r scripts/requirements.txt --quiet
+    else
+        echo -e "\033[1;31m[ERROR] requirements.txt not found.\033[0m"
+        exit 1
+    fi
+
+    if [ -f "setup.py" ]; then
+        python3 setup.py
+    elif [ -f "scripts/setup.py" ]; then
+        python3 scripts/setup.py
+    else
+        echo -e "\033[1;31m[ERROR] setup.py not found.\033[0m"
+        exit 1
+    fi
+    
     deactivate
     echo -e "\033[1;32m[OK] Environment configured.\033[0m"
 else

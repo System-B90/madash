@@ -1,12 +1,10 @@
-'use client';
-
 import React, {
     createContext,
     useCallback,
     useContext,
     useEffect,
     useMemo,
-    useState,
+    useReducer,
 } from 'react';
 import { useSnackbar } from 'notistack';
 import { MessageHandlerType } from '@/components/session-ws';
@@ -24,41 +22,80 @@ export type StudentsContextState = {
     getStudent: (studentResolveableData: ResolvableStudent | number) => StudentData | undefined;
 };
 
+type StudentsState = {
+    rawStudents: Array<CourseUser>;
+    classes: Array<Class>;
+    isClassesLoading: boolean;
+    isStudentsLoading: boolean;
+};
+
+type StudentsAction =
+    | { type: 'SET_RAW_STUDENTS'; payload: Array<CourseUser> }
+    | { type: 'SET_CLASSES'; payload: Array<Class> }
+    | { type: 'SET_CLASSES_LOADING'; payload: boolean }
+    | { type: 'SET_STUDENTS_LOADING'; payload: boolean }
+    | { type: 'START_REFRESH' };
+
+function studentsReducer(state: StudentsState, action: StudentsAction): StudentsState
+{
+    switch (action.type)
+    {
+        case 'SET_RAW_STUDENTS':
+            return { ...state, rawStudents: action.payload, isStudentsLoading: false };
+        case 'SET_CLASSES':
+            return { ...state, classes: action.payload, isClassesLoading: false };
+        case 'SET_CLASSES_LOADING':
+            return { ...state, isClassesLoading: action.payload };
+        case 'SET_STUDENTS_LOADING':
+            return { ...state, isStudentsLoading: action.payload };
+        case 'START_REFRESH':
+            return { ...state, isClassesLoading: true, isStudentsLoading: true };
+        default:
+            return state;
+    }
+}
+
 const StudentsContext = createContext<StudentsContextState | undefined>(undefined);
 
 export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =>
 {
-    const [ rawStudents, setRawStudents ] = useState<Array<CourseUser>>([]);
-    const [ classes, setClasses ] = useState<Array<Class>>([]);
-
-    const [ isClassesLoading, setIsClassesLoading ] = useState<boolean>(true);
-    const [ isStudentsLoading, setIsStudentsLoading ] = useState<boolean>(true);
+    const [ state, dispatch ] = useReducer(studentsReducer, {
+        rawStudents: [],
+        classes: [],
+        isClassesLoading: true,
+        isStudentsLoading: true,
+    });
 
     const { addMessageHandler } = useAuth();
     const { enqueueSnackbar } = useSnackbar();
 
     const fetchClasses = useCallback(async () =>
     {
+        dispatch({ type: 'SET_CLASSES_LOADING', payload: true });
         return apiGetClasses()
-            .then(setClasses)
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על כיתות נכשלה!', error))
-            .finally(() => setIsClassesLoading(false));
+            .then((data) => dispatch({ type: 'SET_CLASSES', payload: data }))
+            .catch((error) => {
+                dispatch({ type: 'SET_CLASSES_LOADING', payload: false });
+                enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על כיתות נכשלה!', error);
+            });
     }, [ enqueueSnackbar ]);
 
     const fetchRawStudents = useCallback(async () =>
     {
+        dispatch({ type: 'SET_STUDENTS_LOADING', payload: true });
         return apiGetStudents()
-            .then(setRawStudents)
-            .catch((error) => enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על חניכים נכשלה!', error))
-            .finally(() => setIsStudentsLoading(false));
+            .then((data) => dispatch({ type: 'SET_RAW_STUDENTS', payload: data }))
+            .catch((error) => {
+                dispatch({ type: 'SET_STUDENTS_LOADING', payload: false });
+                enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת מידע על חניכים נכשלה!', error);
+            });
     }, [ enqueueSnackbar ]);
 
     const onWebSocketMessage: MessageHandlerType = useCallback((messageType: MessageTypes) =>
     {
         if (messageType === MessageTypes.SHUFFLE_MOVE)
         {
-            setIsClassesLoading(true);
-            setIsStudentsLoading(true);
+            dispatch({ type: 'START_REFRESH' });
             fetchRawStudents();
             fetchClasses();
         }
@@ -75,36 +112,56 @@ export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =
         fetchRawStudents();
     }, [ fetchClasses, fetchRawStudents ]);
 
-    const isLoading = isClassesLoading || isStudentsLoading;
+    const isLoading = state.isClassesLoading || state.isStudentsLoading;
 
     const rooms = useMemo(() =>
     {
-        return classes.filter((classItem) => classItem.type === ClassTypeEnum.Room) as Array<Room>;
-    }, [ classes ]);
+        return state.classes.filter((classItem) => classItem.type === ClassTypeEnum.Room) as Array<Room>;
+    }, [ state.classes ]);
 
     const students = useMemo(() =>
     {
-        return rawStudents.map((student): StudentData =>
+        const userIdToRoomName = new Map<number, string>();
+        state.classes.forEach((classItem) =>
         {
-            const studentRoom = classes.find((classItem) =>
-                classItem.type === ClassTypeEnum.Room && classItem.users.includes(student.id)
-            );
+            if (classItem.type === ClassTypeEnum.Room)
+            {
+                classItem.users.forEach((userId) =>
+                {
+                    userIdToRoomName.set(userId, classItem.name);
+                });
+            }
+        });
+
+        return state.rawStudents.map((student): StudentData =>
+        {
+            const roomName = userIdToRoomName.get(student.id) ?? 'Unknown';
 
             return {
                 hiveId: student.id,
                 name: student.display_name,
-                room: studentRoom ? studentRoom.name : 'Unknown',
+                room: roomName,
                 bisId: student.number as number,
                 type: CalledToHadasEntityType.Student,
             };
         });
-    }, [ rawStudents, classes ]);
+    }, [ state.rawStudents, state.classes ]);
+
+    const studentMap = useMemo(() =>
+    {
+        const map = new Map<number, StudentData>();
+        students.forEach((student) =>
+        {
+            map.set(student.hiveId, student);
+        });
+        return map;
+    }, [ students ]);
 
     const getStudent = useCallback((studentResolveableData: ResolvableStudent | number): StudentData | undefined =>
     {
         const hiveId = typeof studentResolveableData === 'number' ? studentResolveableData : studentResolveableData.hiveId;
-        return students.find((student) => student.hiveId === hiveId);
-    }, [ students ]);
+        return studentMap.get(hiveId);
+    }, [ studentMap ]);
 
     const contextValue = useMemo<StudentsContextState>(() => ({
         isLoading,

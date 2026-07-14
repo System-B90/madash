@@ -1,7 +1,15 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Typography, Avatar, Skeleton, IconButton, Tooltip } from '@mui/material';
+import React, { useEffect, useState, useCallback } from 'react';
+import
+{
+    Box,
+    Avatar,
+    Skeleton,
+    IconButton,
+    Tooltip,
+    Chip
+} from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 
 import { useAuth } from '@/components/auth-provider';
@@ -11,9 +19,10 @@ interface UserAvatarProps
 {
     userId?: string;
     username?: string;
+    className?: string;
 }
 
-export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
+export function UserAvatar({ userId, username = '?', className }: UserAvatarProps)
 {
     const [ avatarUrl, setAvatarUrl ] = useState<string | null>(null);
     const [ loading, setLoading ] = useState<boolean>(true);
@@ -25,8 +34,6 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
 
         const startFetch = async () =>
         {
-            // Satisfy linter by deferring synchronous state updates to a microtask.
-            // This prevents cascading renders during the initial effect execution.
             queueMicrotask(() =>
             {
                 if (isMounted)
@@ -46,7 +53,6 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
             {
                 const blob = await apiGetUserAvatar(userId);
 
-                // Guard against updates if the component unmounted or userId changed
                 if (!isMounted) return;
 
                 if (blob)
@@ -72,7 +78,6 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
         return () =>
         {
             isMounted = false;
-            // Immediate cleanup of the Blob URL to prevent memory leaks
             if (currentObjectURL)
             {
                 URL.revokeObjectURL(currentObjectURL);
@@ -82,20 +87,22 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
 
     if (loading)
     {
-        return <Skeleton variant="circular" width={ 36 } height={ 36 } />;
+        return <Skeleton variant="circular" width={ 32 } height={ 32 } />;
     }
 
     return (
         <Avatar
             src={ avatarUrl || undefined }
             alt={ username }
+            className={ className }
             sx={ {
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
-                fontSize: '1rem',
-                fontWeight: 'bold'
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                margin: "0 !important"
             } }
         >
             { username ? username.charAt(0).toUpperCase() : '?' }
@@ -103,7 +110,7 @@ export function UserAvatar({ userId, username = '?' }: UserAvatarProps)
     );
 }
 
-export default function UserAccessBar()
+function ChipAvatar()
 {
     const { userData, logout } = useAuth();
 
@@ -111,47 +118,103 @@ export default function UserAccessBar()
 
     return (
         <Box
-            display={ 'flex' }
-            flexDirection={ 'row' }
-            alignItems={ 'center' }
-            justifyContent={ 'space-between' }
             sx={ {
-                padding: '4px 12px 4px 6px',
-                backgroundColor: 'background.paper',
-                borderRadius: '50px',
-                border: '1px solid',
-                borderColor: 'divider',
-                boxShadow: 1
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+
+                "& .hive-avatar": {
+                    transition:
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                },
+
+                "& .logout-icon": {
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(120%, -50%) rotate(-30deg)",
+                    transition:
+                        "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease",
+                    opacity: 0,
+                    pointerEvents: "none",
+                    padding: 0,
+                },
+
+                "&:hover .logout-icon": {
+                    transform: "translate(-50%, -50%)",
+                    opacity: 1,
+                    pointerEvents: "auto",
+                },
+
+                "&:hover .hive-avatar": {
+                    transform: "translateX(-140%) rotate(30deg)",
+                    opacity: 0.0,
+                },
             } }
         >
-            <Box sx={ {
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-            } }>
-                <UserAvatar userId={ userData.id } username={ userData.username } />
+            <UserAvatar
+                userId={ userData.id }
+                username={ userData.username }
+                className="hive-avatar"
+            />
 
-                <Box display="flex" flexDirection="column" justifyContent="center">
-                    <Typography variant="caption" color="text.secondary" lineHeight={ 1 }>
-                        מחובר כ-
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold" color="text.primary" lineHeight={ 1.2 } mt={ 0.25 }>
-                        { userData.display_name }
-                    </Typography>
-                </Box>
-            </Box>
-
-            <Tooltip title="התנתק">
+            <Tooltip title="התנתקות">
                 <IconButton
+                    className="logout-icon"
+                    color="error"
                     onClick={ logout }
                     size="small"
-                    color="error"
-                    sx={ { ml: 1 } }
-                    aria-label="logout"
+                    sx={ { p: 0.5 } }
                 >
                     <LogoutIcon fontSize="small" />
                 </IconButton>
             </Tooltip>
         </Box>
+    );
+}
+
+export default function UserAccessBar()
+{
+    const { userData } = useAuth();
+
+    if (!userData) return null;
+
+    return (
+        <Chip
+            avatar={ <ChipAvatar /> }
+            color="secondary"
+            label={ userData.display_name }
+            size="medium"
+            sx={ {
+                height: 40,
+                borderRadius: "20px",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                cursor: "pointer",
+                flexGrow: 1,
+                justifyContent: "flex-start",
+                paddingLeft: "6px",
+                borderColor: "divider",
+                backgroundColor: "background.paper",
+                "&:hover": {
+                    transform: "translateY(-2px)",
+                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.12)",
+                    borderColor: "primary.main",
+                    backgroundColor: "action.hover",
+                },
+                "& .MuiChip-label": {
+                    paddingRight: "8px",
+                    fontWeight: 600,
+                    fontSize: "0.875rem",
+                    color: "text.primary"
+                },
+                "& .MuiChip-avatar": {
+                    marginLeft: "2px"
+                }
+            } }
+            variant="outlined"
+        />
     );
 }

@@ -1,10 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { COMBO_DATA_KEY, MessageTypes, NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING } from "../../session-server/session-common";
+import { COMBO_DATA_KEY, MessageTypes } from "../../session-server/session-common";
 import assert from "assert";
 import { useWebSocketConfig } from "@/components/websocket-config-provider";
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });
+
+const RECONNECT_BASE_MS = 500;
+const RECONNECT_MAX_MS = 30_000;
 
 export default function useSessionWebSocketContext()
 {
@@ -12,6 +15,11 @@ export default function useSessionWebSocketContext()
 
     const ws = useRef<WebSocket | null>(null);
     const messageHandlers = useRef<MessageHandlerType[]>([]);
+    const messageQueue = useRef<Record<string, unknown>[]>([]);
+    const reconnectAttempt = useRef(0);
+    const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isMounted = useRef(true);
+    const connectRef = useRef<() => void>(() => {});
 
     const addMessageHandler = useCallback((handler: MessageHandlerType) =>
     {
@@ -48,51 +56,98 @@ export default function useSessionWebSocketContext()
         }
     }, []);
 
-    const registerCurrentSession = useCallback(() =>
+    const registerCurrentSession = useCallback((socket: WebSocket) =>
     {
-        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
 
-        ws.current.send(JSON.stringify({
+        socket.send(JSON.stringify({
             type: MessageTypes.REGISTER_SESSION,
             initiatorKey: crypto.randomUUID()
         }));
     }, []);
 
-    useEffect(() =>
+    const connect = useCallback(async () =>
     {
-        if (ws.current == null)
+        if (!isMounted.current) return;
+
+        const socket = new WebSocket(connectionString);
+        ws.current = socket;
+
+        socket.onopen = () =>
         {
-            ws.current = new WebSocket(connectionString);
-        }
-
-        const socket = ws.current;
-
-        socket.onclose = () => console.log('ws closed');
-        socket.onmessage = webSocketMessageHandler;
-
-        const handleOpen = () =>
-        {
-            console.log("Connection is made");
-            registerCurrentSession();
+            reconnectAttempt.current = 0;
+            registerCurrentSession(socket);
+            while (messageQueue.current.length > 0)
+            {
+                const msg = messageQueue.current.shift();
+                if (msg) socket.send(JSON.stringify(msg));
+            }
         };
 
-        if (socket.readyState === WebSocket.OPEN)
-        {
-            handleOpen();
-        } else
-        {
-            socket.onopen = handleOpen;
-        }
+        socket.onmessage = webSocketMessageHandler;
 
-        return () =>
+        socket.onclose = () =>
         {
-            socket.onopen = null;
-            socket.onmessage = null;
-            socket.onclose = null;
+            ws.current = null;
+            if (!isMounted.current) return;
+            const delay = Math.min(
+                RECONNECT_BASE_MS * Math.pow(2, reconnectAttempt.current),
+                RECONNECT_MAX_MS
+            );
+            reconnectAttempt.current += 1;
+            reconnectTimer.current = setTimeout(
+                () => connectRef.current(),
+                delay
+            );
+        };
+
+        socket.onerror = () =>
+        {
+            console.error("[WS] Connection error");
+            socket.close();
         };
     }, [ connectionString, webSocketMessageHandler, registerCurrentSession ]);
 
-    return { ws, addMessageHandler };
+    useEffect(() =>
+    {
+        connectRef.current = connect;
+        isMounted.current = true;
+        void connect();
+
+        return () =>
+        {
+            isMounted.current = false;
+            if (reconnectTimer.current !== null)
+            {
+                clearTimeout(reconnectTimer.current);
+                reconnectTimer.current = null;
+            }
+            if (ws.current)
+            {
+                ws.current.onclose = null;
+                ws.current.onerror = null;
+                ws.current.close();
+                ws.current = null;
+            }
+        };
+    }, [ connect ]);
+
+    const sendMessage = useCallback((data: Record<string, unknown>) =>
+    {
+        const socket = ws.current;
+        if (socket && socket.readyState === WebSocket.OPEN)
+        {
+            socket.send(JSON.stringify(data));
+        } else if (socket && socket.readyState === WebSocket.CONNECTING)
+        {
+            messageQueue.current.push(data);
+        } else
+        {
+            console.error("WebSocket is closed. Cannot send message.");
+        }
+    }, []);
+
+    return { ws, addMessageHandler, sendMessage };
 }
 
 export const useMessageHandler = () =>

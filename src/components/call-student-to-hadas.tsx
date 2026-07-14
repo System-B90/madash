@@ -25,8 +25,6 @@ import
     Tooltip,
     Typography
 } from "@mui/material";
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/he";
@@ -71,55 +69,53 @@ function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePic
 
     return (
         <Box { ...props } className="flex flex-col items-center">
-            <LocalizationProvider dateAdapter={ AdapterDayjs }>
-                <Tooltip title="קבע זמן פקיעה" placement="top">
-                    <IconButton
-                        onClick={ handleOpen }
-                        color={ time ? "primary" : "default" }
-                        sx={ { border: '1px solid', borderColor: 'divider' } }
-                    >
-                        <AlarmIcon fontSize="medium" />
-                    </IconButton>
-                </Tooltip>
+            <Tooltip title="קבע זמן פקיעה" placement="top">
+                <IconButton
+                    onClick={ handleOpen }
+                    color={ time ? "primary" : "default" }
+                    sx={ { border: '1px solid', borderColor: 'divider' } }
+                >
+                    <AlarmIcon fontSize="medium" />
+                </IconButton>
+            </Tooltip>
 
-                { expiryStatus && (
-                    <Typography
-                        variant="caption"
-                        color={ expiryStatus.color === "error" ? "error.main" : "text.secondary" }
-                        sx={ { mt: 0.5, fontWeight: 'medium', fontSize: '0.7rem', textAlign: 'center' } }
-                        flexWrap={ 'wrap' }
-                        maxWidth={ '2rem' }
-                    >
-                        { expiryStatus.label }
-                    </Typography>
-                ) }
+            { expiryStatus && (
+                <Typography
+                    variant="caption"
+                    color={ expiryStatus.color === "error" ? "error.main" : "text.secondary" }
+                    sx={ { mt: 0.5, fontWeight: 'medium', fontSize: '0.7rem', textAlign: 'center' } }
+                    flexWrap={ 'wrap' }
+                    maxWidth={ '2rem' }
+                >
+                    { expiryStatus.label }
+                </Typography>
+            ) }
 
-                <Popper open={ open } anchorEl={ anchorEl } placement="bottom-end" style={ { zIndex: 1300 } }>
-                    <ClickAwayListener onClickAway={ handleClose }>
-                        <Paper elevation={ 3 } sx={ { p: 1 } }>
-                            <TimePicker
-                                open={ open }
-                                onClose={ handleClose }
-                                value={ time }
-                                onChange={ (newValue) =>
-                                {
-                                    setTime(newValue);
-                                    handleClose();
-                                } }
-                                ampm={ false }
-                                minutesStep={ 5 }
-                                disablePast
-                                openTo="minutes"
-                                closeOnSelect
-                                slotProps={ {
-                                    textField: { style: { display: 'none' } },
-                                    popper: { anchorEl: anchorEl, open: open },
-                                } }
-                            />
-                        </Paper>
-                    </ClickAwayListener>
-                </Popper>
-            </LocalizationProvider>
+            <Popper open={ open } anchorEl={ anchorEl } placement="bottom-end" style={ { zIndex: 1300 } }>
+                <ClickAwayListener onClickAway={ handleClose }>
+                    <Paper elevation={ 3 } sx={ { p: 1 } }>
+                        <TimePicker
+                            open={ open }
+                            onClose={ handleClose }
+                            value={ time }
+                            onChange={ (newValue) =>
+                            {
+                                setTime(newValue ? dayjs(newValue) : null);
+                                handleClose();
+                            } }
+                            ampm={ false }
+                            minutesStep={ 5 }
+                            disablePast
+                            openTo="minutes"
+                            closeOnSelect
+                            slotProps={ {
+                                textField: { style: { display: 'none' } },
+                                popper: { anchorEl: anchorEl, open: open },
+                            } }
+                        />
+                    </Paper>
+                </ClickAwayListener>
+            </Popper>
         </Box>
     );
 }
