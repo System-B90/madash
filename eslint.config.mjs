@@ -21,6 +21,6 @@ export default defineConfig( [
 
   // 3. Global ignores (Next.js 16 handles .next, but add extras here)
   {
-    ignores: [ ".next/*", "out/*", "dist/*" ],
+    ignores: [ ".next/*", "out/*", "dist/*", "tests/**" ],
   }
 ] );

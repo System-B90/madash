@@ -44,6 +44,8 @@ def get_domain() -> str:
 
 
 def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
+    if sys.platform == "win32":
+        kwargs["shell"] = True
     return subprocess.run(cmd, cwd=ROOT, **kwargs)
 
 
@@ -51,10 +53,12 @@ def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
     """Starts a detached background process, logs its output, and records its PID."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     creationflags = 0
+    shell = False
     if sys.platform == "win32":
         creationflags = (
             subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
         )
+        shell = True
     with log_file.open("w", encoding="utf-8") as log:
         proc = subprocess.Popen(
             cmd,
@@ -62,6 +66,7 @@ def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
             stdout=log,
             stderr=subprocess.STDOUT,
             creationflags=creationflags,
+            shell=shell,
         )
     pid_file.write_text(str(proc.pid), encoding="utf-8")
     return proc.pid
