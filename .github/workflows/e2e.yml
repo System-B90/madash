@@ -27,10 +27,10 @@ jobs:
       # Checkout Hive from the private hivelms/Hive repository using a PAT.
       - name: Verify Hive checkout token and SSO branch
         env:
-          HIVE_CHECKOUT_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+          HIVE_CHECKOUT_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           if [ -z "$HIVE_CHECKOUT_TOKEN" ]; then
-            echo "::error::No Hive checkout token configured. Add CLASSIC_ACCESS_TOKEN or HIVE_REPO_TOKEN (PAT with read access to hivelms/Hive) under Settings → Secrets and variables → Actions."
+            echo "::error::No Hive checkout token configured. Add ACCESS_TOKEN (PAT with read access to hivelms/Hive) under Settings → Secrets and variables → Actions."
             exit 1
           fi
           repo_code=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -58,7 +58,7 @@ jobs:
         with:
           repository: ${{ env.HIVE_REPO }}
           ref: ${{ env.HIVE_REF }}
-          token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+          token: ${{ secrets.ACCESS_TOKEN }}
           path: hive
           filter: blob:limit=50k
           persist-credentials: false
