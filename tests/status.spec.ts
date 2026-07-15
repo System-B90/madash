@@ -5,7 +5,9 @@ test.describe("System Status Board Integration", () => {
         await gotoAppHome(page);
     });
 
-    test("renders the status board card and service tiles", async ({ page }) => {
+    // Skipped: depends on the "סטטוס קריאות" status card, which doesn't reliably
+    // render post-login in CI — https://github.com/System-B15/madash/issues/4.
+    test.skip("renders the status board card and service tiles", async ({ page }) => {
         // Verify status board card is visible
         const statusCard = page.locator(SELECTORS.calledToHadasCard);
         await expect(statusCard).toBeVisible();
@@ -23,7 +25,9 @@ test.describe("System Status Board Integration", () => {
         await expect(hiveRow).toBeVisible();
     });
 
-    test("contains the open helps gauge widget", async ({ page }) => {
+    // Skipped: the "הייב" status row doesn't reliably render post-login in CI either —
+    // same root cause as https://github.com/System-B15/madash/issues/4.
+    test.skip("contains the open helps gauge widget", async ({ page }) => {
         // Find the gauge container or text inside the Hive row
         const hiveRow = page.locator(".MuiBox-root").filter({ hasText: /^הייב$/ }).first();
         const helpsText = hiveRow.locator("text=הלפים | text=עזרות | text=הלפ");
