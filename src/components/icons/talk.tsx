@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { SvgIcon, SvgIconProps } from '@mui/material';
+import React from 'react';
 export default function TalkIcon(props: SvgIconProps)
 {
     return (

@@ -1,5 +1,6 @@
-import React from 'react';
 import { Box, Checkbox, Typography, Card, CardContent, useTheme } from '@mui/material';
+import React from 'react';
+
 import { Task } from '@/api-shared/journal';
 
 interface TaskItemProps {

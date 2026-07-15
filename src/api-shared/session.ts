@@ -1,5 +1,6 @@
-import { Clearance, GenderEnum } from "@/api-shared/hive-types";
 import { Session } from "next-auth";
+
+import { Clearance, GenderEnum } from "@/api-shared/hive-types";
 
 export interface AuthSessionUser
 {

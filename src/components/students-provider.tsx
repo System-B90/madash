@@ -1,3 +1,4 @@
+import { useSnackbar } from 'notistack';
 import React, {
     createContext,
     useCallback,
@@ -6,14 +7,14 @@ import React, {
     useMemo,
     useReducer,
 } from 'react';
-import { useSnackbar } from 'notistack';
-import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '../../session-server/session-common';
+
+import { enqueueApiErrorSnackbar } from '@/api-client/common';
+import { apiGetClasses, apiGetStudents } from '@/api-client/hive';
+import { Room, Class, ClassTypeEnum, CourseUser } from '@/api-shared/hive-types';
 import { CalledToHadasEntityType, ResolvableStudent, StudentData } from '@/api-shared/types';
 import { useAuth } from '@/components/auth-provider';
-import { apiGetClasses, apiGetStudents } from '@/api-client/hive';
-import { enqueueApiErrorSnackbar } from '@/api-client/common';
-import { Room, Class, ClassTypeEnum, CourseUser } from '@/api-shared/hive-types';
+import { MessageHandlerType } from '@/components/session-ws';
+import { MessageTypes } from '@/settings';
 
 export type StudentsContextState = {
     isLoading: boolean;
@@ -22,21 +23,21 @@ export type StudentsContextState = {
     getStudent: (studentResolveableData: ResolvableStudent | number) => StudentData | undefined;
 };
 
-type StudentsState = {
+export type StudentsState = {
     rawStudents: Array<CourseUser>;
     classes: Array<Class>;
     isClassesLoading: boolean;
     isStudentsLoading: boolean;
 };
 
-type StudentsAction =
+export type StudentsAction =
     | { type: 'SET_RAW_STUDENTS'; payload: Array<CourseUser> }
     | { type: 'SET_CLASSES'; payload: Array<Class> }
     | { type: 'SET_CLASSES_LOADING'; payload: boolean }
     | { type: 'SET_STUDENTS_LOADING'; payload: boolean }
     | { type: 'START_REFRESH' };
 
-function studentsReducer(state: StudentsState, action: StudentsAction): StudentsState
+export function studentsReducer(state: StudentsState, action: StudentsAction): StudentsState
 {
     switch (action.type)
     {

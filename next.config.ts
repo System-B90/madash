@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  output: 'standalone'
+  output: 'standalone',
+  experimental: {
+    optimizePackageImports: ['@mui/x-date-pickers', '@mui/x-charts'],
+  },
 };
 
 export default nextConfig;

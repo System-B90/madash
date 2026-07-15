@@ -1,7 +1,8 @@
-import { useCallback } from "react";
+import { Button, ButtonProps, Typography, TypographyProps } from "@mui/material";
 import Image from "next/image";
 import { signIn, SignInOptions } from "next-auth/react";
-import { Button, ButtonProps, Typography, TypographyProps } from "@mui/material";
+import { useCallback } from "react";
+
 import { HIVE_URL } from "@/api-shared/common";
 
 interface LoginWithHiveProps extends ButtonProps

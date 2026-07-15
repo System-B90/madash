@@ -1,7 +1,7 @@
 'use client'; // <-- 1. Required for MUI components and hooks in Next.js App Router
 
-import React from 'react';
 import { TextField, Typography, Box, useTheme } from '@mui/material';
+import React from 'react';
 
 interface JournalHeaderProps
 {

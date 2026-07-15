@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import LogoutIcon from '@mui/icons-material/Logout';
 import
 {
     Box,
@@ -10,10 +10,10 @@ import
     Tooltip,
     Chip
 } from '@mui/material';
-import LogoutIcon from '@mui/icons-material/Logout';
+import React, { useEffect, useState, useCallback } from 'react';
 
-import { useAuth } from '@/components/auth-provider';
 import { apiGetUserAvatar } from '@/api-client/user';
+import { useAuth } from '@/components/auth-provider';
 
 interface UserAvatarProps
 {

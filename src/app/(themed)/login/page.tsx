@@ -1,6 +1,7 @@
 'use client';
-import LoginWithHive from '@/app/(themed)/login/login-with-hive-button';
 import { Box, Typography } from '@mui/material';
+
+import LoginWithHive from '@/app/(themed)/login/login-with-hive-button';
 
 function LoginWidget()
 {

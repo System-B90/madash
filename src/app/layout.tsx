@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+
 import { MuiEmotionCacheProvider } from "@/components/mui-emotion-cache-provider";
 import { MadashThemeProvider } from "@/components/theme/ThemeProvider";
 import { WebSocketConfigProvider } from "@/components/websocket-config-provider";

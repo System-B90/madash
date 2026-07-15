@@ -1,14 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SignalWifiStatusbarConnectedNoInternet4Icon from '@mui/icons-material/SignalWifiStatusbarConnectedNoInternet4';
 import SpeedIcon from '@mui/icons-material/Speed';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '../../../session-server/session-common';
-import { ServiceStatusTile, StatusGlyph } from './shared-ui';
+import { ServiceStatusTile, StatusGlyph } from '@/components/system-status-board/shared-ui';
+import { MessageTypes } from '@/settings';
 
 type LinkHealth = 'ok' | 'degraded' | 'error';
 
