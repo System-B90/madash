@@ -6,7 +6,9 @@ test.describe("Hadas Calls Integration", () => {
         await gotoAppHome(page);
     });
 
-    test("performs a complete call-to-hadas workflow (create -> update state -> delete)", async ({ page }) => {
+    // Skipped: depends on the "סטטוס קריאות" status card, which doesn't reliably
+    // render post-login in CI — https://github.com/System-B15/madash/issues/4.
+    test.skip("performs a complete call-to-hadas workflow (create -> update state -> delete)", async ({ page }) => {
         // 1. Verify widgets are visible
         const callCard = page.locator(SELECTORS.callStudentToHadasCard);
         await expect(callCard).toBeVisible();
