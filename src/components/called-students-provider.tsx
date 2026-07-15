@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
 import React, {
     createContext,
     useCallback,
@@ -6,8 +8,7 @@ import React, {
     useMemo,
     useReducer,
 } from 'react';
-import dayjs from 'dayjs';
-import { useSnackbar } from 'notistack';
+
 import { apiGetStudentsCalledToHadas } from '@/api-client/call-to-hadas';
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import
@@ -22,7 +23,7 @@ import
 import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
 import { useStudents } from '@/components/students-provider';
-import { MessageTypes } from '../../session-server/session-common';
+import { MessageTypes } from '@/settings';
 
 export type CalledEntitiesContextState = {
     students: Array<StudentToHadasData>;
@@ -30,16 +31,16 @@ export type CalledEntitiesContextState = {
     isLoading: boolean;
 };
 
-type CalledEntitiesState = {
+export type CalledEntitiesState = {
     entitiesData: Data[ 'calledToHadas' ];
     isLoading: boolean;
 };
 
-type CalledEntitiesAction =
+export type CalledEntitiesAction =
     | { type: 'SET_ENTITIES'; payload: Data[ 'calledToHadas' ] }
     | { type: 'SET_LOADING'; payload: boolean };
 
-function calledEntitiesReducer(state: CalledEntitiesState, action: CalledEntitiesAction): CalledEntitiesState
+export function calledEntitiesReducer(state: CalledEntitiesState, action: CalledEntitiesAction): CalledEntitiesState
 {
     switch (action.type)
     {

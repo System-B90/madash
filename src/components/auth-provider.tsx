@@ -1,5 +1,6 @@
 'use client';
 
+import { signOut } from "next-auth/react";
 import React, {
     createContext,
     useCallback,
@@ -8,10 +9,10 @@ import React, {
     useRef,
     useMemo
 } from 'react';
-import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
-import { MessageTypes } from '../../session-server/session-common';
+
 import { AuthSessionUser } from '@/api-shared/session';
-import { signOut } from "next-auth/react";
+import useSessionWebSocketContext, { MessageHandlerType } from '@/components/session-ws';
+import { MessageTypes } from '@/settings';
 
 export interface WebSocketSessionMessage
 {

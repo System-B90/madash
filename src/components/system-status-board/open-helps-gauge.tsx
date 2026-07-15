@@ -2,6 +2,7 @@
 
 import { alpha, Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
+
 import { useStudents } from '@/components/students-provider';
 
 export const HELPS_PER_STUDENT_DANGER = 1 / 5;

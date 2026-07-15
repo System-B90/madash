@@ -1,10 +1,11 @@
 'use client';
+import { Box } from "@mui/material";
+
 import { CalledEntitiesProvider } from "@/components/called-students-provider";
 import MadratMessageBox from "@/components/madrat-message-box";
 import SideBar from "@/components/side-bar";
 import { StudentsProvider } from "@/components/students-provider";
 import SystemStatusBoard from "@/components/system-status-board/index";
-import { Box } from "@mui/material";
 
 export default function Home()
 {

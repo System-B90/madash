@@ -1,18 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import SignalWifiStatusbarConnectedNoInternet4Icon from '@mui/icons-material/SignalWifiStatusbarConnectedNoInternet4';
 import SpeedIcon from '@mui/icons-material/Speed';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { useEffect, useState } from 'react';
 
 import { apiGetOpenHelpsCount } from '@/api-client/hive';
 import { apiGetHivePrometheusStatus } from '@/api-client/hive-prometheus-status';
 import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
 import { useStudents } from '@/components/students-provider';
-import { ServiceStatusTile, StatusGlyph } from './shared-ui';
-import OpenHelpsGauge, { HELPS_PER_STUDENT_DANGER } from './open-helps-gauge';
+import OpenHelpsGauge, { HELPS_PER_STUDENT_DANGER } from '@/components/system-status-board/open-helps-gauge';
+import { ServiceStatusTile, StatusGlyph } from '@/components/system-status-board/shared-ui';
 
 const HIVE_HEALTH_POLL_MS = 20_000;
 

@@ -1,11 +1,11 @@
 'use client';
 
-import { alpha, Box } from '@mui/material';
 import DnsIcon from '@mui/icons-material/Dns';
-import CollapsableCard from '@/components/collapsable-card';
+import { alpha, Box } from '@mui/material';
 
-import MadashLinkRow from './madash-link-row';
-import HiveHealthRow from './hive-health-row';
+import CollapsableCard from '@/components/collapsable-card';
+import HiveHealthRow from '@/components/system-status-board/hive-health-row';
+import MadashLinkRow from '@/components/system-status-board/madash-link-row';
 
 const SERVICE_STACK_GAP = 0.625;
 

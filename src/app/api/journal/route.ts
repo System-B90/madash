@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest } from 'next/server';
-import { ApiSuccess, catchHandler } from '../../../api-server/common';
-import { Journal, Task } from '../../../api-shared/journal';
+
+import { ApiSuccess, catchHandler } from '@/api-server/common';
+import { Journal, Task } from '@/api-shared/journal';
 
 // Placeholder for database abstraction
 // Assume db is a Prisma-like client or abstracted DB layer

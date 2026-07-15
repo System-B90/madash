@@ -1,7 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useRef } from "react";
-import { COMBO_DATA_KEY, MessageTypes } from "../../session-server/session-common";
 import assert from "assert";
+
+import { createContext, useCallback, useContext, useEffect, useRef } from "react";
+
 import { useWebSocketConfig } from "@/components/websocket-config-provider";
+import { COMBO_DATA_KEY, MessageTypes } from '@/settings';
 
 export type MessageHandlerType = (messageType: MessageTypes, messageTarget: string, data: any) => void;
 const MessageHandlerContext = createContext<MessageHandlerType>(() => { });

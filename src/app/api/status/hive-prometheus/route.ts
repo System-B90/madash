@@ -1,14 +1,16 @@
 export const dynamic = 'force-dynamic';
 
-import { UserNotLoggedInError } from '@/api-shared/errors';
-import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
+import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+
 import { ApiSuccess, catchHandler } from '@/api-server/common';
 import { HiveClient } from '@/api-server/hive/client';
 import { createHiveClientFromSession } from '@/api-server/hive/session-client';
 import { authOptions } from '@/api-server/hive/sso';
+import { UserNotLoggedInError } from '@/api-shared/errors';
+import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
 import type { AuthSessionData } from '@/api-shared/session';
-import { getServerSession } from 'next-auth/next';
-import { NextRequest } from 'next/server';
+
 
 const FETCH_TIMEOUT_MS = 8000;
 

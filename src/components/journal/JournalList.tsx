@@ -1,7 +1,8 @@
-import React from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
-import TaskItem from '@/components/journal/TaskItem';
+import React from 'react';
+
 import { Task } from '@/api-shared/journal';
+import TaskItem from '@/components/journal/TaskItem';
 
 interface JournalListProps {
   tasks: Task[];

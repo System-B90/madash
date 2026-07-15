@@ -1,6 +1,7 @@
-import { useStudents } from "@/components/students-provider";
 import { Box, BoxProps, Chip, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from "@mui/material";
 import { Dispatch, SetStateAction } from "react";
+
+import { useStudents } from "@/components/students-provider";
 export type StudentsSelectorProps = BoxProps & {
     selected: Array<number>;
     setSelected: Dispatch<SetStateAction<Array<number>>>;

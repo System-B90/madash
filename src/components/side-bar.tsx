@@ -1,8 +1,9 @@
+import { Box } from "@mui/material";
+
 import CallStudentToHadas from "@/components/call-student-to-hadas";
 import CalledToHadas from "@/components/called-to-hadas";
-import UserAccessBar from "@/components/user-access-bar";
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
-import { Box } from "@mui/material";
+import UserAccessBar from "@/components/user-access-bar";
 
 export default function SideBar()
 {

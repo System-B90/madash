@@ -1,3 +1,5 @@
+name: madash
+
 services:
   proxy:
     image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
@@ -7,8 +9,8 @@ services:
       context: ../nginx
       dockerfile: Dockerfile.proxy
     ports:
-      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:80:80"
-      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:443:443"
+      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:${MADASH_PROXY_HTTP_PORT:-80}:80"
+      - "${MADASH_PROXY_BIND_IP:-0.0.0.0}:${MADASH_PROXY_HTTPS_PORT:-443}:443"
     volumes:
       - ../ssl:/etc/nginx/ssl:ro
       - ../nginx/nginx.local.conf:/etc/nginx/nginx.conf:ro
