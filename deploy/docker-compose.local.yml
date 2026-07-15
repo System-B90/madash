@@ -1,3 +1,5 @@
+name: madash
+
 services:
   proxy:
     image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}

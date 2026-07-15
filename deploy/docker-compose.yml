@@ -1,3 +1,5 @@
+name: madash
+
 services:
   fe:
     image: ghcr.io/system-b15/madash/fe:${MADASH_VERSION:-latest}

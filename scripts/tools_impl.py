@@ -19,6 +19,31 @@ import typer
 app = typer.Typer(help="Madash dev-ops helper CLI.", no_args_is_help=True)
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+def load_env() -> None:
+    env_path = ROOT / ".env"
+    if env_path.exists():
+        try:
+            import os
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, val = line.split("=", 1)
+                    key = key.strip()
+                    val = val.strip()
+                    # Strip surrounding quotes if present
+                    if val.startswith(('"', "'")) and val.endswith(val[0]):
+                        val = val[1:-1]
+                    if key not in os.environ:
+                        os.environ[key] = val
+        except Exception:
+            pass
+
+
+load_env()
 STATE_DIR = ROOT / "scripts" / ".tools"
 DEV_PID_FILE = STATE_DIR / "dev.pid"
 DEV_LOG_FILE = STATE_DIR / "dev.log"
@@ -56,7 +81,7 @@ def _spawn_background(cmd: list[str], log_file: Path, pid_file: Path) -> int:
     shell = False
     if sys.platform == "win32":
         creationflags = (
-            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+            subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
         )
         shell = True
     with log_file.open("w", encoding="utf-8") as log:
