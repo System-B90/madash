@@ -26,6 +26,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # GitHub-hosted ubuntu-24.04 runners ship with ~14GB free, which isn't
+      # enough headroom for building/caching Hive's full docker-compose stack
+      # (14 images, including a from-source nginx build) on top of the Next.js
+      # build + Playwright browsers. Reclaim the preinstalled toolchains we
+      # don't use (.NET, Android SDK, GHC, CodeQL) before anything else runs.
+      - name: Free up disk space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune -af || true
+          echo "Disk space after cleanup:"
+          df -h /
+
       # ── Hive (SSO identity provider + organizational data) ────────────
       # Checkout Hive from the private hivelms/Hive repository using a PAT.
       - name: Verify Hive checkout token and SSO branch
@@ -128,6 +142,13 @@ jobs:
           if [ "$HIVE_CACHE_HIT" != "true" ]; then
             imgs=$(docker images 'hive/*' --format '{{.Repository}}:{{.Tag}}' | grep -v -- '-base' || true)
             if [ -n "$imgs" ]; then
+              # Build cache/dangling layers from compiling nginx/frontend/core from
+              # source aren't needed once the final images exist, and `docker save`
+              # below needs roughly another full copy's worth of disk for the tar —
+              # reclaim what we can first so that doesn't run us out of space.
+              docker builder prune -af || true
+              echo "Disk space before saving Hive image cache:"
+              df -h /
               echo "Saving Hive images for cache:"; echo "$imgs"
               docker save -o /tmp/hive-images.tar $imgs
             fi
