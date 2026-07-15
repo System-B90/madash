@@ -26,6 +26,7 @@ def load_env() -> None:
     if env_path.exists():
         try:
             import os
+
             for line in env_path.read_text(encoding="utf-8").splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
