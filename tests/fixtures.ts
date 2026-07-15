@@ -85,9 +85,11 @@ export async function waitForAppLoad(page: Page): Promise<void> {
     // Known flaky/broken render — https://github.com/System-B15/madash/issues/4.
     // Non-blocking here so unrelated tests using this helper aren't dragged down by it;
     // tests that actually depend on this card assert on it explicitly and are skipped separately.
+    // Bounded well under the 15s default test/hook timeout (tests/playwright.config.ts) so a
+    // timeout here doesn't blow the whole beforeEach hook's budget and abort the test outright.
     try {
         await expect(page.locator(SELECTORS.calledToHadasCard).first()).toBeVisible({
-            timeout: 60_000,
+            timeout: 5_000,
         });
     } catch (error) {
         console.warn("calledToHadasCard did not become visible on app load (see issue #4):", error);
