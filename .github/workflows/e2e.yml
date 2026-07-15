@@ -30,7 +30,7 @@ jobs:
       - name: Set up Hive
         uses: System-B15/.github/actions/setup-hive@main
         with:
-          hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
+          hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN || secrets.ACCESS_TOKEN }}
           extra-hosts: 127.0.0.3 madash.bis
 
       - name: Install Python dependencies
