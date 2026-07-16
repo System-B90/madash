@@ -195,6 +195,8 @@ jobs:
 
       - name: Install Node dependencies
         run: npm ci
+        env:
+          NPM_TOKEN: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN }}
 
       - name: Install Playwright chromium browser
         run: npx playwright install chromium --with-deps

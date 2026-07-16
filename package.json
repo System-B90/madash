@@ -35,6 +35,8 @@
     "@mui/stylis-plugin-rtl": "^9.1.1",
     "@mui/x-charts": "^8.28.2",
     "@mui/x-date-pickers": "^8.4.0",
+    "@system-b15/hive-core": "^0.1.1",
+    "@system-b15/hive-nextauth": "^0.1.0",
     "@vercel/otel": "^1.12.0",
     "dayjs": "^1.11.13",
     "next": "^16.2.2",

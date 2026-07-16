@@ -2,7 +2,11 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# GitHub Packages read token for @system-b15/* (npm resolves ${NPM_TOKEN} from env)
+ARG NPM_TOKEN
+ENV NPM_TOKEN=${NPM_TOKEN}
+
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --ignore-scripts
 
 FROM node:22-alpine AS builder

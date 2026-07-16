@@ -6,6 +6,8 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
+      args:
+        NPM_TOKEN: ${NPM_TOKEN}
     container_name: fe
     restart: unless-stopped
     env_file:
