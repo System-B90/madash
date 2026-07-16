@@ -8,7 +8,7 @@ test.describe("Journal Integration", () => {
     });
 
     // Skipped: DateNavigator doesn't render its prev/next buttons in this environment —
-    // https://github.com/System-B15/madash/issues/6.
+    // https://github.com/System-B90/madash/issues/6.
     test.skip("loads journal page with heading and date navigator", async ({ page }) => {
         // Verify page heading
         await expect(page.getByText('יומן מדר"ת')).toBeVisible();
@@ -19,7 +19,7 @@ test.describe("Journal Integration", () => {
     });
 
     // Skipped: journal data/empty-state never renders in this environment —
-    // https://github.com/System-B15/madash/issues/6.
+    // https://github.com/System-B90/madash/issues/6.
     test.skip("toggles a task status", async ({ page }) => {
         // Wait for tasks to load (if any are listed)
         // If there are no tasks for today, we can click to previous/next days to find one or verify empty state.

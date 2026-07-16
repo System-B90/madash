@@ -1,9 +1,9 @@
 /*
- * Shared error hierarchy now lives in @system-b15/hive-core; this module
+ * Shared error hierarchy now lives in @system-b90/hive-core; this module
  * remains the app-side import path (`@/api-shared/errors`) and keeps
  * madash-specific errors.
  */
-import { ClientApiError } from "@system-b15/hive-core";
+import { ClientApiError } from "@system-b90/hive-core";
 
 export {
     ApiNotImplementedError,
@@ -13,7 +13,7 @@ export {
     HiveClientError,
     ServerNetworkError,
     UserNotLoggedInError,
-} from "@system-b15/hive-core";
+} from "@system-b90/hive-core";
 
 export class CallToHadasError extends ClientApiError
 {

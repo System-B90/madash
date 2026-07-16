@@ -2,7 +2,7 @@ name: madash
 
 services:
   proxy:
-    image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b90/madash/proxy:${MADASH_VERSION:-latest}
     container_name: proxy-local
     restart: unless-stopped
     build:
