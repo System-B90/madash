@@ -37,6 +37,7 @@
     "@mui/x-date-pickers": "^8.4.0",
     "@system-b15/hive-core": "^0.1.1",
     "@system-b15/hive-nextauth": "^0.1.0",
+    "@system-b15/session-ws": "^0.1.1",
     "@vercel/otel": "^1.12.0",
     "dayjs": "^1.11.13",
     "next": "^16.2.2",

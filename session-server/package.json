@@ -14,6 +14,7 @@
     "*.{json,css,md}": "prettier --write"
   },
   "dependencies": {
+    "@system-b15/session-ws": "^0.1.1",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3",
     "ws": "^8.18.2"
@@ -22,7 +23,4 @@
     "@types/ws": "^8.5.10",
     "eslint": "^8.57.0",
     "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
-    "prettier": "^3.2.5"
-  }
-}
+    "lint-staged": "^15.
