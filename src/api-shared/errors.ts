@@ -1,66 +1,19 @@
+/*
+ * Shared error hierarchy now lives in @system-b15/hive-core; this module
+ * remains the app-side import path (`@/api-shared/errors`) and keeps
+ * madash-specific errors.
+ */
+import { ClientApiError } from "@system-b15/hive-core";
 
-export class ClientError extends Error
-{
-    status?: string;
-    constructor(message?: string)
-    {
-        super(message);
-        this.status = message;
-        this.name = 'ClientError';
-    }
-};
-
-export class ServerNetworkError extends ClientError
-{
-    constructor(message?: string)
-    {
-        super(message);
-        this.name = 'ServerNetworkError';
-    }
-}
-
-export class ClientApiError extends ClientError
-{
-    constructor(message?: string | ClientApiError)
-    {
-        super(typeof message === 'string' ? message : message?.message);
-        if (typeof message === 'string')
-        {
-            this.name = 'ClientApiError';
-        }
-        else if (message)
-        {
-            this.name = message.name;
-            if (message.status !== undefined)
-            {
-                this.status = message.status;
-            }
-        }
-    }
-}
-
-export class UserNotLoggedInError extends ClientApiError
-{
-    constructor(message?: string)
-    {
-        super(message);
-        this.name = 'UserNotLoggedInError';
-    }
-};
-
-export function constructErrorFromNetworkMessage(networkMessage: ClientApiError): ClientApiError
-{
-    return new ClientApiError(networkMessage);
-}
-
-export class ApiNotImplementedError extends ClientApiError
-{
-    constructor(message?: string)
-    {
-        super(message);
-        this.name = 'ApiNotImplementedError';
-    }
-};
+export {
+    ApiNotImplementedError,
+    ClientApiError,
+    ClientError,
+    constructErrorFromNetworkMessage,
+    HiveClientError,
+    ServerNetworkError,
+    UserNotLoggedInError,
+} from "@system-b15/hive-core";
 
 export class CallToHadasError extends ClientApiError
 {
@@ -69,14 +22,4 @@ export class CallToHadasError extends ClientApiError
         super(message);
         this.name = 'CallToHadasError';
     }
-};
-
-export class HiveClientError extends ClientApiError
-{
-    constructor(message?: string)
-    {
-        super(message);
-        this.name = 'HiveClientError';
-    }
-};
-
+}
