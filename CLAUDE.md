@@ -68,7 +68,7 @@ npm run test:e2e:ui     # Playwright interactive UI runner
 
 See [`tests/README.md`](tests/README.md) for the test suite's functionality map.
 
-**Regression tests for bugs:** Every closed bug issue must have a dedicated regression test committed alongside the fix. The test should fail on the pre-fix code and pass after. This ensures the bug cannot silently resurface.
+**Regression tests for bugs:** Every closed bug issue must have a dedicated regression test committed alongside the fix. The test must fail on the pre-fix code and pass after. This prevents bugs from silently resurfacing.
 
 ## Key directories
 
