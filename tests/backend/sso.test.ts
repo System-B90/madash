@@ -5,6 +5,12 @@ import { Clearance, GenderEnum } from "@/api-shared/hive-types";
 describe("sso callbacks", () => {
     const { signIn, jwt, session } = authOptions.callbacks!;
 
+    type SignInArgs = Parameters<NonNullable<typeof signIn>>[ 0 ];
+    type JwtArgs = Parameters<NonNullable<typeof jwt>>[ 0 ];
+    type JwtReturn = Awaited<ReturnType<NonNullable<typeof jwt>>>;
+    type SessionArgs = Parameters<NonNullable<typeof session>>[ 0 ];
+    type SessionReturn = Awaited<ReturnType<NonNullable<typeof session>>>;
+
     const baseUser = {
         id: "1",
         name: "יוסי לוי",
@@ -23,37 +29,37 @@ describe("sso callbacks", () => {
     describe("signIn", () => {
         it("allows Segel clearance", async () => {
             const allowed = await signIn!({
-                user: { ...baseUser, clearance: Clearance.Segel } as any,
+                user: { ...baseUser, clearance: Clearance.Segel } as SignInArgs[ 'user' ],
                 account: null,
                 profile: undefined,
-            } as any);
+            } as SignInArgs);
             expect(allowed).toBe(true);
         });
 
         it("allows Admin clearance", async () => {
             const allowed = await signIn!({
-                user: { ...baseUser, clearance: Clearance.Admin } as any,
+                user: { ...baseUser, clearance: Clearance.Admin } as SignInArgs[ 'user' ],
                 account: null,
                 profile: undefined,
-            } as any);
+            } as SignInArgs);
             expect(allowed).toBe(true);
         });
 
         it("rejects Hanich clearance", async () => {
             const allowed = await signIn!({
-                user: { ...baseUser, clearance: Clearance.Hanich } as any,
+                user: { ...baseUser, clearance: Clearance.Hanich } as SignInArgs[ 'user' ],
                 account: null,
                 profile: undefined,
-            } as any);
+            } as SignInArgs);
             expect(allowed).toBe(false);
         });
 
         it("rejects Checker clearance", async () => {
             const allowed = await signIn!({
-                user: { ...baseUser, clearance: Clearance.Checker } as any,
+                user: { ...baseUser, clearance: Clearance.Checker } as SignInArgs[ 'user' ],
                 account: null,
                 profile: undefined,
-            } as any);
+            } as SignInArgs);
             expect(allowed).toBe(false);
         });
     });
@@ -78,11 +84,11 @@ describe("sso callbacks", () => {
             const hiveUser = { ...baseUser, clearance: Clearance.Segel };
             const token = await jwt!({
                 token: {},
-                user: hiveUser as any,
-                account: { access_token: "hive-access-token" } as any,
-            } as any);
+                user: hiveUser as JwtArgs[ 'user' ],
+                account: { access_token: "hive-access-token" } as JwtArgs[ 'account' ],
+            } as JwtArgs) as JwtReturn & { data: unknown; };
 
-            expect((token as any).data).toEqual({
+            expect(token.data).toEqual({
                 user: {
                     id: hiveUser.id,
                     name: hiveUser.name,
@@ -110,9 +116,9 @@ describe("sso callbacks", () => {
             await expect(
                 jwt!({
                     token: {},
-                    user: hiveUser as any,
-                    account: { access_token: "hive-access-token" } as any,
-                } as any)
+                    user: hiveUser as JwtArgs[ 'user' ],
+                    account: { access_token: "hive-access-token" } as JwtArgs[ 'account' ],
+                } as JwtArgs)
             ).rejects.toThrow("Authentication failed during token exchange.");
         });
 
@@ -122,7 +128,7 @@ describe("sso callbacks", () => {
                 token: existingToken,
                 user: undefined,
                 account: null,
-            } as any);
+            } as JwtArgs);
 
             expect(token).toBe(existingToken);
             expect(globalThis.fetch).not.toHaveBeenCalled();
@@ -139,20 +145,20 @@ describe("sso callbacks", () => {
             };
 
             const result = await session!({
-                session: { expires: "" } as any,
-                token: { data: tokenData } as any,
-            } as any);
+                session: { expires: "" } as SessionArgs[ 'session' ],
+                token: { data: tokenData } as SessionArgs[ 'token' ],
+            } as SessionArgs) as SessionReturn & { user: unknown; accessToken: unknown; };
 
-            expect((result as any).user).toEqual(tokenData.user);
-            expect((result as any).accessToken).toBe("access-token");
+            expect(result.user).toEqual(tokenData.user);
+            expect(result.accessToken).toBe("access-token");
         });
 
         it("passes through unchanged when token.data is missing", async () => {
-            const bareSession = { expires: "" } as any;
+            const bareSession = { expires: "" } as SessionArgs[ 'session' ];
             const result = await session!({
                 session: bareSession,
-                token: {} as any,
-            } as any);
+                token: {} as SessionArgs[ 'token' ],
+            } as SessionArgs);
 
             expect(result).toBe(bareSession);
         });

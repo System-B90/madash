@@ -1,7 +1,9 @@
+import dayjs from "dayjs";
 import { describe, expect, it } from "vitest";
-import { studentsReducer, StudentsState } from "@/components/students-provider";
-import { calledEntitiesReducer, CalledEntitiesState } from "@/components/called-students-provider";
+import { studentsReducer, StudentsState, StudentsAction } from "@/components/students-provider";
+import { calledEntitiesReducer, CalledEntitiesState, CalledEntitiesAction } from "@/components/called-students-provider";
 import { CalledToHadasEntityType } from "@/api-shared/types";
+import type { Class, CourseUser } from "@/api-shared/hive-types";
 
 describe("studentsReducer", () => {
     const initialState: StudentsState = {
@@ -12,14 +14,16 @@ describe("studentsReducer", () => {
     };
 
     it("SET_RAW_STUDENTS stores the students and clears the loading flag", () => {
-        const rawStudents = [ { id: 1 } as any ];
+        // Minimal fixture: only reference identity is asserted, not field shape.
+        const rawStudents = [ { id: 1 } as unknown as CourseUser ];
         const next = studentsReducer(initialState, { type: 'SET_RAW_STUDENTS', payload: rawStudents });
         expect(next.rawStudents).toBe(rawStudents);
         expect(next.isStudentsLoading).toBe(false);
     });
 
     it("SET_CLASSES stores the classes and clears the loading flag", () => {
-        const classes = [ { id: 1 } as any ];
+        // Minimal fixture: only reference identity is asserted, not field shape.
+        const classes = [ { id: 1 } as unknown as Class ];
         const next = studentsReducer(initialState, { type: 'SET_CLASSES', payload: classes });
         expect(next.classes).toBe(classes);
         expect(next.isClassesLoading).toBe(false);
@@ -39,7 +43,8 @@ describe("studentsReducer", () => {
     });
 
     it("ignores unknown actions", () => {
-        const next = studentsReducer(initialState, { type: 'UNKNOWN' } as any);
+        // Deliberately invalid discriminant to exercise the reducer's default branch.
+        const next = studentsReducer(initialState, { type: 'UNKNOWN' } as unknown as StudentsAction);
         expect(next).toBe(initialState);
     });
 });
@@ -48,14 +53,15 @@ describe("calledEntitiesReducer", () => {
     const initialState: CalledEntitiesState = { entitiesData: {}, isLoading: true };
 
     it("SET_ENTITIES stores the data and clears the loading flag", () => {
-        const entitiesData = {
+        const entitiesData: CalledEntitiesState[ 'entitiesData' ] = {
             "call-1": {
                 callId: "call-1",
                 reason: "test",
-                expirationTime: new Date().toISOString(),
-                state: 'requested' as const,
+                expirationTime: dayjs(),
+                state: 'requested',
                 type: CalledToHadasEntityType.Student,
-            } as any,
+                student: { name: "Test Student", hiveId: 1, type: CalledToHadasEntityType.Student },
+            },
         };
 
         const next = calledEntitiesReducer(initialState, { type: 'SET_ENTITIES', payload: entitiesData });
@@ -69,7 +75,8 @@ describe("calledEntitiesReducer", () => {
     });
 
     it("ignores unknown actions", () => {
-        const next = calledEntitiesReducer(initialState, { type: 'UNKNOWN' } as any);
+        // Deliberately invalid discriminant to exercise the reducer's default branch.
+        const next = calledEntitiesReducer(initialState, { type: 'UNKNOWN' } as unknown as CalledEntitiesAction);
         expect(next).toBe(initialState);
     });
 });
