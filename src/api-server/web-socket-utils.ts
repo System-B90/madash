@@ -1,9 +1,8 @@
-import
-{
+import {
+    getWsAuthKey,
     MessageTypes,
+    NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-    WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
-    NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING
 } from "@/settings";
 
 const isServer = typeof window === 'undefined';
@@ -66,7 +65,7 @@ export async function SendServerRequestToSessionServer({ type, data, target }: {
         {
             const payload = JSON.stringify({
                 sender: WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
-                authKey: WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY,
+                authKey: getWsAuthKey(),
                 type: type,
                 targets: target,
                 data,

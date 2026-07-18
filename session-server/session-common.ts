@@ -1,34 +1,36 @@
-import assert from 'assert';
+/*
+ * Connection config, HMAC tickets, and the server core now live in
+ * @system-b90/session-ws; this module remains the app-side import path
+ * (barrelled through `@/settings`) and keeps Madash's wire vocabulary.
+ */
+export {
+    getWsAuthKey,
+    NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING,
+    SECURE_CONTEXT_ONLY,
+    signWsTicket,
+    verifyWsTicket,
+    WEBSOCKET_PORT_SUFFIX,
+    WEBSOCKET_PROTOCOL,
+    WEBSOCKET_SESSION_SERVER_HOST,
+    WEBSOCKET_SESSION_SERVER_PORT,
+    WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
+} from "@system-b90/session-ws";
 
-export const WEBSOCKET_SESSION_SERVER_PORT = parseInt(process.env.WEBSOCKET_SESSION_SERVER_PORT ?? '443', 10);
-
-export const WEBSOCKET_SESSION_SERVER_HOST = process.env.WEBSOCKET_SESSION_SERVER_HOST ?? '127.0.0.1';
-
-export const SECURE_CONTEXT_ONLY = process.env.NODE_ENV === 'production' || WEBSOCKET_SESSION_SERVER_PORT === 443;
-
-export const WEBSOCKET_PROTOCOL = SECURE_CONTEXT_ONLY ? 'wss' : 'ws';
-
-export const WEBSOCKET_PORT_SUFFIX = (WEBSOCKET_SESSION_SERVER_PORT === 443 || WEBSOCKET_SESSION_SERVER_PORT === 80)
-    ? ''
-    : `:${WEBSOCKET_SESSION_SERVER_PORT}`;
-
-export const NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING = `${WEBSOCKET_PROTOCOL}://${WEBSOCKET_SESSION_SERVER_HOST}${WEBSOCKET_PORT_SUFFIX}/ws/`;
-export const WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC = 'server';
-export const WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY = process.env.WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY;
-// Currently no assert since this executes on the client for some reason as well
-assert(WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY || (typeof window !== 'undefined'), `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY must be set in environment variables!`);
-
-export enum MessageTypes 
-{
-    REGISTER_SESSION = 'register-session',
-    MADRAT_TEXT_UPDATE = 'madrat-text-update', // Madrat altered the message text
-    SHUFFLE_MOVE = 'shuffle-move', // Shuffles moved between classrooms
-    STUDENTS_TO_HADAS_UPDATE = 'students-to-hadas-update', // A student was called to the Hadas or arrived at the Hadas
-    REGISTER_SYNC_PROVIDER = 'register-sync-provider',
-    SYNC_OBJECT_UPDATE = 'sync-object-update',
-    DEREGISTER_SYNC_PROVIDER = 'deregister-sync-provider',
-    COMBO = 'combo',
-    PING = 'ping',
-    PONG = 'pong',
-};
-export const COMBO_DATA_KEY = 'combo-data';
+/**
+ * Madash's complete wire vocabulary. The first four values mirror
+ * CoreMessageTypes from @system-b90/session-ws (handled by the server core);
+ * the rest are Madash-specific broadcast types.
+ */
+export enum MessageTypes {
+    REGISTER_SESSION = "register-session",
+    REGISTER_SYNC_PROVIDER = "register-sync-provider",
+    SYNC_OBJECT_UPDATE = "sync-object-update",
+    DEREGISTER_SYNC_PROVIDER = "deregister-sync-provider",
+    MADRAT_TEXT_UPDATE = "madrat-text-update",
+    SHUFFLE_MOVE = "shuffle-move",
+    STUDENTS_TO_HADAS_UPDATE = "students-to-hadas-update",
+    COMBO = "combo",
+    PING = "ping",
+    PONG = "pong",
+}
+export const COMBO_DATA_KEY = "combo-data";

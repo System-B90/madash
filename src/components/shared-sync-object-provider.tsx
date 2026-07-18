@@ -61,14 +61,15 @@ const SharedSyncObjectProvider = (
         };
     }, [ messageHandlers ]);
 
-    // The sync provider has its own "sub-message-handler" which will dispatch the message appropriately
-    const webSocketMessageHandler = useCallback((messageType: MessageTypes, target: string, data: any) =>
+    // The sync provider has its own "sub-message-handler" which dispatches to child handlers.
+    // Signature matches MessageHandlerType: (messageType, data, target?)
+    const webSocketMessageHandler = useCallback((messageType: MessageTypes, data: any, target?: string) =>
     {
         // Skip messages irrelevant to this sync object
         if (id !== target) { return; }
         console.log(`[WS => ${target}] Message type: ${messageType}`);
-        // Call all registered message handlers
-        messageHandlers.current.forEach(handler => handler(messageType, target, data));
+        // Call all registered message handlers with the same (type, data, target) shape
+        messageHandlers.current.forEach(handler => handler(messageType, data, target));
     }, [ id ]);
 
     useEffect(() =>
@@ -108,9 +109,9 @@ const useSharedSyncObjectConext = (required: boolean = true) =>
 };
 
 export type SyncObjectUpdateHandlerFunctionArgumentType = {
-    messageType: Parameters<MessageHandlerType>[ 0 ],
-    messageTarget: Parameters<MessageHandlerType>[ 1 ],
-    data: Parameters<MessageHandlerType>[ 2 ],
+    messageType: MessageTypes;
+    data: any;
+    target?: string;
 };
 
 export type SyncObjectUpdateHandlerFunction = (x: SyncObjectUpdateHandlerFunctionArgumentType) => void;
@@ -172,10 +173,12 @@ export function useSharedSyncObject<T>(
             });
     }, [ id, apiDataGetter, preProcessor, enqueueSnackbar ]);
 
-    const updateHandler = useCallback((messageType: MessageTypes, messageTarget: string, data: { data?: any | null | undefined; }) =>
+    // Handler receives (messageType, data, target?) per the new MessageHandlerType signature.
+    // `data` is already the payload sub-field from the wire message — pass directly to loadData.
+    const updateHandler = useCallback((messageType: MessageTypes, data: any, target?: string) =>
     {
         // This is OK since the sync provider is responsible for making sure we only get relevant messages
-        assert(messageTarget === id);
+        assert(target === id);
 
         if (
             handledMessageTypes !== true &&
@@ -190,7 +193,7 @@ export function useSharedSyncObject<T>(
             return;
         }
 
-        loadData(data.data);
+        loadData(data);
     }, [ id, handledMessageTypes, loadData ]);
 
     useMemo(() =>

@@ -1,23 +1,8 @@
-import { Session } from "next-auth";
-
-import { Clearance, GenderEnum } from "@/api-shared/hive-types";
-
-export interface AuthSessionUser
-{
-    id: string;
-    name: string;
-    email: string | null;
-    username: string;
-    clearance: Clearance;
-    program: number | null;
-    gender: GenderEnum;
-    display_name: string;
-    is_teacher: boolean;
-}
-
-export interface AuthSessionData extends Session
-{
-    user: AuthSessionUser;
-    accessToken: string;
-    refreshToken: string;
-}
+/*
+ * Auth session types now live in @system-b90/hive-nextauth; this module
+ * remains the app-side import path (`@/api-shared/session`).
+ */
+export type {
+    AuthSessionData,
+    AuthSessionUser,
+} from "@system-b90/hive-nextauth";

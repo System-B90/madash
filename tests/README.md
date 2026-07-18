@@ -17,7 +17,6 @@ Playwright end-to-end tests driving the real app + Hive SSO (`tests/*.spec.ts`).
 | `common.test.ts`             | `catchHandler` error-to-response mapping, `ApiResponseMaker` cache-control branches          |
 | `hive-prometheus.test.ts`    | `/api/status/hive-prometheus` — auth gate, unconfigured shortcut, probe branch matrix        |
 | `session-ws-utils.test.ts`   | Server-side WS singleton (`api-server/web-socket-utils.ts`) — queueing, error/close resets   |
-| `session-server.test.ts`     | Session-server dispatch logic (`session-server/session-dispatch.ts`) — auth, fan-out, GC     |
 | `avatars-route.test.ts`      | `/api/avatars/[slug]` — auth gate, upstream error passthrough, success/failure paths         |
 | `providers-reducers.test.ts` | `studentsReducer` / `calledEntitiesReducer` state transitions                                |
 
