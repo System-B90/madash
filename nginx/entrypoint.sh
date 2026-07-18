@@ -10,7 +10,7 @@ if [ ! -f "$SSL_DIR/server.key" ] || [ ! -f "$SSL_DIR/server.crt" ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout "$SSL_DIR/server.key" \
         -out "$SSL_DIR/server.crt" \
-        -subj "/C=US/ST=State/L=City/O=System-B15/CN=localhost"
+        -subj "/C=US/ST=State/L=City/O=System-B90/CN=localhost"
     echo "Certificates generated successfully."
 fi
 

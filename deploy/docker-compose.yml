@@ -2,7 +2,7 @@ name: madash
 
 services:
   fe:
-    image: ghcr.io/system-b15/madash/fe:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b90/madash/fe:${MADASH_VERSION:-latest}
     build:
       context: ../
       dockerfile: Dockerfile
@@ -16,7 +16,7 @@ services:
       - madash_net
       
   ws:
-    image: ghcr.io/system-b15/madash/ws:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b90/madash/ws:${MADASH_VERSION:-latest}
     build:
       context: ../session-server
       dockerfile: Dockerfile.websocket
@@ -28,7 +28,7 @@ services:
       - madash_net
 
   proxy:
-    image: ghcr.io/system-b15/madash/proxy:${MADASH_VERSION:-latest}
+    image: ghcr.io/system-b90/madash/proxy:${MADASH_VERSION:-latest}
     build:
       context: ../nginx
       dockerfile: Dockerfile.proxy

@@ -13,9 +13,9 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_UI: system-b15/madash/fe
-  IMAGE_NAME_WS: system-b15/madash/ws
-  IMAGE_NAME_PROXY: system-b15/madash/proxy
+  IMAGE_NAME_UI: system-b90/madash/fe
+  IMAGE_NAME_WS: system-b90/madash/ws
+  IMAGE_NAME_PROXY: system-b90/madash/proxy
 
 jobs:
   lint:

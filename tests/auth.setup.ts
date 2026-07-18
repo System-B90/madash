@@ -163,7 +163,7 @@ setup("authenticate via Hive SSO", async ({ browser }) => {
     );
 
     // Wait until the dashboard content loads (the status card).
-    // Known flaky/broken post-login render — https://github.com/System-B15/madash/issues/4.
+    // Known flaky/broken post-login render — https://github.com/System-B90/madash/issues/4.
     // Non-blocking: auth itself succeeded (we navigated away from /login), so don't
     // fail the setup project and block the whole "chromium" project over this.
     try {
