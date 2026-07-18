@@ -23,7 +23,7 @@ describe("HiveClient", () => {
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: true,
             status: 200,
-            json: async () => mockUsers,
+            text: async () => JSON.stringify(mockUsers),
         } as Response);
 
         const client = new HiveClient("access-token-123");
@@ -32,10 +32,12 @@ describe("HiveClient", () => {
         expect(globalThis.fetch).toHaveBeenCalledWith(
             `${nextPublicHiveUrl}/api/core/management/users/?role=student`,
             {
+                method: "GET",
                 headers: {
                     Authorization: "Bearer access-token-123",
                     "Content-Type": "application/json",
-                }
+                },
+                body: undefined,
             }
         );
         expect(users).toEqual(mockUsers);
@@ -47,7 +49,7 @@ describe("HiveClient", () => {
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: true,
             status: 200,
-            json: async () => mockClasses,
+            text: async () => JSON.stringify(mockClasses),
         } as Response);
 
         const client = new HiveClient("access-token-123");
@@ -56,10 +58,12 @@ describe("HiveClient", () => {
         expect(globalThis.fetch).toHaveBeenCalledWith(
             `${nextPublicHiveUrl}/api/core/management/classes/`,
             {
+                method: "GET",
                 headers: {
                     Authorization: "Bearer access-token-123",
                     "Content-Type": "application/json",
-                }
+                },
+                body: undefined,
             }
         );
         expect(classes).toEqual(mockClasses);
@@ -69,7 +73,7 @@ describe("HiveClient", () => {
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: true,
             status: 200,
-            json: async () => ({ count: 5 }),
+            text: async () => JSON.stringify({ count: 5 }),
         } as Response);
 
         const client = new HiveClient("access-token-123");
@@ -86,7 +90,7 @@ describe("HiveClient", () => {
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: true,
             status: 200,
-            json: async () => ({ count: "invalid-string" }),
+            text: async () => JSON.stringify({ count: "invalid-string" }),
         } as Response);
 
         const client = new HiveClient("access-token-123");
@@ -104,11 +108,11 @@ describe("HiveClient", () => {
             .mockResolvedValueOnce({
                 ok: true,
                 status: 200,
-                json: async () => [{ id: 1 }]
+                text: async () => JSON.stringify([{ id: 1 }])
             } as Response);
 
         const client = new HiveClient("access-token-123");
-        
+
         // Mock setTimeout to return immediately
         const originalSetTimeout = globalThis.setTimeout;
         globalThis.setTimeout = vi.fn().mockImplementation((fn: any) => fn()) as any;
@@ -136,7 +140,7 @@ describe("HiveClient", () => {
             .mockResolvedValueOnce({
                 ok: true,
                 status: 200,
-                json: async () => [{ id: 1 }]
+                text: async () => JSON.stringify([{ id: 1 }])
             } as Response); // Retried request
 
         const client = new HiveClient("old-access-token", "refresh-token-value");
@@ -160,10 +164,12 @@ describe("HiveClient", () => {
             3,
             `${nextPublicHiveUrl}/api/core/management/users/?`,
             {
+                method: "GET",
                 headers: {
                     Authorization: "Bearer new-access-token",
                     "Content-Type": "application/json",
-                }
+                },
+                body: undefined,
             }
         );
     });
@@ -176,7 +182,7 @@ describe("HiveClient", () => {
         } as Response);
 
         const client = new HiveClient("old-access-token"); // No refresh token provided
-        await expect(client.getUsers({})).rejects.toThrow("הטוקן אינו תקף, אנא התחבר מחדש");
+        await expect(client.getUsers({})).rejects.toThrow("הטוקן אינו תקף, נדרשת התחברות מחדש");
     });
 
     it("fetchWithTokenCookie injects Authorization cookies", async () => {
