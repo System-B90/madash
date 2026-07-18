@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import type { JWT } from "next-auth/jwt";
 
 vi.mock("next-auth/jwt", () => ({
     getToken: vi.fn(),
@@ -7,6 +8,7 @@ vi.mock("next-auth/jwt", () => ({
 
 import { getToken } from "next-auth/jwt";
 import { GET } from "@/app/api/avatars/[slug]/route";
+import type { AuthSessionData } from "@/api-shared/session";
 
 function makeRequest()
 {
@@ -16,6 +18,11 @@ function makeRequest()
 function makeParams(slug: string)
 {
     return { params: Promise.resolve({ slug }) };
+}
+
+function makeToken(data: Partial<AuthSessionData>): JWT
+{
+    return { data } as JWT;
 }
 
 describe("GET /api/avatars/[slug]", () => {
@@ -38,14 +45,14 @@ describe("GET /api/avatars/[slug]", () => {
     });
 
     it("returns 401 when the token has no access token", async () => {
-        vi.mocked(getToken).mockResolvedValueOnce({ data: {} } as any);
+        vi.mocked(getToken).mockResolvedValueOnce(makeToken({}));
 
         const response = await GET(makeRequest(), makeParams("42"));
         expect(response.status).toBe(401);
     });
 
     it("passes through the upstream status/statusText when Hive responds with an error", async () => {
-        vi.mocked(getToken).mockResolvedValueOnce({ data: { accessToken: "token-123" } } as any);
+        vi.mocked(getToken).mockResolvedValueOnce(makeToken({ accessToken: "token-123" }));
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: false,
             status: 404,
@@ -57,7 +64,7 @@ describe("GET /api/avatars/[slug]", () => {
     });
 
     it("returns the image bytes and content type on success", async () => {
-        vi.mocked(getToken).mockResolvedValueOnce({ data: { accessToken: "token-123" } } as any);
+        vi.mocked(getToken).mockResolvedValueOnce(makeToken({ accessToken: "token-123" }));
         const imageBytes = new Uint8Array([ 1, 2, 3 ]).buffer;
         vi.mocked(globalThis.fetch).mockResolvedValueOnce({
             ok: true,
@@ -71,7 +78,7 @@ describe("GET /api/avatars/[slug]", () => {
     });
 
     it("returns 500 when the upstream fetch throws", async () => {
-        vi.mocked(getToken).mockResolvedValueOnce({ data: { accessToken: "token-123" } } as any);
+        vi.mocked(getToken).mockResolvedValueOnce(makeToken({ accessToken: "token-123" }));
         vi.mocked(globalThis.fetch).mockRejectedValueOnce(new Error("network down"));
 
         const response = await GET(makeRequest(), makeParams("42"));

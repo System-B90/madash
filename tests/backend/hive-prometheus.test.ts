@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import type { Session } from "next-auth";
 
 vi.mock("next-auth/next", () => ({
     getServerSession: vi.fn(),
@@ -7,10 +8,16 @@ vi.mock("next-auth/next", () => ({
 
 import { getServerSession } from "next-auth/next";
 import { GET } from "@/app/api/status/hive-prometheus/route";
+import type { AuthSessionData } from "@/api-shared/session";
 
 function makeRequest()
 {
     return new NextRequest("https://madash.test/api/status/hive-prometheus");
+}
+
+function makeSession(overrides: Partial<AuthSessionData>): Session
+{
+    return { expires: "", ...overrides } as Session;
 }
 
 function readyOk()
@@ -23,7 +30,13 @@ function readyNotOk()
     return { ok: false } as Response;
 }
 
-function queryOk(body: any)
+interface PrometheusQueryBody
+{
+    status?: string;
+    data?: { result?: Array<{ value?: [ number, string ]; }>; };
+}
+
+function queryOk(body: PrometheusQueryBody)
 {
     return { ok: true, json: async () => body } as Response;
 }
@@ -49,7 +62,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("returns an error response when there is no session", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce(null as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(null);
 
         const response = await GET(makeRequest());
         expect(response.ok).toBe(false);
@@ -57,7 +70,7 @@ describe("GET /api/status/hive-prometheus", () => {
 
     it("returns configured:false when HIVE_PROMETHEUS_URL is unset", async () => {
         vi.stubEnv("HIVE_PROMETHEUS_URL", "");
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
 
         const response = await GET(makeRequest());
         const body = await response.json();
@@ -65,7 +78,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks unreachable when the readiness probe is not ok", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch).mockResolvedValueOnce(readyNotOk());
 
         const response = await GET(makeRequest());
@@ -74,7 +87,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks reachable but not overloaded when the query probe is not ok", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(queryNotOk());
@@ -85,7 +98,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks reachable but not overloaded on a malformed query body", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(queryOk({ status: "error" }));
@@ -96,7 +109,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks reachable but not overloaded when the metric value is not numeric", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(
@@ -109,7 +122,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks overloaded when the metric meets the default threshold (20)", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(
@@ -123,7 +136,7 @@ describe("GET /api/status/hive-prometheus", () => {
 
     it("respects a custom overload threshold from the environment", async () => {
         vi.stubEnv("HIVE_PROMETHEUS_OVERLOAD_QUERY_THRESHOLD", "5");
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(
@@ -137,7 +150,7 @@ describe("GET /api/status/hive-prometheus", () => {
 
     it("falls back to the default threshold when the env value is invalid", async () => {
         vi.stubEnv("HIVE_PROMETHEUS_OVERLOAD_QUERY_THRESHOLD", "not-a-number");
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch)
             .mockResolvedValueOnce(readyOk())
             .mockResolvedValueOnce(
@@ -151,7 +164,7 @@ describe("GET /api/status/hive-prometheus", () => {
     });
 
     it("marks unreachable when the probe throws (e.g. timeout/abort)", async () => {
-        vi.mocked(getServerSession).mockResolvedValueOnce({ accessToken: "token" } as any);
+        vi.mocked(getServerSession).mockResolvedValueOnce(makeSession({ accessToken: "token" }));
         vi.mocked(globalThis.fetch).mockRejectedValueOnce(new Error("aborted"));
 
         const response = await GET(makeRequest());

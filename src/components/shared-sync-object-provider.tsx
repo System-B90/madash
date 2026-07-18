@@ -63,7 +63,7 @@ const SharedSyncObjectProvider = (
 
     // The sync provider has its own "sub-message-handler" which dispatches to child handlers.
     // Signature matches MessageHandlerType: (messageType, data, target?)
-    const webSocketMessageHandler = useCallback((messageType: MessageTypes, data: any, target?: string) =>
+    const webSocketMessageHandler = useCallback((messageType: MessageTypes, data: unknown, target?: string) =>
     {
         // Skip messages irrelevant to this sync object
         if (id !== target) { return; }
@@ -110,7 +110,7 @@ const useSharedSyncObjectConext = (required: boolean = true) =>
 
 export type SyncObjectUpdateHandlerFunctionArgumentType = {
     messageType: MessageTypes;
-    data: any;
+    data: unknown;
     target?: string;
 };
 
@@ -140,7 +140,7 @@ export function useSharedSyncObject<T>(
         return await rawPreProcessor(raw);
     }, [ rawPreProcessor ]);
 
-    const loadData = useCallback((data?: any) =>
+    const loadData = useCallback((data?: T) =>
     {
         if (data)
         {
@@ -175,7 +175,7 @@ export function useSharedSyncObject<T>(
 
     // Handler receives (messageType, data, target?) per the new MessageHandlerType signature.
     // `data` is already the payload sub-field from the wire message — pass directly to loadData.
-    const updateHandler = useCallback((messageType: MessageTypes, data: any, target?: string) =>
+    const updateHandler = useCallback((messageType: MessageTypes, data: unknown, target?: string) =>
     {
         // This is OK since the sync provider is responsible for making sure we only get relevant messages
         assert(target === id);
@@ -193,7 +193,7 @@ export function useSharedSyncObject<T>(
             return;
         }
 
-        loadData(data);
+        loadData(data as T | undefined);
     }, [ id, handledMessageTypes, loadData ]);
 
     useMemo(() =>
