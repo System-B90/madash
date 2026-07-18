@@ -10,10 +10,10 @@ export async function safeFetcher(input: RequestInfo, init?: RequestInit | undef
     return fetch(input, init);
 }
 
-export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | undefined, withCatch?: boolean): Promise<any | false>
+export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | undefined, withCatch?: boolean): Promise<unknown | false>
 {
     return safeFetcher(input, init)
-        .then((response): Promise<any> =>
+        .then((response): Promise<unknown | false> =>
         {
             // An API request should only return a redirect if the user is not logged in!
             if (response.redirected)
@@ -32,7 +32,7 @@ export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | un
 
                     throw constructErrorFromNetworkMessage(data.error as ClientApiError);
                 })
-                .catch((e: any | ClientApiError) =>
+                .catch((e: unknown) =>
                 {
                     if (withCatch !== true) { throw e; }
 
@@ -55,7 +55,7 @@ export async function safeApiFetcher(input: RequestInfo, init?: RequestInit | un
                     return false;
                 });
         })
-        .catch((e: any) =>
+        .catch((e: unknown) =>
         {
             if (e instanceof ClientApiError) { throw e; }
             throw new ServerNetworkError(JSON.stringify(e));
@@ -86,7 +86,7 @@ export function enqueueSnackbarWithSubtext(
     }
 }
 
-export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: string | React.ReactNode, error: any)
+export function enqueueApiErrorSnackbar(enqueueSnackbar: EnqueueSnackbar | undefined, mainText: string | React.ReactNode, error: unknown)
 {
     if (error instanceof UserNotLoggedInError) { console.log(error.message); return; }
 

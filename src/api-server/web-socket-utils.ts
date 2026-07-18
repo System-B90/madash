@@ -9,7 +9,7 @@ const isServer = typeof window === 'undefined';
 const TARGET_WS_URL = isServer ? 'ws://ws:28199' : NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING;
 
 let sharedWs: WebSocket | null = null;
-const messageQueue: Array<{ payload: string; resolve: () => void; reject: (error: any) => void; }> = [];
+const messageQueue: Array<{ payload: string; resolve: () => void; reject: (error: unknown) => void; }> = [];
 
 function getOrCreateWebSocket(): WebSocket
 {
@@ -18,9 +18,10 @@ function getOrCreateWebSocket(): WebSocket
         return sharedWs;
     }
 
-    sharedWs = new WebSocket(TARGET_WS_URL);
+    const ws = new WebSocket(TARGET_WS_URL);
+    sharedWs = ws;
 
-    sharedWs.onopen = () =>
+    ws.onopen = () =>
     {
         while (messageQueue.length > 0)
         {
@@ -29,7 +30,7 @@ function getOrCreateWebSocket(): WebSocket
             {
                 try
                 {
-                    sharedWs!.send(item.payload);
+                    ws.send(item.payload);
                     item.resolve();
                 } catch (error)
                 {
@@ -57,7 +58,7 @@ function getOrCreateWebSocket(): WebSocket
     return sharedWs;
 }
 
-export async function SendServerRequestToSessionServer({ type, data, target }: { type: MessageTypes, data?: any, target?: string; }): Promise<void>
+export async function SendServerRequestToSessionServer({ type, data, target }: { type: MessageTypes, data?: unknown, target?: string; }): Promise<void>
 {
     return new Promise((resolve, reject) =>
     {

@@ -1,10 +1,10 @@
 export const HIVE_URL = process.env.HIVE_URL || 'https://hive.org';
 
-export interface ApiResponseJson
+export interface ApiResponseJson<TData = unknown, TError = unknown>
 {
     status: number;
-    data?: any;
-    error?: any;
+    data?: TData;
+    error?: TError;
 }
 
 export type Keys<T> = keyof T;

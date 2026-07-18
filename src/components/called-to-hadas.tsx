@@ -64,7 +64,9 @@ function EntityRoomItem({ entityToHadasData }: { entityToHadasData: StudentToHad
     {
         const groupData = entityToHadasData as GroupToHadasData;
         const groupUsers = groupData.students.map((x) => x.hiveId) || [];
-        const groupStudents = groupUsers.map((id: number) => getStudent(id)).filter(Boolean);
+        const groupStudents = groupUsers
+            .map((id: number) => getStudent(id))
+            .filter((student): student is NonNullable<typeof student> => student !== undefined);
 
         return (
             <Tooltip placement="top" title={ tooltipContent }>
@@ -96,7 +98,7 @@ function EntityRoomItem({ entityToHadasData }: { entityToHadasData: StudentToHad
                                 { groupData.groupName }
                             </Typography>
                         ) }
-                        { groupStudents.map((student: any) => (
+                        { groupStudents.map((student) => (
                             <Chip
                                 key={ student.hiveId }
                                 label={ student.name }
@@ -265,7 +267,7 @@ function RoomSkeleton()
 export default function CalledToHadas()
 {
     // Check for explicit isLoading properties, falling back to a rooms undefined check
-    const { students: studentsCalledToHadas, groups: groupsCalledToHadas, isLoading: isEntitiesLoading } = useCalledEntities() as any;
+    const { students: studentsCalledToHadas, groups: groupsCalledToHadas, isLoading: isEntitiesLoading } = useCalledEntities();
     const { rooms, isLoading: isRoomsLoading } = useStudents();
 
     const isLoading = isEntitiesLoading || isRoomsLoading || !rooms;

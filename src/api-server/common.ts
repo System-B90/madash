@@ -10,7 +10,7 @@ import { CACHE_CONTROL_HTTP_HEADER, IMMUTABLE_CACHE_MAX_TTL } from "@/settings";
 export type ApiResponseHeaders = Record<string, string>;
 export type ApiResponseInit = (Omit<ResponseInit, 'status' | 'headers'> & { headers: ApiResponseHeaders; }) | undefined;
 export type ApiCacheControl = 'no-cache' | 'no-store' | 'immutable' | 'must-revalidate' | number;
-export function ApiResponseMaker(data: any, cacheControl?: ApiCacheControl, init?: ApiResponseInit)
+export function ApiResponseMaker(data: unknown, cacheControl?: ApiCacheControl, init?: ApiResponseInit)
 {
     const additionalHeaders: ApiResponseHeaders = {};
     if (cacheControl !== undefined)
@@ -45,27 +45,27 @@ export function ApiResponseMaker(data: any, cacheControl?: ApiCacheControl, init
 
     return new NextResponse(JSON.stringify({ 'status': 0, 'data': data }), { status: 200, ...init });
 }
-export function ApiErrorMaker(e: any)
+export function ApiErrorMaker(e: unknown)
 {
     return new NextResponse(JSON.stringify({ 'status': -1, 'error': e }), { status: 200 });
 }
 
-export function ApiError(e: any)
+export function ApiError(e: unknown)
 {
     return ApiErrorMaker(e);
 }
 
-export function ApiAccessError(e: any)
+export function ApiAccessError(e: unknown)
 {
     return ApiErrorMaker(e);
 }
 
-export function ApiSuccess(data?: any, cacheControl?: ApiCacheControl, init?: ApiResponseInit)
+export function ApiSuccess(data?: unknown, cacheControl?: ApiCacheControl, init?: ApiResponseInit)
 {
     return ApiResponseMaker(data, cacheControl, init);
 }
 
-export function catchHandler<T extends NextRequest>(request: T, e: any)
+export function catchHandler<T extends NextRequest>(request: T, e: unknown)
 {
     if (e instanceof UserNotLoggedInError)
     {
