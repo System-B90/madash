@@ -1,15 +1,28 @@
 # MADASH
 
-**MADASH** is a Hebrew, right-to-left status/dashboard web app for an
-educational institution ("Bis"). It surfaces a live journal, a call-to-Hadas
-board (calling students/groups and tracking their status), and a system
-status board (Hive health, Madash link status). It reads organizational data
-(students, classes) from an external **Hive** service that also provides SSO.
+**MADASH** ("Bis Madash") is a Hebrew, right-to-left **status/dashboard** web app for an
+educational institution. It surfaces a live journal, a call-to-Hadas board (calling
+students/groups and tracking their status), and a system status board (Hive health,
+Madash link status), reading organizational data (students, classes) from an external
+**Hive** service that also provides SSO.
+
+> **Working in this repo with an AI agent (or want the full architecture)?**
+> See **[CLAUDE.md](CLAUDE.md)** — it documents the layered API design, directory map,
+> conventions, and every command in one place.
 
 MADASH is intentionally **volatile / stateless** — there is no database.
 All server-side state lives in-process and is lost on restart. See
 [`docs/architecture.md`](docs/architecture.md) for details and the reasoning
 behind that design.
+
+---
+
+## Features
+
+- **Journal** — live, running record of the day's status/events.
+- **Call-to-Hadas board** — call students/groups and track their status in real time.
+- **System status board** — Hive health and Madash link status at a glance.
+- **Hive SSO** — authentication and shared org data through the external Hive microservice.
 
 ## Tech stack
 
