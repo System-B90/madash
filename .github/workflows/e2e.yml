@@ -15,7 +15,7 @@ concurrency:
 jobs:
   e2e:
     name: Full E2E Tests (with Hive SSO)
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
     timeout-minutes: 45
     env:
       NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
