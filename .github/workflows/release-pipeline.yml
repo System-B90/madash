@@ -20,7 +20,8 @@ env:
 jobs:
   lint:
     name: Lint Codebase
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -55,7 +56,8 @@ jobs:
 
   test:
     name: Unit Tests
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
+    timeout-minutes: 25
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -78,7 +80,8 @@ jobs:
     name: Docker Build and Push
     needs: [lint, test]
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -173,7 +176,8 @@ jobs:
     name: Craft Release Packages
     needs: build-and-push
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-24.04
+    runs-on: self-hosted
+    timeout-minutes: 45
     permissions:
       contents: write
       packages: read
