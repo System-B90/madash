@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 
+import { CommandPaletteButton } from "@/components/app-commands/CommandPaletteButton";
 import CallStudentToHadas from "@/components/call-student-to-hadas";
 import CalledToHadas from "@/components/called-to-hadas";
 import { ThemeSelectorIcon } from "@/components/header/ThemeSelector";
@@ -15,6 +16,7 @@ export default function SideBar()
                     <ThemeSelectorIcon />
                 </Box>
             </Box>
+            <CommandPaletteButton />
             <CallStudentToHadas />
             <CalledToHadas />
         </Box>
