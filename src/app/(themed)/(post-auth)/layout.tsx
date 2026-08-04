@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth/next";
 
 import { authOptions } from "@/api-server/hive/sso";
 import { AuthSessionUser } from "@/api-shared/session";
+import { MadashCommandPalette } from "@/components/app-commands/MadashCommandPalette";
 import { AuthProvider } from "@/components/auth-provider";
 
 export default async function PostAuthLayout({
@@ -21,7 +22,9 @@ export default async function PostAuthLayout({
 
     return (
         <AuthProvider userData={ session.user as AuthSessionUser }>
-            { children }
+            <MadashCommandPalette>
+                { children }
+            </MadashCommandPalette>
         </AuthProvider>
     );
 }
