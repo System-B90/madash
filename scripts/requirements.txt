@@ -1,6 +1,19 @@
+# sb90-devops is published to a small PEP 503 index in System-B90/.github, not
+# to PyPI. The index is served by GitHub Pages — NOT by raw.githubusercontent.com,
+# which cannot back a pip index at all: it 404s the directory URL pip requests,
+# and serves index.html as text/plain with nosniff so --find-links will not
+# scrape it either.
+--extra-index-url https://system-b90.github.io/.github/pypi/
+
 InquirerPy>=0.3.4
 prompt-toolkit>=3.0.36
 python-dotenv==1.2.2
 typer==0.20.0
 PyHiveLMS>=1.4.0
+# Shared dev-ops helpers. See System-B90/Bluz#226 and System-B90/devops-py.
+sb90-devops>=0.1.0
 tqdm>=4.68.3
+# ruff moved here from the workflow's inline `pip install ruff` so the
+# linter version is pinned in one place with everything else.
+ruff>=0.9.0
+pytest>=8.0.0
