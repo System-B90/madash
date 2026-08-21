@@ -14,7 +14,7 @@ has the reasoning.
 
 ## Quick start
 
-Point `madash.bis` at `127.0.0.3` in your hosts file, then:
+Point `madash.dev` at `127.0.0.8` in your hosts file, then:
 
 ```bash
 pip install -r scripts/requirements.txt

@@ -11,11 +11,11 @@ import { defineConfig, devices } from "@playwright/test";
  * The test suite:
  * - Authenticates via Hive SSO (admin:Password1) in the setup project
  * - Saves auth state to .auth/user.json for test reuse
- * - Requires a running MADASH instance at BASE_URL (default: https://madash.bis)
+ * - Requires a running MADASH instance at BASE_URL (default: https://madash.dev)
  * - Runs in Hebrew locale (he-IL) with Jerusalem timezone
  *
  * Environment Variables:
- * - BASE_URL: Override default MADASH URL (default: "https://madash.bis")
+ * - BASE_URL: Override default MADASH URL (default: "https://madash.dev")
  */
 export default defineConfig({
     testDir: ".",
@@ -29,7 +29,7 @@ export default defineConfig({
     reporter: process.env.CI ? [ [ "html" ], [ "github" ] ] : [ [ "html" ], [ "list" ] ],
 
     use: {
-        baseURL: process.env.BASE_URL ?? "https://madash.bis",
+        baseURL: process.env.BASE_URL ?? "https://madash.dev",
         ignoreHTTPSErrors: true,
         screenshot: "only-on-failure",
         video: "on-first-retry",

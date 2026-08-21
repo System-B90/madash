@@ -38,7 +38,7 @@ utils used by both. Don't cross the boundary — no DB queries here since there'
 
 ## Run locally
 
-Route `madash.bis` to `127.0.0.3` in your hosts file, then:
+Route `madash.dev` to `127.0.0.8` in your hosts file, then:
 
 ```bash
 python setup.py

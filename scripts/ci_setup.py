@@ -13,7 +13,7 @@ except ImportError:
 
 def main():
     hive_url = os.environ.get("NEXT_PUBLIC_HIVE_URL", "https://hive.org")
-    domain_name = os.environ.get("MADASH_DOMAIN", "madash.bis")
+    domain_name = os.environ.get("MADASH_DOMAIN", "madash.dev")
     nextauth_url = f"https://{domain_name}"
 
     print(f"Registering Madash SSO service with Hive at {hive_url}...")
