@@ -1,8 +1,15 @@
 name: Build and Release Madash
 
 on:
+  # push is master-only on purpose. With `push: ["**"]` alongside
+  # `pull_request: ["**"]`, every commit on a PR branch ran this workflow
+  # twice — once per event — and the two runs did not cancel each other,
+  # because the concurrency key includes github.ref, which is
+  # refs/heads/<branch> for push and refs/pull/N/merge for pull_request.
+  # Two checkouts, two `npm ci` runs and two test runs per commit, on a
+  # single shared self-hosted box.
   push:
-    branches: ["**"]
+    branches: [master]
     tags: ["v*.*.*"]
   pull_request:
     branches: ["**"]
@@ -30,7 +37,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22"
-          cache: "npm"
+          # No `cache:` on purpose. The self-hosted runners have persistent
+          # disk, so the npm cache already survives between runs — the
+          # actions/cache save is pure cost, and it is what left a
+          # peek-a-boo job wedged in "Post Setup Node.js" for over an hour
+          # while holding the runner. bluz dropped it for the same reason.
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -76,7 +87,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "22"
-          cache: "npm"
+          # No `cache:` on purpose. The self-hosted runners have persistent
+          # disk, so the npm cache already survives between runs — the
+          # actions/cache save is pure cost, and it is what left a
+          # peek-a-boo job wedged in "Post Setup Node.js" for over an hour
+          # while holding the runner. bluz dropped it for the same reason.
 
       - name: Install Dependencies
         run: npm ci
