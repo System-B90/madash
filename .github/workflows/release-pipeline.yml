@@ -42,8 +42,12 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
+      # Was `pip install ruff`. The requirements file now carries the
+      # Python test deps too, and pulls sb90-devops from the org pip index
+      # (GitHub Pages) — tools_impl.py imports it, so pytest cannot collect
+      # without it.
       - name: Install Dependencies (Python)
-        run: pip install ruff
+        run: pip install -r scripts/requirements.txt
 
       - name: Run ESLint
         run: npm run lint
@@ -53,6 +57,12 @@ jobs:
 
       - name: Run Ruff (Python Formatter Check)
         run: ruff format --check .
+
+      # Runs here rather than in the `test` job because that one is labelled
+      # [self-hosted, node] with no Python toolchain, and this job already has
+      # one set up.
+      - name: Run Python Unit Tests
+        run: pytest -q
 
   test:
     name: Unit Tests
