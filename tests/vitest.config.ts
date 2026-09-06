@@ -1,20 +1,12 @@
 import path from "path";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { configDefaults, defineConfig } from "vitest/config";
+import { defineSharedVitestConfig } from "@system-b90/test-kit/vitest";
 
-export default defineConfig({
-    plugins: [
-        tsconfigPaths({
-            projects: [ path.resolve(__dirname, "../tsconfig.json") ],
-        }),
-    ],
+export default defineSharedVitestConfig({
+    include: [ "tests/backend/**/*.test.ts" ],
+    alias: {
+        "@": path.resolve(__dirname, "../src"),
+    },
     test: {
-        environment: "node",
-        include: [ "tests/backend/**/*.test.ts" ],
-        exclude: [ ...configDefaults.exclude, "**/.claude/**", "**/worktrees/**" ],
-        alias: {
-            "@": path.resolve(__dirname, "../src"),
-        },
         env: {
             NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ?? "test-secret",
             NEXT_PUBLIC_HIVE_URL: process.env.NEXT_PUBLIC_HIVE_URL ?? "https://hive.org",

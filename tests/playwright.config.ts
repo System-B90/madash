@@ -1,5 +1,7 @@
 import * as path from "path";
-import { defineConfig, devices } from "@playwright/test";
+import { devices } from "@playwright/test";
+import { definePlaywrightConfig } from "@system-b90/test-kit/playwright";
+import { AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
 
 /**
  * Playwright configuration for MADASH integration tests.
@@ -12,30 +14,21 @@ import { defineConfig, devices } from "@playwright/test";
  * - Authenticates via Hive SSO (admin:Password1) in the setup project
  * - Saves auth state to .auth/user.json for test reuse
  * - Requires a running MADASH instance at BASE_URL (default: https://madash.dev)
- * - Runs in Hebrew locale (he-IL) with Jerusalem timezone
+ * - Runs in Hebrew locale (he-IL) with Jerusalem timezone (shared default from @system-b90/test-kit)
  *
  * Environment Variables:
  * - BASE_URL: Override default MADASH URL (default: "https://madash.dev")
  */
-export default defineConfig({
-    testDir: ".",
-    testMatch: "**/*.spec.ts",
-    testIgnore: [ /worktrees/, /\.claude/ ],
+export default definePlaywrightConfig({
     timeout: 15_000,
     fullyParallel: false,
-    forbidOnly: !!process.env.CI,
-    retries: process.env.CI ? 2 : 1,
     workers: 1,
-    reporter: process.env.CI ? [ [ "html" ], [ "github" ] ] : [ [ "html" ], [ "list" ] ],
 
     use: {
         baseURL: process.env.BASE_URL ?? "https://madash.dev",
-        ignoreHTTPSErrors: true,
         screenshot: "only-on-failure",
         video: "on-first-retry",
         trace: "on-first-retry",
-        locale: "he-IL",
-        timezoneId: "Asia/Jerusalem",
     },
 
     projects: [
@@ -57,7 +50,7 @@ export default defineConfig({
             testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
                 ...devices[ "Desktop Chrome" ],
-                storageState: path.join(__dirname, ".auth", "user.json"),
+                storageState: path.join(__dirname, AUTH_STATE_PATH),
             },
             dependencies: [ "setup" ],
         },

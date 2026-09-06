@@ -1,37 +1,7 @@
-import { test as baseTest, expect as baseExpect, Locator, Page, BrowserContext } from "@playwright/test";
+import { Page } from "@playwright/test";
+import { test, expect } from "@system-b90/test-kit/fixtures";
 
-// Shared page and context for visual mode (single-window reuse)
-let sharedContext: BrowserContext | null = null;
-let sharedPage: Page | null = null;
-
-export const test = baseTest.extend({
-    context: async ({ browser, contextOptions }, use) => {
-        if (process.env.TEST_VISUAL === "1") {
-            if (!sharedContext) {
-                sharedContext = await browser.newContext(contextOptions);
-            }
-            await use(sharedContext);
-        } else {
-            const context = await browser.newContext(contextOptions);
-            await use(context);
-            await context.close();
-        }
-    },
-    page: async ({ context }, use) => {
-        if (process.env.TEST_VISUAL === "1") {
-            if (!sharedPage) {
-                sharedPage = await context.newPage();
-            }
-            await use(sharedPage);
-        } else {
-            const page = await context.newPage();
-            await use(page);
-            await page.close();
-        }
-    }
-});
-
-export const expect = baseExpect;
+export { test, expect };
 
 /**
  * Shared test fixtures and helper utilities for MADASH integration tests.

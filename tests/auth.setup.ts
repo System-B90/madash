@@ -1,66 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import { expect, Page, test as setup } from "@playwright/test";
+import { hiveLogin, AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
 import { SELECTORS } from "./fixtures";
 
-const AUTH_FILE = path.join(__dirname, ".auth", "user.json");
-
-async function waitForAuthApi(page: Page, baseURL: string): Promise<void> {
-    for (let attempt = 1; attempt <= 10; attempt++) {
-        try {
-            const response = await page.request.get(`${baseURL}/api/auth/csrf`);
-            if (response.ok()) {
-                return;
-            }
-        } catch {
-            // Ignore error and retry
-        }
-        await page.waitForTimeout(3_000);
-    }
-    throw new Error("NextAuth API is not ready");
-}
-
-async function startHiveSso(page: Page, baseURL: string): Promise<void> {
-    await waitForAuthApi(page, baseURL);
-
-    const maxAttempts = 3;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-            const csrfResponse = await page.request.get(`${baseURL}/api/auth/csrf`);
-            if (!csrfResponse.ok()) {
-                throw new Error(`CSRF request failed: ${csrfResponse.status()}`);
-            }
-
-            const { csrfToken } = await csrfResponse.json();
-            const signInResponse = await page.request.post(
-                `${baseURL}/api/auth/signin/hive`,
-                {
-                    form: {
-                        csrfToken,
-                        callbackUrl: `${baseURL}/`,
-                        json: "true",
-                    },
-                },
-            );
-            if (!signInResponse.ok()) {
-                throw new Error(`Sign-in request failed: ${signInResponse.status()}`);
-            }
-
-            const signInData = await signInResponse.json();
-            await page.goto(signInData.url, {
-                waitUntil: "commit",
-                timeout: 60_000,
-            });
-            await page.waitForURL(/hive\.org/, { timeout: 60_000 });
-            return;
-        } catch (error) {
-            if (attempt === maxAttempts) {
-                throw error;
-            }
-            await page.waitForTimeout(3_000 * attempt);
-        }
-    }
-}
+const AUTH_FILE = path.join(__dirname, AUTH_STATE_PATH);
 
 async function tryGoto(
     page: Page,
@@ -128,39 +72,10 @@ setup("authenticate via Hive SSO", async ({ browser }) => {
         return;
     }
 
-    await startHiveSso(page, baseURL);
-
-    const usernameField = page
-        .locator("input[name='username'], input[name='login'], input[type='text']")
-        .first();
-    const passwordField = page
-        .locator("input[name='password'], input[type='password']")
-        .first();
-
-    await usernameField.waitFor({ state: "visible", timeout: 30_000 });
-    await usernameField.fill("admin");
-    await passwordField.fill("Password1");
-
-    const submitButton = page
-        .locator("button[type='submit'], input[type='submit']")
-        .first();
-    await submitButton.click();
-
-    try {
-        const authorizeButton = page.locator(
-            "button:has-text('Authorize'), button:has-text('Allow'), button:has-text('אשר'), input[type='submit'][value='Authorize']",
-        );
-        await authorizeButton.waitFor({ state: "visible", timeout: 5_000 });
-        await authorizeButton.click();
-    } catch {
-        // No authorization screen — continue
-    }
-
-    await page.waitForURL(
-        (url) =>
-            !url.hostname.includes("hive") && !url.pathname.includes("/login"),
-        { timeout: 60_000 },
-    );
+    // Shared Hive SSO flow (CSRF handshake, credential form, optional
+    // authorize screen) lives in @system-b90/test-kit/auth — this is the
+    // copy-pasted boilerplate #226 is consolidating.
+    await hiveLogin(page, { baseURL, username: "admin", password: "Password1" });
 
     // Wait until the dashboard content loads (the status card).
     // Known flaky/broken post-login render — https://github.com/System-B90/madash/issues/4.
