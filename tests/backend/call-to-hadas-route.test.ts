@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
+vi.mock("@/api-server/hive/sso", () => ({ authOptions: {} }));
+
 vi.mock("@/api-server/datastore", () => ({
     getCallsToHadas: vi.fn(),
     addStudentCallToHadas: vi.fn(),
@@ -10,6 +13,7 @@ vi.mock("@/api-server/datastore", () => ({
 }));
 
 import { DELETE, GET, POST, PUT } from "@/app/api/call-to-hadas/route";
+import { refusal, signIn, signInWithoutUserId, signOut } from "./session-harness";
 import {
     addGroupCallToHadas,
     addStudentCallToHadas,
@@ -51,6 +55,8 @@ beforeEach(() => {
     vi.mocked(addGroupCallToHadas).mockReset();
     vi.mocked(removeCallToHadas).mockReset();
     vi.mocked(updateCallToHadasState).mockReset();
+    // Every handler is gated now; suites not about the gate run signed in.
+    signIn();
 });
 
 describe("GET /api/call-to-hadas", () => {
@@ -225,21 +231,36 @@ describe("POST /api/call-to-hadas", () => {
     });
 });
 
-describe("auth posture (characterization -- see madash#30)", () => {
-    // NONE of these handlers check a session, there is no Next.js middleware,
-    // and nginx proxies /api/* unrestricted. So every mutation below is
-    // reachable unauthenticated against the deployed origin: anyone who can
-    // reach it can call students to Hadas or clear the board.
+describe("auth gate (madash#30)", () => {
+    // These four handlers used to have no session check at all, with no
+    // middleware and nginx proxying /api/* unrestricted -- so every mutation
+    // was reachable unauthenticated against the deployed origin: anyone who
+    // could reach it could call students to Hadas, read their names and
+    // reasons, or clear the board. The owner's call on #37 was to gate them
+    // and accept the break for any non-browser caller.
     //
-    // Pinned as current behaviour, NOT endorsed. Adding a gate is a product
-    // decision (it changes the contract for any non-browser caller), so it is
-    // raised on the issue rather than made here. If the gate lands, these four
-    // assertions are the ones that must flip to expecting 401.
-    it("GET succeeds with no session", async () => {
-        expect((await envelope(await GET(new NextRequest(URL_)))).status).toBe(0);
+    // These are the assertions that were pinned as "succeeds with no session"
+    // before the gate landed. They are the regression test for the fix: each
+    // one fails on the pre-fix handlers.
+    const refuses = async (response: Response, ...unreached: unknown[]) => {
+        const { httpStatus, body } = await refusal(response);
+
+        expect(httpStatus).toBe(401);
+        expect(body.status).toBe(-1);
+        expect(body.error?.name).toBe("UserNotLoggedInError");
+        // The refusal must come *before* the side effect, not alongside it.
+        for (const fn of unreached) {
+            expect(fn).not.toHaveBeenCalled();
+        }
+    };
+
+    beforeEach(() => signOut());
+
+    it("GET refuses with no session", async () => {
+        await refuses(await GET(new NextRequest(URL_)), getCallsToHadas);
     });
 
-    it("PUT succeeds with no session", async () => {
+    it("PUT refuses with no session", async () => {
         const response = await PUT(
             jsonRequest("PUT", {
                 students: [ STUDENTS[0] ],
@@ -249,31 +270,48 @@ describe("auth posture (characterization -- see madash#30)", () => {
             }),
         );
 
-        expect((await envelope(response)).status).toBe(0);
-        expect(addStudentCallToHadas).toHaveBeenCalled();
+        await refuses(response, addStudentCallToHadas, addGroupCallToHadas);
     });
 
-    it("DELETE succeeds with no session", async () => {
-        vi.mocked(removeCallToHadas).mockReturnValue({
-            type: "student",
-            student: { name: "דנה כהן" },
-        } as never);
-
-        const response = await DELETE(jsonRequest("DELETE", { callId: "abc" }));
-
-        expect((await envelope(response)).status).toBe(0);
-    });
-
-    it("POST succeeds with no session", async () => {
-        vi.mocked(updateCallToHadasState).mockReturnValue({
-            type: "student",
-            student: { name: "דנה כהן" },
-        } as never);
-
-        const response = await POST(
-            jsonRequest("POST", { callId: "abc", state: "הגיע" }),
+    it("DELETE refuses with no session", async () => {
+        await refuses(
+            await DELETE(jsonRequest("DELETE", { callId: "abc" })),
+            removeCallToHadas,
         );
+    });
 
-        expect((await envelope(response)).status).toBe(0);
+    it("POST refuses with no session", async () => {
+        await refuses(
+            await POST(jsonRequest("POST", { callId: "abc", state: "הגיע" })),
+            updateCallToHadasState,
+        );
+    });
+
+    it("refuses a session that carries no user id", async () => {
+        // The gate keys on session.user.id, matching /api/ws-ticket. A
+        // half-built session is not an authenticated one, and accepting it
+        // would mint board writes attributable to nobody.
+        signInWithoutUserId();
+
+        await refuses(
+            await PUT(
+                jsonRequest("PUT", {
+                    students: [ STUDENTS[0] ],
+                    reason: "שיחה",
+                    expirationTime: "2026-09-19T12:00:00.000Z",
+                    groupCall: false,
+                }),
+            ),
+            addStudentCallToHadas,
+        );
+    });
+
+    it("lets a signed-in caller through", async () => {
+        // The gate has to be a gate, not a wall: the pre-fix suite would pass
+        // vacuously against a handler that refused everyone.
+        signIn();
+
+        expect((await envelope(await GET(new NextRequest(URL_)))).status).toBe(0);
+        expect(getCallsToHadas).toHaveBeenCalled();
     });
 });

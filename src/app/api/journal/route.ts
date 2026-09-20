@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from 'next/server';
 
+import { denyUnauthenticated } from '@/api-server/auth-gate';
 import { ApiSuccess, catchHandler } from '@/api-server/common';
 import { Journal, Task } from '@/api-shared/journal';
 
@@ -11,6 +12,9 @@ import { Journal, Task } from '@/api-shared/journal';
 
 export async function GET(request: NextRequest) {
   try {
+    const denied = await denyUnauthenticated();
+    if (denied) { return denied; }
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date');
 
@@ -47,6 +51,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const denied = await denyUnauthenticated();
+    if (denied) { return denied; }
+
     const body: Partial<Journal> = await request.json();
 
     if (!body.date) {
