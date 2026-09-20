@@ -1,7 +1,14 @@
 import { NextRequest } from "next/server";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
+vi.mock("@/api-server/hive/sso", () => ({ authOptions: {} }));
+
 
 import { GET, POST } from "@/app/api/journal/route";
+import { refusal, signIn, signOut } from "./session-harness";
+
+beforeEach(() => signIn());
 
 async function envelope(response: Response)
 {
@@ -207,5 +214,43 @@ describe("POST /api/journal", () => {
         );
 
         expect((await envelope(response)).status).toBe(-1);
+    });
+});
+
+describe("auth gate (madash#30)", () => {
+    // The journal had no session check either: its GET exposed the day's
+    // tasks and its POST rewrote them, both unauthenticated. Gated on the
+    // owner's call in #37; these assertions fail on the pre-fix handlers.
+    beforeEach(() => signOut());
+
+    it("GET refuses with no session", async () => {
+        const { httpStatus, body } = await refusal(await get("?date=2026-09-20"));
+
+        expect(httpStatus).toBe(401);
+        expect(body.status).toBe(-1);
+        expect(body.error?.name).toBe("UserNotLoggedInError");
+    });
+
+    it("POST refuses with no session", async () => {
+        const { httpStatus, body } = await refusal(
+            await post({ date: "2026-09-20", tasks: [] }),
+        );
+
+        expect(httpStatus).toBe(401);
+        expect(body.status).toBe(-1);
+    });
+
+    it("refuses before the missing-date check", async () => {
+        // Order matters: a caller with no session must not be able to probe
+        // the handler's validation behaviour to learn what it accepts.
+        const { httpStatus } = await refusal(await get(""));
+
+        expect(httpStatus).toBe(401);
+    });
+
+    it("lets a signed-in caller through", async () => {
+        signIn();
+
+        expect((await envelope(await get("?date=2026-09-20"))).status).toBe(0);
     });
 });

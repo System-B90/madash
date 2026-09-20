@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
+vi.mock("@/api-server/hive/sso", () => ({ authOptions: {} }));
+
 vi.mock("@/api-server/datastore", () => ({
     getMadratText: vi.fn(),
     modifyMadratText: vi.fn(),
@@ -9,6 +12,7 @@ vi.mock("@/api-server/datastore", () => ({
 vi.mock("@/api-server/hive/session-client", () => ({ default: vi.fn() }));
 
 import { GET as madratGET, POST as madratPOST } from "@/app/api/madrat/route";
+import { refusal, signIn, signOut } from "./session-harness";
 import { GET as classesGET } from "@/app/api/hive/classes/route";
 import { GET as studentsGET } from "@/app/api/hive/students/route";
 import { GET as openHelpsGET } from "@/app/api/status/hive/open-helps/route";
@@ -33,6 +37,8 @@ beforeEach(() => {
     vi.mocked(getMadratText).mockReset().mockResolvedValue("" as never);
     vi.mocked(modifyMadratText).mockReset().mockResolvedValue(undefined as never);
     vi.mocked(createHiveClient).mockReset();
+    // Every handler is gated now; suites not about the gate run signed in.
+    signIn();
 });
 
 describe("GET /api/madrat", () => {
@@ -221,11 +227,13 @@ describe("GET /api/status/hive/open-helps", () => {
     });
 });
 
-describe("auth posture (characterization -- see madash#30)", () => {
-    // /api/madrat has no session check at all, so its POST is an
-    // unauthenticated write to the board every user sees. Pinned, not
-    // endorsed -- see the comment in call-to-hadas-route.test.ts.
-    it("madrat POST succeeds with no session", async () => {
+describe("auth gate (madash#30)", () => {
+    // /api/madrat had no session check at all, so its POST was an
+    // unauthenticated write to the board every user sees. Gated on the
+    // owner's call in #37; these assertions fail on the pre-fix handlers.
+    beforeEach(() => signOut());
+
+    it("madrat POST refuses with no session", async () => {
         const response = await madratPOST(
             request("https://madash.test/api/madrat", {
                 method: "POST",
@@ -233,15 +241,39 @@ describe("auth posture (characterization -- see madash#30)", () => {
             }),
         );
 
-        expect((await envelope(response)).status).toBe(0);
-        expect(modifyMadratText).toHaveBeenCalled();
+        const { httpStatus, body } = await refusal(response);
+        expect(httpStatus).toBe(401);
+        expect(body.status).toBe(-1);
+        expect(body.error?.name).toBe("UserNotLoggedInError");
+        // Refused before the write, not alongside it.
+        expect(modifyMadratText).not.toHaveBeenCalled();
     });
 
-    // The three Hive routes are different: they hold no gate of their own, but
-    // createHiveClient() needs a session to build a client, so they fail
-    // closed in practice. That is worth pinning separately, because it is an
-    // accident of the dependency rather than a deliberate gate.
+    it("madrat GET refuses with no session", async () => {
+        // The board text is as readable as it is writable; gating one end
+        // only would leave the contents public.
+        const { httpStatus } = await refusal(
+            await madratGET(request("https://madash.test/api/madrat")),
+        );
+
+        expect(httpStatus).toBe(401);
+        expect(getMadratText).not.toHaveBeenCalled();
+    });
+
+    it("lets a signed-in caller through", async () => {
+        signIn();
+
+        expect((await envelope(await madratGET(request("https://madash.test/api/madrat")))).status)
+            .toBe(0);
+        expect(getMadratText).toHaveBeenCalled();
+    });
+
+    // The three Hive routes still hold no gate of their own: createHiveClient()
+    // needs a session to build a client, so they fail closed through the
+    // dependency. Pinned separately because that is an accident rather than a
+    // deliberate gate -- the middleware is what now makes it deliberate.
     it("hive routes fail when no session can produce a client", async () => {
+        signIn();
         vi.mocked(createHiveClient).mockRejectedValue(
             new Error("Unauthorized: No active session found."),
         );
