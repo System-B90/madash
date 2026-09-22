@@ -1,6 +1,6 @@
 import os
-import sys
 import secrets
+import sys
 from pathlib import Path
 
 # Add pyhive to python path if we need to import it
@@ -31,7 +31,7 @@ def main():
             print(f"SSO Registration successful. Client ID: {hive_client_id}")
     except Exception as e:
         print(f"Failed to register SSO with Hive: {e}")
-        sys.exit(1)
+        raise SystemExit(1) from e
 
     ws_auth_key = secrets.token_hex(32)
     nextauth_secret = secrets.token_hex(32)
