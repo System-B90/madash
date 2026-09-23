@@ -6,6 +6,8 @@ Created: 2026-07-15
 Author: Michael K. Steinberg
 """
 
+import contextlib
+import os
 import subprocess
 from pathlib import Path
 
@@ -20,9 +22,9 @@ ROOT = Path(__file__).resolve().parent.parent
 def load_env() -> None:
     env_path = ROOT / ".env"
     if env_path.exists():
-        try:
-            import os
-
+        # An unreadable .env just means nothing is preloaded; the commands that
+        # need a variable report it missing themselves.
+        with contextlib.suppress(OSError, UnicodeDecodeError):
             for line in env_path.read_text(encoding="utf-8").splitlines():
                 line = line.strip()
                 if not line or line.startswith("#"):
@@ -36,8 +38,6 @@ def load_env() -> None:
                         val = val[1:-1]
                     if key not in os.environ:
                         os.environ[key] = val
-        except Exception:
-            pass
 
 
 load_env()
@@ -54,14 +54,12 @@ WS_PORT = 28199
 def get_domain() -> str:
     env_path = ROOT / ".env"
     if env_path.exists():
-        try:
+        with contextlib.suppress(OSError, UnicodeDecodeError):
             for line in env_path.read_text(encoding="utf-8").splitlines():
                 if line.startswith("NEXTAUTH_URL="):
                     val = line.split("=", 1)[1].strip()
                     # Strip protocol
                     return val.replace("https://", "").replace("http://", "")
-        except Exception:
-            pass
     return "localhost"
 
 

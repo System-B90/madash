@@ -213,7 +213,10 @@ def generate_env():
                     "client_secret", "ERROR_FETCHING_SECRET"
                 )
                 typer.secho("Hive SSO registration successful.", fg=typer.colors.GREEN)
-            except Exception as e:
+            # Deliberately broad: any failure here (browser flow, network, Hive
+            # version check, a malformed reply) has the same answer — fall back
+            # to manual entry rather than abort setup halfway through.
+            except Exception as e:  # noqa: BLE001
                 typer.secho(f"Failed to register Hive SSO: {e}", fg=typer.colors.RED)
                 hive_client_id = "MANUAL_ENTRY_REQUIRED"
                 hive_client_secret = "MANUAL_ENTRY_REQUIRED"

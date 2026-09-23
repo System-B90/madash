@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import dayjs from "dayjs";
 import { NextRequest } from "next/server";
 
+import { denyUnauthenticated } from "@/api-server/auth-gate";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import { addGroupCallToHadas, addStudentCallToHadas, getCallsToHadas, removeCallToHadas, updateCallToHadasState } from "@/api-server/datastore";
 import { CallStudentToHadasParams, RemoveEntityCallToHadasParams, UpdateStateEntityCallToHadasParams } from "@/api-shared/types";
@@ -13,6 +14,9 @@ export async function GET(
 {
     try
     {
+        const denied = await denyUnauthenticated();
+        if (denied) { return denied; }
+
         return ApiSuccess(await getCallsToHadas());
     }
     catch (e)
@@ -27,6 +31,9 @@ export async function PUT(
 {
     try
     {
+        const denied = await denyUnauthenticated();
+        if (denied) { return denied; }
+
         const { students, reason, expirationTime, groupCall }: CallStudentToHadasParams = await request.json();
 
         if (!groupCall)
@@ -55,6 +62,9 @@ export async function DELETE(
 {
     try
     {
+        const denied = await denyUnauthenticated();
+        if (denied) { return denied; }
+
         const { callId }: RemoveEntityCallToHadasParams = await request.json();
 
         const entity = removeCallToHadas(callId);
@@ -75,6 +85,9 @@ export async function POST(
 {
     try
     {
+        const denied = await denyUnauthenticated();
+        if (denied) { return denied; }
+
         const { callId, state }: UpdateStateEntityCallToHadasParams = await request.json();
 
         const entity = updateCallToHadasState(callId, state);
