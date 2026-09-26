@@ -5,9 +5,6 @@
 # scrape it either.
 --extra-index-url https://system-b90.github.io/.github/pypi/
 
-InquirerPy>=0.3.4
-prompt-toolkit>=3.0.36
-python-dotenv==1.2.2
 typer==0.20.0
 # 2.1.5 is the release that added Hive API 7.2.0 to SUPPORTED_API_VERSIONS.
 # The floor was >=1.4.0, which CI happily satisfied with a preinstalled client
@@ -17,6 +14,9 @@ typer==0.20.0
 PyHiveLMS>=2.1.5
 # Shared dev-ops helpers. See System-B90/Bluz#226 and System-B90/devops-py.
 sb90-devops>=0.1.0
+# Shared install/upgrade/wizard flows (System-B90/deploy-py): scripts/setup.py
+# and `npm run docker:link-hive` run on it.
+sb90-deploy>=0.1.0
 tqdm>=4.68.3
 # ruff moved here from the workflow's inline `pip install ruff` so the
 # linter version is pinned in one place with everything else.

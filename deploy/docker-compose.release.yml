@@ -1,0 +1,82 @@
+# Release compose file — shipped as docker-compose.yml at the root of the
+# release bundle, next to .env, ssl/ and the install/update launchers.
+#
+# Deliberately not deploy/docker-compose.yml: that one builds from, and reads
+# .env from, the repo root, which is outside a bundle (the same breakage as Bluz#451, which
+# madash's bundle shipped until now). Images only; every tag is pinned to
+# ${MADASH_VERSION}, which ./install.sh writes from the bundle's VERSION file —
+# `latest` is never what a release should run.
+#
+# Co-located Hive: layer docker-compose.hive-local.yml on top (./link-hive.sh
+# does it, and update keeps it once HIVE_NETWORK_NAME is in .env).
+name: madash
+
+services:
+  ui:
+    image: ghcr.io/system-b90/madash/ui:${MADASH_VERSION:?MADASH_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+    container_name: madash-ui
+    restart: unless-stopped
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - madash_net
+    depends_on:
+      sessions:
+        condition: service_healthy
+    healthcheck:
+      # No curl/wget in the runner image; node is the only HTTP client.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  sessions:
+    image: ghcr.io/system-b90/madash/sessions:${MADASH_VERSION:?MADASH_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+    container_name: madash-sessions
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - madash_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('net').connect(28199,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  proxy:
+    image: ghcr.io/system-b90/madash/proxy:${MADASH_VERSION:?MADASH_VERSION is not set — run ./install.sh, which writes it into .env from the bundle's VERSION file}
+    container_name: madash-proxy
+    restart: unless-stopped
+    ports:
+      - "${MADASH_BIND_IP:-0.0.0.0}:${MADASH_HTTP_PORT:-80}:80"
+      - "${MADASH_BIND_IP:-0.0.0.0}:${MADASH_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      ui:
+        condition: service_healthy
+      sessions:
+        condition: service_healthy
+    networks:
+      - madash_net
+
+networks:
+  madash_net:
+    driver: bridge

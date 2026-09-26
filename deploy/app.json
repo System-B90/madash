@@ -1,0 +1,18 @@
+{
+  "name": "madash",
+  "display_name": "Madash",
+  "env_prefix": "MADASH",
+  "release_repo": "System-B90/madash",
+  "roll": ["sessions", "ui", "proxy"],
+  "health": { "service": "ui", "url": "http://127.0.0.1:3000/api/health" },
+  "containers": { "ui": "madash-ui", "proxy": "madash-proxy" },
+  "state": ["ssl"],
+  "bundle": {
+    "dir": "madash",
+    "files": {
+      "docker-compose.yml": "deploy/docker-compose.release.yml",
+      "docker-compose.hive-local.yml": "deploy/docker-compose.hive-local.yml",
+      "setup.py": "scripts/setup.py"
+    }
+  }
+}
