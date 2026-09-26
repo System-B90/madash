@@ -9,6 +9,8 @@ import { formatLatency, type TileState } from '@/components/system-status-board/
 const SPARKLINE_W = 88;
 const SPARKLINE_H = 30;
 
+const PROBE_TIME_FORMAT = new Intl.DateTimeFormat('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
 function strokeFor(state: TileState, theme: Theme): string
 {
     switch (state)
@@ -33,7 +35,7 @@ export default function LatencySparkline({ history, state }: { history: LatencyS
             <SparkLineChart
                 // Nulls are gaps at runtime; the prop is typed number[] only.
                 data={ history.map((s) => s.latencyMs) as number[] }
-                xAxis={ { data: history.map((s) => s.at) } }
+                xAxis={ { data: history.map((s) => s.at), valueFormatter: (at: number) => PROBE_TIME_FORMAT.format(at) } }
                 yAxis={ { min: 0 } }
                 width={ SPARKLINE_W }
                 height={ SPARKLINE_H }
