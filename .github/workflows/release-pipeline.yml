@@ -44,9 +44,21 @@ jobs:
           # while holding the runner. bluz dropped it for the same reason.
 
       - name: Setup Python
+        if: runner.environment == 'github-hosted'
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+
+      # actions/setup-python ignores the runner's own Python (the `py` launcher)
+      # and downloads a zip whose setup.ps1 Windows PowerShell 5.1 blocks under
+      # the runner's execution policy. Use the installed 3.11 in a per-job venv.
+      - name: Setup Python (self-hosted)
+        if: runner.environment != 'github-hosted'
+        shell: pwsh
+        run: |
+          py -V:3.11 -m venv "$env:RUNNER_TEMP\venv"
+          if ($LASTEXITCODE -ne 0) { throw "py -V:3.11 -m venv failed" }
+          "$env:RUNNER_TEMP\venv\Scripts" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
 
       - name: Install Dependencies (Node)
         run: npm ci
