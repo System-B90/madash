@@ -2,13 +2,15 @@
 
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { apiGetOpenHelpsCount } from '@/api-client/hive';
+import { apiGetOpenHelpsCount, apiGetToiletQueue } from '@/api-client/hive';
 import { apiGetHivePrometheusStatus } from '@/api-client/hive-prometheus-status';
 import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
+import type { ToiletQueue } from '@/api-shared/toilet-queue';
 import HiveGenericIcon from '@/components/icons/hive';
 import { useStudents } from '@/components/students-provider';
 import OpenHelpsGauge, { HELPS_PER_STUDENT_DANGER } from '@/components/system-status-board/open-helps-gauge';
 import { DEFAULT_STATE_DETAIL, ServiceHealthTile, ServiceIcon, type TileState } from '@/components/system-status-board/shared-ui';
+import ToiletQueueIndicator from '@/components/system-status-board/toilet-queue-indicator';
 import { usePolling } from '@/components/system-status-board/use-polling';
 
 const HIVE_HEALTH_POLL_MS = 20_000;
@@ -34,6 +36,9 @@ export interface HiveHealth
     detail: string;
     helps: number | null;
     helpsLoading: boolean;
+    /** Null when the count failed to load. */
+    toiletQueue: ToiletQueue | null;
+    toiletLoading: boolean;
 }
 
 export const HIVE_LABEL = 'הייב';
@@ -51,6 +56,12 @@ export function useHiveHealth(): HiveHealth
     );
     const helpsLoading = helpsResult === null;
     const helps = helpsResult?.count ?? null;
+    // Same wrapping: null = not fetched yet, { queue: null } = fetch failed.
+    const toiletResult = usePolling(
+        async (): Promise<{ queue: ToiletQueue | null; }> => ({ queue: await apiGetToiletQueue() }),
+        HIVE_HEALTH_POLL_MS,
+        () => ({ queue: null }),
+    );
 
     const { students, isLoading: studentsLoading } = useStudents();
     const state = hiveTileState(status);
@@ -61,7 +72,7 @@ export function useHiveHealth(): HiveHealth
     const detailBase = state === 'degraded' ? 'עומס גבוה על התשתית' : DEFAULT_STATE_DETAIL[ state ];
     const detail = helpsDanger ? `${detailBase} · יותר מדי הלפים` : detailBase;
 
-    return { state, detail, helps, helpsLoading };
+    return { state, detail, helps, helpsLoading, toiletQueue: toiletResult?.queue ?? null, toiletLoading: toiletResult === null };
 }
 
 export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
@@ -73,7 +84,12 @@ export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
             icon={ <HiveServiceIcon /> }
             state={ hive.state }
             detail={ hive.detail }
-            mid={ <OpenHelpsGauge openHelpsCount={ hive.helps } helpsLoading={ hive.helpsLoading } /> }
+            mid={ (
+                <>
+                    <ToiletQueueIndicator queue={ hive.toiletQueue } loading={ hive.toiletLoading } />
+                    <OpenHelpsGauge openHelpsCount={ hive.helps } helpsLoading={ hive.helpsLoading } />
+                </>
+            ) }
         />
     );
 }

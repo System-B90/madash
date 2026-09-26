@@ -24,6 +24,7 @@ Playwright end-to-end tests driving the real app + Hive SSO (`tests/*.spec.ts`).
 | `service-health.test.ts`        | Unified service-health backend — `RingBuffer`, latency window/history, interpreters, prober, monitor (unconfigured/up/slow/dependency/down, cache TTL, shared in-flight round) |
 | `services-status-route.test.ts` | `/api/status/services` — auth gate, one entry per monitored service                                                                                                            |
 | `status-tile-state.test.ts`     | Status board pure logic — Hive/Madash state mapping, tile text, sparkline helpers (incl. time-format regression), `startPolling`                                               |
+| `toilet-queue-route.test.ts`    | `/api/status/hive/toilet-queue` — students-only query, waiting/out counts, Hive failure                                                                                        |
 | `session-server-pong.test.ts`   | Session server answers the status board's PING with PONG (regression)                                                                                                          |
 
 Run with `npm run test:unit` (`vitest run --config tests/vitest.config.ts`).
@@ -36,12 +37,12 @@ Keep component logic in exported pure functions (e.g. `service-health-text.ts`,
 
 ## End-to-end tests (`tests/*.spec.ts`, Playwright)
 
-| Test File         | Covers                                                                                                                                                                                                                       |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login.spec.ts`   | Login page render, SSO redirect/button                                                                                                                                                                                       |
-| `hadas.spec.ts`   | Call-to-Hadas flow — calling/removing students and groups                                                                                                                                                                    |
-| `journal.spec.ts` | Journal page — task list, date navigation                                                                                                                                                                                    |
-| `status.spec.ts`  | System status board — every tile + icon, Madash link up with RTT, `/api/status/services` contract, latency/sparkline, down/degraded rendering (mocked payloads), endpoint failure, Hive helps gauge, collapsed compact strip |
+| Test File         | Covers                                                                                                                                                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `login.spec.ts`   | Login page render, SSO redirect/button                                                                                                                                                                                                                                   |
+| `hadas.spec.ts`   | Call-to-Hadas flow — calling/removing students and groups                                                                                                                                                                                                                |
+| `journal.spec.ts` | Journal page — task list, date navigation                                                                                                                                                                                                                                |
+| `status.spec.ts`  | System status board — every tile + icon, Madash link up with RTT, `/api/status/services` contract, latency/sparkline, down/degraded rendering (mocked payloads), endpoint failure, Hive helps gauge, Hive toilet queue (mocked + live endpoint), collapsed compact strip |
 
 Plus `auth.setup.ts` (Hive SSO login, saves `tests/.auth/user.json`) and
 `fixtures.ts` (shared helpers).

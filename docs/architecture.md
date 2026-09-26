@@ -52,12 +52,12 @@ state model in `src/api-shared/service-health.ts`:
 `up | degraded | down | unconfigured` (+ client-only `loading`). **Degraded**
 means reachable but unwell: slow, or the service reporting a degraded dependency.
 
-| Tile       | Source                                                                                          |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| Madash     | Client-side WebSocket ping/pong: silence and round-trip time                                    |
-| Hive       | `/api/status/hive-prometheus` (Prometheus load) + `/api/status/hive/open-helps` (kept separate) |
-| Bluz       | `/api/status/services` → `${BLUZ_URL}/api/health` (reports Mongo/Postgres/Hive checks)          |
-| Peek-a-Boo | `/api/status/services` → `${PEEKABOO_URL}/api/health` (liveness)                                |
+| Tile       | Source                                                                                                                                                                  |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Madash     | Client-side WebSocket ping/pong: silence and round-trip time                                                                                                            |
+| Hive       | `/api/status/hive-prometheus` (Prometheus load) + `/api/status/hive/open-helps` + `/api/status/hive/toilet-queue` (students in `Toilet Request` status) — kept separate |
+| Bluz       | `/api/status/services` → `${BLUZ_URL}/api/health` (reports Mongo/Postgres/Hive checks)                                                                                  |
+| Peek-a-Boo | `/api/status/services` → `${PEEKABOO_URL}/api/health` (liveness)                                                                                                        |
 
 The unified backend (`src/api-server/service-health/`) is split so new services
 only add a registry entry:

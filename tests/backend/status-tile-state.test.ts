@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { StatusEnum } from "@/api-shared/hive-types";
 import { MONITORED_SERVICE_IDS, type ServiceHealth } from "@/api-shared/service-health";
+import { countToiletQueue } from "@/api-shared/toilet-queue";
 import { compactStatuses } from "@/components/system-status-board";
 import { compactDotPalette } from "@/components/system-status-board/compact-status-strip";
 import { hiveTileState } from "@/components/system-status-board/hive-health-row";
@@ -12,6 +14,7 @@ import {
     describeServiceHealth,
 } from "@/components/system-status-board/service-health-text";
 import { DEFAULT_STATE_DETAIL, formatLatency } from "@/components/system-status-board/shared-ui";
+import { toiletQueueTooltip } from "@/components/system-status-board/toilet-queue-indicator";
 import { startPolling } from "@/components/system-status-board/use-polling";
 
 describe("hiveTileState", () => {
@@ -138,7 +141,7 @@ describe("collapsed status strip", () => {
 
     it("summarises all four services in board order, loading until the backend answers", () => {
         const link = { state: "up" as const, rttMs: 20, history: [] };
-        const hive = { state: "degraded" as const, detail: "", helps: 0, helpsLoading: false };
+        const hive = { state: "degraded" as const, detail: "", helps: 0, helpsLoading: false, toiletQueue: null, toiletLoading: false };
         const pending = compactStatuses({ link, hive, services: null });
         expect(pending.map((s) => [ s.id, s.state ])).toEqual([
             [ "madash", "up" ], [ "hive", "degraded" ], [ "bluz", "loading" ], [ "peekaboo", "loading" ],
@@ -149,5 +152,25 @@ describe("collapsed status strip", () => {
             { id: "peekaboo", state: "down", latencyMs: null, checkedAt: 0, history: [] },
         ];
         expect(compactStatuses({ link, hive, services }).slice(2).map((s) => s.state)).toEqual([ "up", "down" ]);
+    });
+});
+
+describe("toilet queue", () => {
+    it("counts students waiting for approval separately from those already out", () => {
+        const users = [
+            { status: StatusEnum.Toilet_Request },
+            { status: StatusEnum.Toilet_Request },
+            { status: StatusEnum.Toilet },
+            { status: StatusEnum.Present },
+            { status: StatusEnum.Raised_Hand },
+        ];
+        expect(countToiletQueue(users)).toEqual({ waiting: 2, out: 1 });
+        expect(countToiletQueue([])).toEqual({ waiting: 0, out: 0 });
+    });
+
+    it("describes loading, failure, and the counts in the tooltip", () => {
+        expect(toiletQueueTooltip(null, true)).toBe("טוען תור לשירותים…");
+        expect(toiletQueueTooltip(null, false)).toBe("לא ניתן לטעון את התור לשירותים");
+        expect(toiletQueueTooltip({ waiting: 3, out: 1 }, false)).toBe("ממתינים לאישור יציאה לשירותים: 3 · בשירותים כעת: 1");
     });
 });

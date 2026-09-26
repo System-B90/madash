@@ -131,4 +131,21 @@ test.describe("System status board", () => {
         await expect(strip).toHaveCount(0);
         await expect(tile(page, "peekaboo")).toHaveAttribute("data-state", "down");
     });
+
+    test("Hive tile shows how many students are waiting to go to the toilet", async ({ page }) => {
+        await page.route("**/api/status/hive/toilet-queue", (route) =>
+            route.fulfill({ contentType: "application/json", body: JSON.stringify({ status: 0, data: { waiting: 3, out: 1 } }) }));
+        await gotoAppHome(page);
+        const queue = tile(page, "hive").getByTestId("toilet-queue");
+        await expect(queue).toHaveText("3");
+        await expect(queue).toHaveAttribute("aria-label", /ממתינים לאישור יציאה לשירותים: 3 · בשירותים כעת: 1/);
+    });
+
+    test("toilet queue endpoint returns waiting/out counts from Hive", async ({ page }) => {
+        await gotoAppHome(page);
+        const body = await (await page.request.get("/api/status/hive/toilet-queue")).json();
+        expect(body.status).toBe(0);
+        expect(Number.isInteger(body.data.waiting) && body.data.waiting >= 0).toBe(true);
+        expect(Number.isInteger(body.data.out) && body.data.out >= 0).toBe(true);
+    });
 });
