@@ -1,21 +1,48 @@
+# Dev overlay for `npm run docker:dev` — layered over docker-compose.yml:
+#   docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up --watch
+#
+# Everything dev-only lives here so docker-compose.yml stays the shippable prod
+# file (the release bundle copies it on its own).
 name: madash
 
 services:
-  fe:
+  ui:
+    # Own tag: the base file names ui ghcr.io/.../ui:latest, and building the dev
+    # target under that name would make later prod runs boot the dev image.
+    image: madash-ui:dev
+    build:
+      target: dev
+    command: npm run next:dev
     environment:
       - NODE_ENV=development
+    networks:
+      - madash_net
+      - hive_net
+    # The base file pins hive.org to the host gateway (works without Hive's
+    # network). /etc/hosts beats DNS, so clear it and let hive_net's alias win.
+    extra_hosts: !reset []
     develop:
       watch:
         - action: sync
           path: ../
           target: /app/
           ignore:
-            - node_modules/
-            - .next/
+            - "**/node_modules/"
+            - "**/.next/"
+            - .git/
+            - session-server/
+            - deploy/
+            - tests/
         - action: rebuild
           path: ../package.json
+        - action: rebuild
+          path: ../package-lock.json
 
-  ws:
+  sessions:
+    image: madash-sessions:dev
+    build:
+      target: dev
+    command: npm run dev
     environment:
       - NODE_ENV=development
     develop:
@@ -24,6 +51,32 @@ services:
           path: ../session-server
           target: /app/
           ignore:
-            - node_modules/
+            - "**/node_modules/"
         - action: rebuild
           path: ../session-server/package.json
+        - action: rebuild
+          path: ../session-server/package-lock.json
+
+  proxy:
+    # Resolves ui/sessions per request so a rebuilt container doesn't 502 the proxy.
+    ports: !override
+      - "${MADASH_PROXY_BIND_IP:-127.0.0.8}:80:80"
+      - "${MADASH_PROXY_BIND_IP:-127.0.0.8}:443:443"
+    volumes:
+      - ../ssl:/etc/nginx/ssl:ro
+      - ../nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ../nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
+    networks:
+      - madash_net
+      - hive_net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  hive_net:
+    # The Hive stack's network, on which hive-nginx aliases "hive.org". ui needs
+    # it for server-side Hive calls (SSO token exchange, students/classes,
+    # Prometheus). Compose names it after the directory Hive was started from,
+    # so override with HIVE_NETWORK_NAME if yours differs (CI uses hive_hive-net).
+    name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
+    external: true

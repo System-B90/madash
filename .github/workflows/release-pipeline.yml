@@ -20,8 +20,8 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_UI: system-b90/madash/fe
-  IMAGE_NAME_WS: system-b90/madash/ws
+  IMAGE_NAME_UI: system-b90/madash/ui
+  IMAGE_NAME_SESSIONS: system-b90/madash/sessions
   IMAGE_NAME_PROXY: system-b90/madash/proxy
 
 jobs:
@@ -153,10 +153,10 @@ jobs:
 
       # --- WebSocket Image ---
       - name: Extract metadata for WS Image
-        id: meta-ws
+        id: meta-sessions
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WS }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=tag
@@ -168,8 +168,8 @@ jobs:
           context: session-server/
           file: session-server/Dockerfile.websocket
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: ${{ steps.meta-ws.outputs.tags }}
-          labels: ${{ steps.meta-ws.outputs.labels }}
+          tags: ${{ steps.meta-sessions.outputs.tags }}
+          labels: ${{ steps.meta-sessions.outputs.labels }}
           build-args: |
             NPM_TOKEN=${{ secrets.ACCESS_TOKEN }}
           cache-from: type=gha
@@ -233,12 +233,12 @@ jobs:
 
           echo "Pulling freshly built images..."
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WS }}:$TAG_NAME
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME
           docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME
 
           echo "Saving images to flat archives..."
-          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME -o release-offline/images/madash-fe.tar
-          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WS }}:$TAG_NAME -o release-offline/images/madash-ws.tar
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME -o release-offline/images/madash-ui.tar
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME -o release-offline/images/madash-sessions.tar
           docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME -o release-offline/images/madash-proxy.tar
 
       - name: Compress Final Packages

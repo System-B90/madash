@@ -149,7 +149,7 @@ jobs:
           done
           # Dump proxy logs to stdout for quick diagnosis
           echo "::group::Proxy logs"
-          docker logs proxy-local || true
+          docker logs madash-proxy-local || true
           echo "::endgroup::"
 
       - name: Upload Container Logs

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -7,7 +8,17 @@ ARG NPM_TOKEN
 ENV NPM_TOKEN=${NPM_TOKEN}
 
 COPY package.json package-lock.json .npmrc ./
-RUN npm ci --ignore-scripts
+RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
+
+# Hot-reload target for `npm run docker:dev`: full deps + source, Next dev server.
+# Source is kept fresh by `docker compose watch` (see deploy/docker-compose.dev.yml).
+FROM deps AS dev
+WORKDIR /app
+COPY . .
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+CMD ["npm", "run", "next:dev"]
 
 FROM node:22-alpine AS builder
 WORKDIR /app

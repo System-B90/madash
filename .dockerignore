@@ -1,6 +1,28 @@
-node_modules
+# Dependency directories (anchored patterns only match the context root, so
+# use **/ — otherwise session-server/node_modules leaks into the fe image and,
+# for the ws dev target, host node_modules overwrite the container's)
+**/node_modules
 .next
+**/.next
 .git
 dist
 .vscode
 *.log
+
+# Secrets — never bake into an image. Compose injects them via env_file.
+.env
+.env.*
+**/.env
+**/.env.*
+
+# TLS material (mounted into the proxy at runtime)
+ssl/
+nginx/ssl/
+
+# Test/tooling output
+playwright-report/
+test-results/
+container-logs/
+.mypy_cache
+.pytest_cache
+.ruff_cache

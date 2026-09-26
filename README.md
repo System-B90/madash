@@ -50,6 +50,14 @@ npm run test:e2e       # Playwright (test:e2e:ui for the UI runner)
 npm run docker:dev     # Full dev stack in Docker (hot-reload)
 ```
 
+`docker:dev` runs `ui` (Next dev server), `sessions` and the proxy in Docker with source
+synced into the containers (`docker compose watch`; `package.json` changes trigger a
+rebuild). It serves on `127.0.0.8` (override with `MADASH_PROXY_BIND_IP`), needs
+`ssl/cert.pem` + `ssl/key.pem` from `python setup.py`, `NPM_TOKEN` in the environment
+or `.env`, and a running Hive stack: `ui` joins Hive's Docker network so `hive.org`
+resolves in-container (`HIVE_NETWORK_NAME`, default `hive-stack_hive-net`). Don't run it
+alongside `npm run dev` � both bind the same proxy ports.
+
 ---
 
 ## What it does
