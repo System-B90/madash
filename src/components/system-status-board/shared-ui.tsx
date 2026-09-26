@@ -1,8 +1,15 @@
 'use client';
 
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import SignalWifiStatusbarConnectedNoInternet4Icon from '@mui/icons-material/SignalWifiStatusbarConnectedNoInternet4';
+import SpeedIcon from '@mui/icons-material/Speed';
 import { alpha, Box, IconProps, Tooltip, Typography, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { ElementType, type ReactNode } from 'react';
+import { ElementType, type ReactNode, useEffect, useState } from 'react';
+
+import type { ServiceHealthState } from '@/api-shared/service-health';
 
 export function toneFromIconColor(color: IconProps[ 'color' ], theme: Theme)
 {
@@ -59,22 +66,142 @@ export function StatusGlyph({
     );
 }
 
+/** Everything a tile can show: the shared service states plus the client-only "not checked yet". */
+export type TileState = ServiceHealthState | 'loading';
+
+const STATE_GLYPHS: Record<TileState, { icon: ElementType; color: IconProps[ 'color' ]; title: string; pulse?: boolean; }> = {
+    loading: { icon: HourglassEmptyIcon, color: 'action', title: 'בודק…', pulse: true },
+    unconfigured: { icon: HelpOutlineIcon, color: 'action', title: 'ניטור לא הוגדר בשרת' },
+    up: { icon: CheckCircleIcon, color: 'success', title: 'זמין ותקין' },
+    degraded: { icon: SpeedIcon, color: 'warning', title: 'ביצועים ירודים' },
+    down: { icon: SignalWifiStatusbarConnectedNoInternet4Icon, color: 'error', title: 'לא זמין' },
+};
+
+export const DEFAULT_STATE_DETAIL: Record<TileState, string> = {
+    loading: 'בודק זמינות…',
+    unconfigured: 'המערכת לא הוגדרה לניטור',
+    up: 'שירות זמין ותקין',
+    degraded: 'השירות איטי או פועל חלקית',
+    down: 'שירות לא זמין או לא מגיב',
+};
+
+export function ServiceStateGlyph({ state, title }: { state: TileState; title?: string; })
+{
+    const g = STATE_GLYPHS[ state ];
+    return <StatusGlyph icon={ g.icon } color={ g.color } title={ title ?? g.title } pulse={ g.pulse } />;
+}
+
+const SERVICE_ICON_SIZE = 22;
+
+/**
+ * A service's brand mark: its real logo (`src`), falling back to `icon` when the
+ * image fails to load (e.g. a remote service that's down).
+ *
+ * The <img>'s own error can fire before hydration attaches onError, so a fresh
+ * Image probe after mount catches that case too (same approach as Bluz's HiveLogo).
+ */
+export function ServiceIcon({ src, icon: Icon, imgSx }: { src?: string; icon?: ElementType; imgSx?: SxProps<Theme>; })
+{
+    const [ failed, setFailed ] = useState(false);
+
+    useEffect(() =>
+    {
+        if (!src) return;
+        let cancelled = false;
+        const probe = new Image();
+        probe.onerror = () => { if (!cancelled) setFailed(true); };
+        probe.src = src;
+        return () => { cancelled = true; };
+    }, [ src ]);
+
+    const showImage = src && !failed;
+    return (
+        <Box
+            aria-hidden
+            sx={ {
+                width: SERVICE_ICON_SIZE,
+                height: SERVICE_ICON_SIZE,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            } }
+        >
+            { showImage
+                ? <Box component="img" src={ src } alt="" onError={ () => setFailed(true) } sx={ [ { width: '100%', height: '100%', objectFit: 'contain' }, ...(Array.isArray(imgSx) ? imgSx : [ imgSx ]) ] } />
+                : Icon && <Icon sx={ { fontSize: SERVICE_ICON_SIZE, color: 'text.secondary' } } /> }
+        </Box>
+    );
+}
+
+export function formatLatency(latencyMs: number): string
+{
+    return latencyMs < 1000 ? `${latencyMs}ms` : `${(latencyMs / 1000).toFixed(1)}s`;
+}
+
+/**
+ * The one tile every service row renders: label, state-driven glyph, detail text,
+ * optional latency, and an optional service-specific widget (e.g. Hive's helps gauge).
+ */
+export function ServiceHealthTile({
+    label,
+    state,
+    detail,
+    latencyMs,
+    glyphTitle,
+    mid,
+    testId,
+    icon,
+}: {
+    label: string;
+    icon?: ReactNode;
+    state: TileState;
+    detail?: string;
+    latencyMs?: number | null;
+    glyphTitle?: string;
+    mid?: ReactNode;
+    testId?: string;
+})
+{
+    const text = detail ?? DEFAULT_STATE_DETAIL[ state ];
+    const showLatency = latencyMs != null && (state === 'up' || state === 'degraded');
+    return (
+        <ServiceStatusTile
+            label={ label }
+            detail={ showLatency ? `${text} · ${formatLatency(latencyMs)}` : text }
+            mid={ mid }
+            glyph={ <ServiceStateGlyph state={ state } title={ glyphTitle } /> }
+            testId={ testId }
+            dataState={ state }
+            icon={ icon }
+        />
+    );
+}
+
 export function ServiceStatusTile({
     label,
     detail,
     mid,
     glyph,
     rootSx,
+    testId,
+    dataState,
+    icon,
 }: {
     label: string;
     detail: string;
+    icon?: ReactNode;
     mid?: ReactNode;
     glyph: ReactNode;
     rootSx?: SxProps<Theme>;
+    testId?: string;
+    dataState?: string;
 })
 {
     return (
         <Box
+            data-testid={ testId }
+            data-state={ dataState }
             sx={ {
                 display: 'flex',
                 alignItems: 'center',
@@ -108,6 +235,7 @@ export function ServiceStatusTile({
                     lineHeight: 1.35,
                 } }
             >
+                { icon }
                 <Typography component="span" variant="body2" fontWeight={ 700 } color="text.primary" sx={ { letterSpacing: '-0.02em' } }>
                     { label }
                 </Typography>
@@ -140,7 +268,7 @@ export function ServiceStatusTile({
                     alignItems: 'center',
                     gap: 1.25,
                     flexShrink: 0,
-                    marginLeft: 'auto' // Ensures it stays right-aligned if it drops to a new line
+                    marginInlineStart: 'auto', // Keeps it at the inline end if it drops to a new line
                 } }
             >
                 { mid }
