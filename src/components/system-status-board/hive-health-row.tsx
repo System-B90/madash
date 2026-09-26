@@ -1,117 +1,95 @@
 'use client';
 
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import SignalWifiStatusbarConnectedNoInternet4Icon from '@mui/icons-material/SignalWifiStatusbarConnectedNoInternet4';
-import SpeedIcon from '@mui/icons-material/Speed';
-import { useEffect, useState } from 'react';
+import type { SxProps, Theme } from '@mui/material/styles';
 
-import { apiGetOpenHelpsCount } from '@/api-client/hive';
+import { apiGetOpenHelpsCount, apiGetToiletQueue } from '@/api-client/hive';
 import { apiGetHivePrometheusStatus } from '@/api-client/hive-prometheus-status';
 import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
+import type { ToiletQueue } from '@/api-shared/toilet-queue';
+import HiveGenericIcon from '@/components/icons/hive';
 import { useStudents } from '@/components/students-provider';
 import OpenHelpsGauge, { HELPS_PER_STUDENT_DANGER } from '@/components/system-status-board/open-helps-gauge';
-import { ServiceStatusTile, StatusGlyph } from '@/components/system-status-board/shared-ui';
+import { DEFAULT_STATE_DETAIL, ServiceHealthTile, ServiceIcon, type TileState } from '@/components/system-status-board/shared-ui';
+import ToiletQueueIndicator from '@/components/system-status-board/toilet-queue-indicator';
+import { usePolling } from '@/components/system-status-board/use-polling';
 
 const HIVE_HEALTH_POLL_MS = 20_000;
+/** Hive serves its own logo; the generic mark covers Hive being unreachable. */
+// Hive's own icon is light-coloured; render it black on the light theme.
+const HIVE_ICON_SX: SxProps<Theme> = (theme) => theme.applyStyles('light', { filter: 'brightness(0)' });
+const HIVE_ICON_URL = `${(process.env.NEXT_PUBLIC_HIVE_URL ?? '').replace(/\/$/, '')}/static/icon.svg`;
 
-function mapHiveStatus(data: HivePrometheusStatus | null): 'loading' | 'unconfigured' | 'ok' | 'overloaded' | 'down'
+export function hiveTileState(data: HivePrometheusStatus | null): TileState
 {
     if (data === null) return 'loading';
     if (!data.configured) return 'unconfigured';
     if (!data.reachable) return 'down';
-    if (data.overloaded) return 'overloaded';
-    return 'ok';
+    if (data.overloaded) return 'degraded';
+    return 'up';
 }
 
-function hiveDetail(state: ReturnType<typeof mapHiveStatus>): string
+const HIVE_DOWN: HivePrometheusStatus = { configured: true, reachable: false, overloaded: false };
+
+export interface HiveHealth
 {
-    switch (state)
-    {
-        case 'loading': return 'בודק זמינות…';
-        case 'unconfigured': return 'המערכת לא הוגדרה לניטור';
-        case 'ok': return 'שירות זמין ותקין';
-        case 'overloaded': return 'עומס גבוה על התשתית';
-        case 'down': return 'שירות לא זמין או לא מגיב';
-    }
+    state: TileState;
+    detail: string;
+    helps: number | null;
+    helpsLoading: boolean;
+    /** Null when the count failed to load. */
+    toiletQueue: ToiletQueue | null;
+    toiletLoading: boolean;
 }
 
-function HiveHealthGlyph({ state }: { state: ReturnType<typeof mapHiveStatus>; })
+export const HIVE_LABEL = 'הייב';
+export const HiveServiceIcon = () => <ServiceIcon src={ HIVE_ICON_URL } icon={ HiveGenericIcon } imgSx={ HIVE_ICON_SX } />;
+
+/** Hive's own (separate) health sources: Prometheus load + open helps. */
+export function useHiveHealth(): HiveHealth
 {
-    switch (state)
-    {
-        case 'loading': return <StatusGlyph icon={ HourglassEmptyIcon } title="בודק…" color="action" pulse />;
-        case 'unconfigured': return <StatusGlyph icon={ HelpOutlineIcon } title="ניטור הייב לא הוגדר בשרת" color="action" />;
-        case 'ok': return <StatusGlyph icon={ CheckCircleIcon } title="הייב זמין" color="success" />;
-        case 'overloaded': return <StatusGlyph icon={ SpeedIcon } title="הייב עמוס" color="warning" />;
-        case 'down': return <StatusGlyph icon={ SignalWifiStatusbarConnectedNoInternet4Icon } title="הייב לא זמין" color="error" />;
-    }
-}
-
-export default function HiveHealthRow()
-{
-    const [ data, setData ] = useState<HivePrometheusStatus | null>(null);
-    const [ openHelpsCount, setOpenHelpsCount ] = useState<number | null>(null);
-    const [ helpsLoading, setHelpsLoading ] = useState(true);
-
-    useEffect(() =>
-    {
-        let alive = true;
-
-        const tick = async () =>
-        {
-            const [ promSettled, helpsSettled ] = await Promise.allSettled([
-                apiGetHivePrometheusStatus(),
-                apiGetOpenHelpsCount(),
-            ]);
-
-            if (!alive) return;
-
-            const promResult: HivePrometheusStatus =
-                promSettled.status === 'fulfilled'
-                    ? promSettled.value
-                    : {
-                        configured: true,
-                        reachable: false,
-                        overloaded: false,
-                    };
-
-            const helps = helpsSettled.status === 'fulfilled' ? helpsSettled.value.count : null;
-
-            setData(promResult);
-            setOpenHelpsCount(helps);
-            setHelpsLoading(false);
-        };
-
-        tick();
-        const interval = setInterval(tick, HIVE_HEALTH_POLL_MS);
-        return () =>
-        {
-            alive = false;
-            clearInterval(interval);
-        };
-    }, []);
+    const status = usePolling(apiGetHivePrometheusStatus, HIVE_HEALTH_POLL_MS, () => HIVE_DOWN);
+    // Wrapped so "not fetched yet" (null) stays distinct from "fetch failed" ({ count: null }).
+    const helpsResult = usePolling(
+        async (): Promise<{ count: number | null; }> => ({ count: (await apiGetOpenHelpsCount()).count }),
+        HIVE_HEALTH_POLL_MS,
+        () => ({ count: null }),
+    );
+    const helpsLoading = helpsResult === null;
+    const helps = helpsResult?.count ?? null;
+    // Same wrapping: null = not fetched yet, { queue: null } = fetch failed.
+    const toiletResult = usePolling(
+        async (): Promise<{ queue: ToiletQueue | null; }> => ({ queue: await apiGetToiletQueue() }),
+        HIVE_HEALTH_POLL_MS,
+        () => ({ queue: null }),
+    );
 
     const { students, isLoading: studentsLoading } = useStudents();
-    const state = mapHiveStatus(data);
-    const detailBase = hiveDetail(state);
-    const denom = Math.max(students.length, 1);
+    const state = hiveTileState(status);
 
-    const ratioForDetail = openHelpsCount !== null && !(studentsLoading && students.length === 0)
-        ? openHelpsCount / denom
-        : null;
+    const studentsKnown = !(studentsLoading && students.length === 0);
+    const helpsDanger = helps !== null && studentsKnown && helps / Math.max(students.length, 1) > HELPS_PER_STUDENT_DANGER;
 
-    const helpsDanger = ratioForDetail !== null && ratioForDetail > HELPS_PER_STUDENT_DANGER;
+    const detailBase = state === 'degraded' ? 'עומס גבוה על התשתית' : DEFAULT_STATE_DETAIL[ state ];
     const detail = helpsDanger ? `${detailBase} · יותר מדי הלפים` : detailBase;
 
+    return { state, detail, helps, helpsLoading, toiletQueue: toiletResult?.queue ?? null, toiletLoading: toiletResult === null };
+}
+
+export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
+{
     return (
-        <ServiceStatusTile
-            label="הייב"
-            detail={ detail }
-            rootSx={ { minHeight: 36 } } // Removed `py: 0.5` override to allow flexible wrapping space
-            mid={ <OpenHelpsGauge openHelpsCount={ openHelpsCount } helpsLoading={ helpsLoading } /> }
-            glyph={ <HiveHealthGlyph state={ state } /> }
+        <ServiceHealthTile
+            testId="service-tile-hive"
+            label={ HIVE_LABEL }
+            icon={ <HiveServiceIcon /> }
+            state={ hive.state }
+            detail={ hive.detail }
+            mid={ (
+                <>
+                    <ToiletQueueIndicator queue={ hive.toiletQueue } loading={ hive.toiletLoading } />
+                    <OpenHelpsGauge openHelpsCount={ hive.helps } helpsLoading={ hive.helpsLoading } />
+                </>
+            ) }
         />
     );
 }

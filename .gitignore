@@ -54,3 +54,8 @@ next-env.d.ts
 *.swp
 *.swo
 
+
+# Playwright: saved SSO session (a credential) and run output
+tests/.auth/
+playwright-report/
+test-results/

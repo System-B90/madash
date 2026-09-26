@@ -51,6 +51,12 @@ def main() -> None:
         "NEXT_PUBLIC_HIVE_URL", "Hive URL (NEXT_PUBLIC_HIVE_URL)", "https://hive.org"
     )
     w.set("HIVE_PROMETHEUS_URL", f"{hive_url.rstrip('/')}/prometheus")
+    # Sibling services shown on the status board; blank leaves the tile "not configured".
+    w.ask("BLUZ_URL", "Bluz URL for the status board (BLUZ_URL, blank to skip)")
+    w.ask(
+        "PEEKABOO_URL",
+        "Peek-a-Boo URL for the status board (PEEKABOO_URL, blank to skip)",
+    )
 
     w.set("WEBSOCKET_SESSION_SERVER_PORT", "443")
     w.set("WEBSOCKET_SESSION_SERVER_HOST", domain)
