@@ -19,6 +19,8 @@ Playwright end-to-end tests driving the real app + Hive SSO (`tests/*.spec.ts`).
 | `session-ws-utils.test.ts`   | Server-side WS singleton (`api-server/web-socket-utils.ts`) — queueing, error/close resets   |
 | `avatars-route.test.ts`      | `/api/avatars/[slug]` — auth gate, upstream error passthrough, success/failure paths         |
 | `providers-reducers.test.ts` | `studentsReducer` / `calledEntitiesReducer` state transitions                                |
+| `emotion-stylis.test.ts`     | Emotion cache + stylis prefixer/RTL plugins — `::placeholder` rule insertion regression      |
+| `websocket-config.test.ts`   | `resolveWebSocketClientConfig` — empty port suffix is preserved                              |
 
 Run with `npm run test:unit` (`vitest run --config tests/vitest.config.ts`).
 Environment is plain Node (no DOM) — component/hook tests are limited to
