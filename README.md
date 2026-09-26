@@ -55,7 +55,9 @@ synced into the containers (`docker compose watch`; `package.json` changes trigg
 rebuild). It serves on `127.0.0.8` (override with `MADASH_PROXY_BIND_IP`), needs
 `ssl/cert.pem` + `ssl/key.pem` from `python setup.py`, `NPM_TOKEN` in the environment
 or `.env`, and a running Hive stack: `ui` joins Hive's Docker network so `hive.org`
-resolves in-container (`HIVE_NETWORK_NAME`, default `hive-stack_hive-net`). Don't run it
+resolves in-container (`HIVE_NETWORK_NAME`, default `hive-stack_hive-net`). If `hive.org` doesn't resolve
+there, `npm run docker:link-hive` finds Hive's network, persists `HIVE_NETWORK_NAME` to `.env`,
+aliases `hive.org` onto Hive's nginx and re-ups the stack (overlay: `deploy/docker-compose.hive-local.yml`). Don't run it
 alongside `npm run dev` � both bind the same proxy ports.
 
 ---

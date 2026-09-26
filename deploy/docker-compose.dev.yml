@@ -1,5 +1,6 @@
-# Dev overlay for `npm run docker:dev` — layered over docker-compose.yml:
-#   docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml up --watch
+# Dev overlay for `npm run docker:dev` — layered over docker-compose.yml (and
+# docker-compose.hive-local.yml, which joins Hive's network):
+#   docker compose --env-file .env -f deploy/docker-compose.yml -f deploy/docker-compose.dev.yml -f deploy/docker-compose.hive-local.yml up --watch
 #
 # Everything dev-only lives here so docker-compose.yml stays the shippable prod
 # file (the release bundle copies it on its own).
@@ -15,12 +16,6 @@ services:
     command: npm run next:dev
     environment:
       - NODE_ENV=development
-    networks:
-      - madash_net
-      - hive_net
-    # The base file pins hive.org to the host gateway (works without Hive's
-    # network). /etc/hosts beats DNS, so clear it and let hive_net's alias win.
-    extra_hosts: !reset []
     develop:
       watch:
         - action: sync
@@ -66,17 +61,5 @@ services:
       - ../ssl:/etc/nginx/ssl:ro
       - ../nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
       - ../nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
-    networks:
-      - madash_net
-      - hive_net
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
-networks:
-  hive_net:
-    # The Hive stack's network, on which hive-nginx aliases "hive.org". ui needs
-    # it for server-side Hive calls (SSO token exchange, students/classes,
-    # Prometheus). Compose names it after the directory Hive was started from,
-    # so override with HIVE_NETWORK_NAME if yours differs (CI uses hive_hive-net).
-    name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
-    external: true
