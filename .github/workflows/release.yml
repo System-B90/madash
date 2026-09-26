@@ -1,4 +1,4 @@
-name: Build and Release Madash
+name: Release
 
 on:
   # push is master-only on purpose. With `push: ["**"]` alongside
