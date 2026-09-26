@@ -77,6 +77,23 @@ const STATE_GLYPHS: Record<TileState, { icon: ElementType; color: IconProps[ 'co
     down: { icon: SignalWifiStatusbarConnectedNoInternet4Icon, color: 'error', title: 'לא זמין' },
 };
 
+/** Whole-tile tint for states that need attention, so an outage reads at a glance. */
+function alertTileSx(palette: 'error' | 'warning', strength: number): SxProps<Theme>
+{
+    return {
+        bgcolor: (theme: Theme) => `rgba(${theme.vars!.palette[ palette ].mainChannel} / ${0.1 * strength})`,
+        borderColor: (theme: Theme) => `rgba(${theme.vars!.palette[ palette ].mainChannel} / ${0.45 * strength})`,
+        '&:hover': {
+            borderColor: (theme: Theme) => `rgba(${theme.vars!.palette[ palette ].mainChannel} / 0.7)`,
+        },
+    };
+}
+
+const STATE_TILE_SX: Partial<Record<TileState, SxProps<Theme>>> = {
+    down: alertTileSx('error', 1.6),
+    degraded: alertTileSx('warning', 1.2),
+};
+
 export const DEFAULT_STATE_DETAIL: Record<TileState, string> = {
     loading: 'בודק זמינות…',
     unconfigured: 'המערכת לא הוגדרה לניטור',
@@ -173,6 +190,7 @@ export function ServiceHealthTile({
             glyph={ <ServiceStateGlyph state={ state } title={ glyphTitle } /> }
             testId={ testId }
             dataState={ state }
+            rootSx={ STATE_TILE_SX[ state ] }
             icon={ icon }
         />
     );
