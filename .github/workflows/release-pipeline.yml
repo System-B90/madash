@@ -13,6 +13,16 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner environment to execute on'
+        required: false
+        default: 'self-hosted'
+        type: choice
+        options:
+          - self-hosted
+          - github-hosted
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,7 +37,7 @@ env:
 jobs:
   lint:
     name: Lint Codebase
-    runs-on: [self-hosted, node, python]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node", "python"]') }}
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -77,7 +87,7 @@ jobs:
 
   test:
     name: Unit Tests
-    runs-on: [self-hosted, node]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node"]') }}
     timeout-minutes: 25
     steps:
       - name: Checkout repository
@@ -105,7 +115,7 @@ jobs:
     name: Docker Build and Push
     needs: [lint, test]
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, dind]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -202,7 +212,7 @@ jobs:
     name: Craft Release Packages
     needs: build-and-push
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, dind]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
     timeout-minutes: 45
     permissions:
       contents: write
