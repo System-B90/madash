@@ -48,6 +48,7 @@ npm run lint           # ESLint (lint:fix to autofix)
 npm run test:unit      # Vitest
 npm run test:e2e       # Playwright (test:e2e:ui for the UI runner)
 npm run docker:dev     # Full dev stack in Docker (hot-reload)
+npm run docker:dev:rebuild  # Same, but rebuilds the images first (needs NPM_TOKEN)
 ```
 
 `docker:dev` runs `ui` (Next dev server), `sessions` and the proxy in Docker with source
