@@ -45,13 +45,20 @@ test.describe("Journal Integration", () => {
         }
     });
 
-    test("allows renaming the journal if editable", async ({ page }) => {
+    // Skipped rather than left conditional. The body used to be wrapped in
+    // `if (await titleField.isVisible())`, so when the field was absent -- which
+    // is exactly what issue #6 reports -- the test reported green having
+    // asserted nothing. A vacuous pass is worse than a skip: it hides the very
+    // regression the spec exists to catch. Un-skip together with the two above
+    // once #6 lands; the assertions below are already written as hard
+    // expectations.
+    // https://github.com/System-B90/madash/issues/6
+    test.skip("allows renaming the journal if editable", async ({ page }) => {
         const titleField = page.locator("input[type='text'], input[placeholder='שם יומן']").first();
-        if (await titleField.isVisible()) {
-            await titleField.fill("שם יומן בדיקה חדש");
-            await page.keyboard.press("Enter");
-            await page.waitForTimeout(500);
-            await expect(titleField).toHaveValue("שם יומן בדיקה חדש");
-        }
+        await expect(titleField).toBeVisible();
+
+        await titleField.fill("שם יומן בדיקה חדש");
+        await page.keyboard.press("Enter");
+        await expect(titleField).toHaveValue("שם יומן בדיקה חדש");
     });
 });
