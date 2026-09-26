@@ -1,6 +1,6 @@
 'use client';
 
-import { alpha, Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { Box, Stack, Tooltip, Typography, useTheme } from '@mui/material';
 import { Gauge, gaugeClasses } from '@mui/x-charts/Gauge';
 
 import { useStudents } from '@/components/students-provider';
@@ -110,7 +110,7 @@ export default function OpenHelpsGauge({
                         sx={ {
                             [ `& .${gaugeClasses.valueArc}` ]: { fill: arcColor },
                             [ `& .${gaugeClasses.referenceArc}` ]: {
-                                fill: alpha(theme.palette.text.primary, 0.08),
+                                fill: `rgba(${theme.vars!.palette.text.primaryChannel} / 0.08)`,
                             },
                             [ `& .${gaugeClasses.valueText}` ]: {
                                 fontSize: 13,

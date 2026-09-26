@@ -32,7 +32,7 @@ export default function CollapsableCard({
                 borderRadius: 2.5,
                 border: '1px solid',
                 borderColor: 'divider',
-                boxShadow: (theme) => `0 1px 2px ${theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.35)' : 'rgba(15,23,42,0.06)'}, 0 0 0 1px ${theme.palette.divider}`,
+                boxShadow: (theme) => `0 1px 2px rgba(0,0,0,0.2), 0 0 0 1px ${theme.vars!.palette.divider}`,
             } }
         >
             <Box
@@ -45,7 +45,7 @@ export default function CollapsableCard({
                     gap: 1.25,
                     cursor: 'pointer',
                     userSelect: 'none',
-                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                    bgcolor: (theme) => `rgba(${theme.vars!.palette.text.primaryChannel} / 0.03)`,
                     '&:hover': { bgcolor: 'action.hover' }
                 } }
             >
