@@ -13,7 +13,7 @@
 # loopback address on the host. Joining Hive's network and letting Docker's
 # embedded DNS resolve a container alias has no dependency on host bind
 # addresses or the host hosts file. The alias lives on Hive's container, so it
-# cannot be declared here; scripts/link-hive.sh adds it idempotently:
+# cannot be declared here; link-hive (python -m sb90_deploy link-hive / ./link-hive.sh in a bundle) adds it idempotently:
 #
 #   docker network connect --alias hive.org <hive-net> <hive-nginx-container>
 
@@ -39,6 +39,6 @@ networks:
   hive_net:
     # Compose names Hive's network after the directory it was started from, so
     # it differs by environment: hive-stack_hive-net locally, hive_hive-net in
-    # CI. scripts/link-hive.sh detects it; override with HIVE_NETWORK_NAME.
+    # CI. link-hive detects it; override with HIVE_NETWORK_NAME.
     name: ${HIVE_NETWORK_NAME:-hive-stack_hive-net}
     external: true

@@ -36,12 +36,19 @@ Same layered client/server split as bluz: `api-client` is browser-only (no secre
 `api-server` is server-only (Hive calls, in-memory state), `api-shared` holds types/pure
 utils used by both. Don't cross the boundary — no DB queries here since there's no DB.
 
+## Release bundles
+
+Built by the shared sb90-deploy (System-B90/deploy-py, org `craft-release` action) from
+`deploy/app.json` — add bundle files there, not in `release-pipeline.yml`. The bundle's
+compose file is `deploy/docker-compose.release.yml` (images only, `.env` beside it),
+never the dev `deploy/docker-compose.yml`.
+
 ## Run locally
 
 Route `madash.dev` to `127.0.0.8` in your hosts file, then:
 
 ```bash
-python setup.py
+python scripts/setup.py
 npm install
 npm run dev            # Local Next.js dev server + Dockerized proxy
 ```
@@ -80,7 +87,7 @@ See [`tests/README.md`](tests/README.md) for the test suite's functionality map.
 | `src/api-shared/` | Shared types/contracts, pure utils. No side effects.           |
 | `src/components/` | React UI: `journal`, `system-status-board`, `header`, `theme`. |
 | `session-server/` | Standalone WebSocket server, own `package.json`.               |
-| `scripts/`        | `setup.py` / `ci_setup.py` — env generation for local/CI.      |
+| `scripts/`        | `setup.py` (on sb90-deploy) / `ci_setup.py` — env generation.  |
 | `tests/`          | Vitest backend tests + Playwright e2e specs.                   |
 
 ## Environment variables

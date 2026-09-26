@@ -62,6 +62,25 @@ alongside `npm run dev` � both bind the same proxy ports.
 
 ---
 
+## Deploying a release
+
+Tagged releases publish `madash-online-<tag>.tar.gz` (images pulled from GHCR) and
+`madash-offline-<tag>.tar.gz` (adds `images/*.tar` and vendored Python `wheels/`
+for air-gapped hosts). Both extract into a versionless `madash/`:
+
+```bash
+tar -xzf madash-offline-v1.2.3.tar.gz && cd madash
+./install.sh                                   # Windows: .\install.ps1
+./update.sh --package ../madash-offline-v1.3.0.tar.gz   # later: in-place upgrade
+./link-hive.sh                                 # only if Hive runs on this Docker host
+```
+
+Needs Docker Compose v2 and Python 3.10+ (Ubuntu 22.04's stock `python3`, no
+`python3-venv` needed). The launchers and install/upgrade logic come from the shared
+[sb90-deploy](https://github.com/System-B90/deploy-py), configured by `deploy/app.json`;
+the bundle ships `deploy/docker-compose.release.yml` as its `docker-compose.yml`.
+Re-run the wizard with `python3 bootstrap.py setup`.
+
 ## What it does
 
 - **Journal** — live, running record of the day's status/events.
