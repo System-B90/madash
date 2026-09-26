@@ -223,12 +223,11 @@ export function ServiceStatusTile({
             sx={ {
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap', // Allows internal contents to wrap
                 gap: 1.25,
                 px: 1.5,
-                py: 1, // Slight padding increase to handle vertical stacking gracefully
-                minHeight: 36,
+                py: 1,
+                minWidth: 0,
+                minHeight: 64,
                 borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
@@ -241,54 +240,34 @@ export function ServiceStatusTile({
                 ...rootSx,
             } }
         >
-            {/* Left Side: Text Container */ }
-            <Box
-                sx={ {
-                    flex: '1 1 160px',
-                    minWidth: '160px', // HARD STOP: Forces wrap if the container gets too small
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    flexWrap: 'wrap',
-                    lineHeight: 1.35,
-                } }
-            >
-                { icon }
-                <Typography component="span" variant="body2" fontWeight={ 700 } color="text.primary" sx={ { letterSpacing: '-0.02em' } }>
-                    { label }
-                </Typography>
-                <Typography component="span" variant="caption" color="text.disabled" sx={ { lineHeight: 1, userSelect: 'none', flexShrink: 0 } } aria-hidden>
-                    ·
-                </Typography>
+            {/* Name on top, detail below: the only part that shrinks, so it never pushes the widgets onto a new line. */ }
+            <Box data-testid="tile-text" sx={ { flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.25 } }>
+                <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 } }>
+                    { icon }
+                    <Typography component="span" variant="body2" fontWeight={ 700 } color="text.primary" noWrap sx={ { letterSpacing: '-0.02em' } }>
+                        { label }
+                    </Typography>
+                </Box>
                 <Typography
                     component="span"
                     variant="body2"
                     color="text.secondary"
+                    title={ detail }
                     sx={ {
-                        flex: 1,
-                        minWidth: 0,
-                        fontWeight: 400,
                         fontSize: '0.8125rem',
+                        lineHeight: 1.35,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
+                        overflowWrap: 'anywhere',
                     } }
                 >
                     { detail }
                 </Typography>
             </Box>
 
-            {/* Right Side: Gauge & Icon */ }
-            <Box
-                sx={ {
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.25,
-                    flexShrink: 0,
-                    marginInlineStart: 'auto', // Keeps it at the inline end if it drops to a new line
-                } }
-            >
+            <Box sx={ { display: 'flex', alignItems: 'center', gap: 1.25, flexShrink: 0 } }>
                 { mid }
                 { glyph }
             </Box>

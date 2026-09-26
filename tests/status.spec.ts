@@ -148,4 +148,53 @@ test.describe("System status board", () => {
         expect(Number.isInteger(body.data.waiting) && body.data.waiting >= 0).toBe(true);
         expect(Number.isInteger(body.data.out) && body.data.out >= 0).toBe(true);
     });
+
+    // Regression (#58): on regular HD screens the tiles wrapped their widgets onto a
+    // second line and clipped their text; the layout was only tuned for ultrawide.
+    for (const viewport of [ { width: 1366, height: 768 }, { width: 1600, height: 900 }, { width: 1920, height: 1080 } ])
+    {
+        test(`tiles lay out cleanly at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+            await page.setViewportSize(viewport);
+            await mockServices(page, [
+                { id: "bluz", state: "up", latencyMs: 106, checkedAt: Date.now(), history: history([ 100, 106, 98 ]) },
+                { id: "peekaboo", state: "down", reason: "unreachable", latencyMs: null, checkedAt: Date.now(), history: history([ 40, null ]) },
+            ]);
+            await gotoAppHome(page);
+            for (const id of TILE_IDS) await expect(tile(page, id)).toHaveAttribute("data-state", SETTLED_STATES, { timeout: 30_000 });
+
+            const boxes = [];
+            for (const id of TILE_IDS)
+            {
+                const problems = await tile(page, id).evaluate((el) =>
+                {
+                    const out: string[] = [];
+                    const r = el.getBoundingClientRect();
+                    if (el.scrollWidth > el.clientWidth + 1) out.push("tile overflows horizontally");
+                    for (const child of el.querySelectorAll("*"))
+                    {
+                        const c = child.getBoundingClientRect();
+                        if (c.width === 0 || c.height === 0) continue;
+                        if (c.left < r.left - 1 || c.right > r.right + 1 || c.top < r.top - 1 || c.bottom > r.bottom + 1)
+                            out.push(`child <${child.tagName.toLowerCase()}> spills out of the tile`);
+                    }
+                    // Text block and the widgets/glyph must share one line, not wrap under each other.
+                    const text = el.querySelector("[data-testid=tile-text]")!.getBoundingClientRect();
+                    const side = el.lastElementChild!.getBoundingClientRect();
+                    if (side.top >= text.bottom || text.top >= side.bottom) out.push("widgets wrapped onto their own line");
+                    const label = el.querySelector("[data-testid=tile-text] .MuiTypography-root") as HTMLElement;
+                    if (label.scrollWidth > label.clientWidth + 1) out.push("service name is truncated");
+                    return out;
+                });
+                expect(problems, id).toEqual([]);
+                boxes.push((await tile(page, id).boundingBox())!);
+            }
+
+            // Balanced grid: every row fully used (4 or 2+2), never a lone orphan tile.
+            const rows = new Set(boxes.map((b) => Math.round(b.y)));
+            expect([ 1, 2 ]).toContain(rows.size);
+            const widths = boxes.map((b) => b.width);
+            expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(2);
+            expect(Math.min(...widths)).toBeGreaterThanOrEqual(300);
+        });
+    }
 });

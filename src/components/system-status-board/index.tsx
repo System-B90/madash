@@ -16,6 +16,10 @@ import MonitoredServiceRows, {
 } from '@/components/system-status-board/monitored-service-rows';
 
 const SERVICE_STACK_GAP = 0.625;
+/** Narrowest a tile gets while still fitting label, detail, widget and glyph side by side. */
+const TILE_MIN_PX = 320;
+const TWO_COLUMNS_MIN_PX = TILE_MIN_PX * 2;
+const FOUR_COLUMNS_MIN_PX = TILE_MIN_PX * 4;
 
 export interface BoardData
 {
@@ -41,23 +45,23 @@ export function compactStatuses({ link, hive, services }: BoardData): CompactSer
 function SystemStatusBoardContent({ link, hive, services }: BoardData)
 {
     return (
-        <Box
-            sx={ {
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: SERVICE_STACK_GAP,
-                width: '100%',
-                // This targets the child tiles: grow to fill space, but 
-                // wrap to the next line if the container is smaller than 280px.
-                '& > *': {
-                    flex: '1 1 280px',
-                    minWidth: 0,
-                }
-            } }
-        >
-            <MadashLinkRow link={ link } />
-            <HiveHealthRow hive={ hive } />
-            <MonitoredServiceRows services={ services } />
+        <Box sx={ { containerType: 'inline-size', width: '100%' } }>
+            <Box
+                data-testid="service-tiles"
+                sx={ {
+                    display: 'grid',
+                    gap: SERVICE_STACK_GAP,
+                    // 1 → 2 → 4 columns by the board's own width (never 3+1),
+                    // so every tile keeps room for its text, widget and glyph on one line.
+                    gridTemplateColumns: '1fr',
+                    [ `@container (min-width: ${TWO_COLUMNS_MIN_PX}px)` ]: { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' },
+                    [ `@container (min-width: ${FOUR_COLUMNS_MIN_PX}px)` ]: { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' },
+                } }
+            >
+                <MadashLinkRow link={ link } />
+                <HiveHealthRow hive={ hive } />
+                <MonitoredServiceRows services={ services } />
+            </Box>
         </Box>
     );
 }
