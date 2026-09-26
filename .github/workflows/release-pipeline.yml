@@ -13,6 +13,16 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner environment to execute on'
+        required: false
+        default: 'self-hosted'
+        type: choice
+        options:
+          - self-hosted
+          - github-hosted
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,7 +37,7 @@ env:
 jobs:
   lint:
     name: Lint Codebase
-    runs-on: [self-hosted, node, python]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node", "python"]') }}
     timeout-minutes: 15
     steps:
       - name: Checkout repository
@@ -77,7 +87,7 @@ jobs:
 
   test:
     name: Unit Tests
-    runs-on: [self-hosted, node]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "node"]') }}
     timeout-minutes: 25
     steps:
       - name: Checkout repository
@@ -105,7 +115,7 @@ jobs:
     name: Docker Build and Push
     needs: [lint, test]
     if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, dind]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -202,7 +212,7 @@ jobs:
     name: Craft Release Packages
     needs: build-and-push
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: [self-hosted, dind]
+    runs-on: ${{ (inputs.runner == 'github-hosted' || vars.CI_RUNNER == 'github-hosted') && 'ubuntu-latest' || fromJSON('["self-hosted", "Linux", "dind"]') }}
     timeout-minutes: 45
     permissions:
       contents: write
@@ -219,16 +229,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Shared with Bluz and peek-a-boo via sb90-deploy, driven by
-      # deploy/app.json. This used to ship deploy/docker-compose.yml — the dev
-      # file, which builds from ../ and reads ../.env — as the bundle's compose
-      # file, with no VERSION, update or link-hive; the bundles now carry
-      # docker-compose.release.yml and the full install/update/link-hive set.
-      - name: Craft release bundles
-        uses: System-B90/.github/actions/craft-release@main
-        with:
-          tag: ${{ github.ref_name }}
-          out: .
+      - name: Prepare Workspace
+        run: |
+          mkdir -p release-online/images
+          mkdir -p release-offline/images
+
+          # Copy deployment scripts into both bundles
+          cp scripts/install.sh deploy/docker-compose.yml scripts/setup.py scripts/requirements.txt release-online/
+          cp scripts/install.sh deploy/docker-compose.yml scripts/setup.py scripts/requirements.txt release-offline/
+
+          # Export Offline Images
+        run: |
+          TAG_NAME=${{ github.ref_name }}
+
+          echo "Pulling freshly built images..."
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME
+
+          echo "Saving images to flat archives..."
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_UI }}:$TAG_NAME -o release-offline/images/madash-ui.tar
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SESSIONS }}:$TAG_NAME -o release-offline/images/madash-sessions.tar
+          docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PROXY }}:$TAG_NAME -o release-offline/images/madash-proxy.tar
+
+      - name: Compress Final Packages
+        run: |
+          tar -czvf madash-online-${{ github.ref_name }}.tar.gz -C release-online .
+          tar -czvf madash-offline-${{ github.ref_name }}.tar.gz -C release-offline .
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
