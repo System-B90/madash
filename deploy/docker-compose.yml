@@ -6,8 +6,8 @@ services:
     build:
       context: ../
       dockerfile: Dockerfile
-      args:
-        NPM_TOKEN: ${NPM_TOKEN}
+      secrets:
+        - npm_token
     container_name: madash-ui
     restart: unless-stopped
     env_file:
@@ -38,8 +38,8 @@ services:
     build:
       context: ../session-server
       dockerfile: Dockerfile.websocket
-      args:
-        NPM_TOKEN: ${NPM_TOKEN}
+      secrets:
+        - npm_token
     container_name: madash-sessions
     restart: unless-stopped
     env_file:
@@ -84,3 +84,8 @@ services:
 networks:
   madash_net:
     driver: bridge
+
+secrets:
+  # Build-time only; scripts/with-npm-token.sh exports NPM_TOKEN (falls back to `gh auth token`).
+  npm_token:
+    environment: NPM_TOKEN

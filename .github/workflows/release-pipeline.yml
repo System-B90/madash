@@ -147,7 +147,8 @@ jobs:
           labels: ${{ steps.meta-ui.outputs.labels }}
           build-args: |
             WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY=ci_build_placeholder
-            NPM_TOKEN=${{ secrets.ACCESS_TOKEN }}
+          secrets: |
+            npm_token=${{ secrets.ACCESS_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -170,8 +171,8 @@ jobs:
           push: ${{ startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta-sessions.outputs.tags }}
           labels: ${{ steps.meta-sessions.outputs.labels }}
-          build-args: |
-            NPM_TOKEN=${{ secrets.ACCESS_TOKEN }}
+          secrets: |
+            npm_token=${{ secrets.ACCESS_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
