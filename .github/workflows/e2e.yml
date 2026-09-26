@@ -64,6 +64,9 @@ jobs:
           NEXT_PUBLIC_HIVE_URL: https://hive.org
           NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST: madash.dev
           NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT: "443"
+          # Route modules assert it at import during page-data collection. A
+          # build-only placeholder; the server uses the one ci_setup writes.
+          NEXTAUTH_SECRET: build-placeholder-not-used-at-runtime
 
       # ── Shared Hive: exclusive, reset, 25-minute budget ──────────────
       - name: Acquire shared Hive
