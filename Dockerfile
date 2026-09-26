@@ -1,13 +1,23 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# GitHub Packages read token for @system-b90/* (npm resolves ${NPM_TOKEN} from env)
-ARG NPM_TOKEN
-ENV NPM_TOKEN=${NPM_TOKEN}
-
+# GitHub Packages read token for @system-b90/* arrives as a BuildKit secret
+# (`npm_token`), never as ARG/ENV, so it can't land in image config, layers or
+# provenance. .npmrc resolves ${NPM_TOKEN} from the env of this one command.
 COPY package.json package-lock.json .npmrc ./
-RUN npm ci --ignore-scripts
+RUN --mount=type=cache,target=/root/.npm     --mount=type=secret,id=npm_token     NPM_TOKEN="$(cat /run/secrets/npm_token)" npm ci --ignore-scripts
+
+# Hot-reload target for `npm run docker:dev`: full deps + source, Next dev server.
+# Source is kept fresh by `docker compose watch` (see deploy/docker-compose.dev.yml).
+FROM deps AS dev
+WORKDIR /app
+COPY . .
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+EXPOSE 3000
+CMD ["npm", "run", "next:dev"]
 
 FROM node:22-alpine AS builder
 WORKDIR /app

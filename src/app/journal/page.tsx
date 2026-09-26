@@ -24,25 +24,29 @@ const JournalPage: React.FC = () => {
   const theme = useTheme();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [journal, setJournal] = useState<Journal | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadedDate, setLoadedDate] = useState<Dayjs | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchJournal = async (date: Dayjs) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const dateStr = date.toISOString().split('T')[0];
-      const data = await apiGetJournal(dateStr);
-      setJournal(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = loadedDate !== selectedDate;
 
   useEffect(() => {
-    fetchJournal(selectedDate);
+    let cancelled = false;
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    apiGetJournal(dateStr)
+      .then((data) => {
+        if (cancelled) return;
+        setJournal(data);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      })
+      .finally(() => {
+        if (!cancelled) setLoadedDate(selectedDate);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedDate]);
 
   const handleNameChange = async (name: string) => {

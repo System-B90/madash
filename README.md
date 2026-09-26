@@ -48,7 +48,17 @@ npm run lint           # ESLint (lint:fix to autofix)
 npm run test:unit      # Vitest
 npm run test:e2e       # Playwright (test:e2e:ui for the UI runner)
 npm run docker:dev     # Full dev stack in Docker (hot-reload)
+npm run docker:dev:rebuild  # Same, but rebuilds the images first (needs NPM_TOKEN)
 ```
+
+`docker:dev` runs `ui` (Next dev server), `sessions` and the proxy in Docker with source
+synced into the containers (`docker compose watch`; `package.json` changes trigger a
+rebuild). It serves on `127.0.0.8` (override with `MADASH_PROXY_BIND_IP`), needs
+`ssl/cert.pem` + `ssl/key.pem` from `python setup.py`, `NPM_TOKEN` in the environment (defaults to `gh auth token`; passed to the build as a BuildKit secret, never baked into images), and a running Hive stack: `ui` joins Hive's Docker network so `hive.org`
+resolves in-container (`HIVE_NETWORK_NAME`, default `hive-stack_hive-net`). If `hive.org` doesn't resolve
+there, `npm run docker:link-hive` finds Hive's network, persists `HIVE_NETWORK_NAME` to `.env`,
+aliases `hive.org` onto Hive's nginx and re-ups the stack (overlay: `deploy/docker-compose.hive-local.yml`). Don't run it
+alongside `npm run dev` � both bind the same proxy ports.
 
 ---
 

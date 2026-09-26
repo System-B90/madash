@@ -128,7 +128,7 @@ describe("sso callbacks", () => {
                 token: existingToken,
                 user: undefined,
                 account: null,
-            } as JwtArgs);
+            } as unknown as JwtArgs);
 
             expect(token).toBe(existingToken);
             expect(globalThis.fetch).not.toHaveBeenCalled();

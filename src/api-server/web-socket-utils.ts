@@ -6,7 +6,7 @@ import {
 } from "@/settings";
 
 const isServer = typeof window === 'undefined';
-const TARGET_WS_URL = isServer ? 'ws://ws:28199' : NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING;
+const TARGET_WS_URL = isServer ? 'ws://sessions:28199' : NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING;
 
 let sharedWs: WebSocket | null = null;
 const messageQueue: Array<{ payload: string; resolve: () => void; reject: (error: unknown) => void; }> = [];
