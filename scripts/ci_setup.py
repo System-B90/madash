@@ -48,6 +48,10 @@ HIVE_CLIENT_ID={hive_client_id}
 HIVE_CLIENT_SECRET={hive_client_secret}
 
 HIVE_PROMETHEUS_URL={hive_url}/prometheus
+
+# Sibling services on the status board; unset in CI (tiles show "not configured").
+BLUZ_URL=
+PEEKABOO_URL=
 """
     Path(".env").write_text(env_content, encoding="utf-8")
     print("Created .env file for CI environment successfully.")

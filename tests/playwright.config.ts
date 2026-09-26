@@ -1,4 +1,3 @@
-import * as path from "path";
 import { devices } from "@playwright/test";
 import { definePlaywrightConfig } from "@system-b90/test-kit/playwright";
 import { AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
@@ -50,7 +49,7 @@ export default definePlaywrightConfig({
             testIgnore: [ /login\.spec\.ts/, /auth\.setup\.ts/, /backend/, /worktrees/, /\.claude/ ],
             use: {
                 ...devices[ "Desktop Chrome" ],
-                storageState: path.join(__dirname, AUTH_STATE_PATH),
+                storageState: AUTH_STATE_PATH,
             },
             dependencies: [ "setup" ],
         },

@@ -4,7 +4,8 @@ import { expect, Page, test as setup } from "@playwright/test";
 import { hiveLogin, AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
 import { SELECTORS } from "./fixtures";
 
-const AUTH_FILE = path.join(__dirname, AUTH_STATE_PATH);
+// Already absolute (resolved from the repo root); joining it onto __dirname broke on Windows.
+const AUTH_FILE = AUTH_STATE_PATH;
 
 async function tryGoto(
     page: Page,
