@@ -178,10 +178,10 @@ test.describe("System status board", () => {
                             out.push(`child <${child.tagName.toLowerCase()}> spills out of the tile`);
                     }
                     // Text block and the widgets/glyph must share one line, not wrap under each other.
-                    const text = el.querySelector("[data-testid=tile-text]")!.getBoundingClientRect();
+                    const text = el.firstElementChild!.getBoundingClientRect();
                     const side = el.lastElementChild!.getBoundingClientRect();
                     if (side.top >= text.bottom || text.top >= side.bottom) out.push("widgets wrapped onto their own line");
-                    const label = el.querySelector("[data-testid=tile-text] .MuiTypography-root") as HTMLElement;
+                    const label = el.querySelector(".MuiTypography-root") as HTMLElement;
                     if (label.scrollWidth > label.clientWidth + 1) out.push("service name is truncated");
                     return out;
                 });
