@@ -1,4 +1,4 @@
-import { LatencyWindow } from '@/api-server/service-health/latency-window';
+import { LatencyHistory, LatencyWindow } from '@/api-server/service-health/latency-window';
 import { DEFAULT_PROBE_TIMEOUT_MS, probeHealthUrl } from '@/api-server/service-health/probe';
 import { healthUrlFor, MONITORED_SERVICES, type MonitoredServiceDefinition } from '@/api-server/service-health/registry';
 import type { ServiceHealth } from '@/api-shared/service-health';
@@ -35,7 +35,7 @@ export function defaultMonitorOptions(): ServiceHealthMonitorOptions
  */
 export class ServiceHealthMonitor
 {
-    private readonly windows = new Map<string, LatencyWindow>();
+    private readonly trackers = new Map<string, { window: LatencyWindow; history: LatencyHistory; }>();
     private cached: { at: number; result: ServiceHealth[]; } | null = null;
     private inFlight: Promise<ServiceHealth[]> | null = null;
 
@@ -60,23 +60,25 @@ export class ServiceHealthMonitor
         return this.inFlight;
     }
 
-    private windowFor(id: string): LatencyWindow
+    private trackerFor(id: string)
     {
-        let w = this.windows.get(id);
-        if (!w) this.windows.set(id, w = new LatencyWindow());
-        return w;
+        let t = this.trackers.get(id);
+        if (!t) this.trackers.set(id, t = { window: new LatencyWindow(), history: new LatencyHistory() });
+        return t;
     }
 
     private async check(def: MonitoredServiceDefinition): Promise<ServiceHealth>
     {
         const url = healthUrlFor(def);
         const checkedAt = this.options.now();
-        if (!url) return { id: def.id, state: 'unconfigured', latencyMs: null, checkedAt };
+        if (!url) return { id: def.id, state: 'unconfigured', latencyMs: null, checkedAt, history: [] };
 
-        const window = this.windowFor(def.id);
+        const { window, history } = this.trackerFor(def.id);
         const probe = await probeHealthUrl(url, def.interpret, this.options.timeoutMs);
+        const failed = !probe.reached || probe.verdict.state === 'down';
+        history.push({ at: checkedAt, latencyMs: failed ? null : probe.latencyMs });
 
-        if (!probe.reached || probe.verdict.state === 'down')
+        if (failed)
         {
             // A recovered service should be judged on fresh samples, not pre-outage ones.
             window.clear();
@@ -87,12 +89,13 @@ export class ServiceHealthMonitor
                 reason: probe.verdict.checks ? 'dependency' : 'unreachable',
                 checks: probe.verdict.checks,
                 checkedAt,
+                history: history.snapshot(),
             };
         }
 
         window.push(probe.latencyMs);
         const latencyMs = window.median();
-        const base = { id: def.id, latencyMs, checks: probe.verdict.checks, checkedAt };
+        const base = { id: def.id, latencyMs, checks: probe.verdict.checks, checkedAt, history: history.snapshot() };
 
         if (probe.verdict.state === 'degraded') return { ...base, state: 'degraded', reason: 'dependency' };
         if (latencyMs !== null && latencyMs >= this.options.degradedLatencyMs) return { ...base, state: 'degraded', reason: 'slow' };

@@ -18,6 +18,13 @@ export type ServiceHealthReason =
     /** Non-2xx, timeout, or network failure. */
     | 'unreachable';
 
+/** One probe on the latency-over-time graph; `latencyMs: null` = unreachable (a gap). */
+export interface LatencySample
+{
+    at: number;
+    latencyMs: number | null;
+}
+
 export interface ServiceHealth
 {
     id: MonitoredServiceId;
@@ -29,6 +36,8 @@ export interface ServiceHealth
     checks?: Record<string, 'up' | 'degraded' | 'down'>;
     /** Epoch ms of the probe this result is based on. */
     checkedAt: number;
+    /** Recent probes, oldest first, for the latency-over-time graph. */
+    history: LatencySample[];
 }
 
 /** Response from GET /api/status/services */

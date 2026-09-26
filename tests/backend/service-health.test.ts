@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LatencyWindow } from "@/api-server/service-health/latency-window";
+import { RingBuffer } from "@/api-shared/ring-buffer";
+import { LatencyHistory, LatencyWindow } from "@/api-server/service-health/latency-window";
 import { ServiceHealthMonitor, type ServiceHealthMonitorOptions } from "@/api-server/service-health/monitor";
 import { livenessInterpreter, probeHealthUrl } from "@/api-server/service-health/probe";
 import { bluzInterpreter, type MonitoredServiceDefinition } from "@/api-server/service-health/registry";
@@ -12,6 +13,23 @@ function jsonResponse(status: number, body: unknown)
 
 const BLUZ: MonitoredServiceDefinition = { id: "bluz", baseUrlEnv: "BLUZ_URL", healthPath: "/api/health", interpret: bluzInterpreter };
 const PAB: MonitoredServiceDefinition = { id: "peekaboo", baseUrlEnv: "PEEKABOO_URL", healthPath: "/api/health", interpret: livenessInterpreter };
+
+describe("RingBuffer", () => {
+    it("overwrites the oldest item once full, keeping capacity fixed", () => {
+        const r = new RingBuffer<number>(3);
+        for (let i = 1; i <= 7; i++) r.push(i);
+        expect(r.size).toBe(3);
+        expect(r.toArray()).toEqual([ 5, 6, 7 ]);
+        r.clear();
+        expect(r.toArray()).toEqual([]);
+        r.push(9);
+        expect(r.toArray()).toEqual([ 9 ]);
+    });
+
+    it("rejects a non-positive capacity", () => {
+        expect(() => new RingBuffer(0)).toThrow(RangeError);
+    });
+});
 
 describe("LatencyWindow", () => {
     it("returns null when empty and the median otherwise", () => {
@@ -29,6 +47,14 @@ describe("LatencyWindow", () => {
         const w = new LatencyWindow(4);
         [ 10, 20, 30, 40 ].forEach((n) => w.push(n));
         expect(w.median()).toBe(25);
+    });
+});
+
+describe("LatencyHistory", () => {
+    it("keeps the newest samples, oldest first", () => {
+        const h = new LatencyHistory(2);
+        h.push({ at: 1, latencyMs: 10 }); h.push({ at: 2, latencyMs: null }); h.push({ at: 3, latencyMs: 30 });
+        expect(h.snapshot()).toEqual([ { at: 2, latencyMs: null }, { at: 3, latencyMs: 30 } ]);
     });
 });
 
@@ -114,6 +140,18 @@ describe("ServiceHealthMonitor", () => {
         vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("timeout"));
         const [ pab ] = await new ServiceHealthMonitor([ PAB ], options()).getAll();
         expect(pab).toMatchObject({ state: "down", reason: "unreachable", latencyMs: null });
+    });
+
+    it("records every probe in the history, outages as gaps", async () => {
+        const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(jsonResponse(200, {}));
+        const monitor = new ServiceHealthMonitor([ PAB ], options({ cacheTtlMs: 0 }));
+        await monitor.getAll();
+        fetchSpy.mockRejectedValueOnce(new Error("down"));
+        clock = 1;
+        const [ pab ] = await monitor.getAll();
+        expect(pab.history).toHaveLength(2);
+        expect(pab.history[ 0 ].latencyMs).not.toBeNull();
+        expect(pab.history[ 1 ]).toEqual({ at: 1, latencyMs: null });
     });
 
     it("marks a service reporting a degraded dependency as degraded", async () => {
