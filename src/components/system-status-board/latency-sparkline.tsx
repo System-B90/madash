@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, type Theme, useTheme } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 
 import type { LatencySample } from '@/api-shared/service-health';
@@ -11,15 +11,24 @@ const SPARKLINE_H = 30;
 
 const PROBE_TIME_FORMAT = new Intl.DateTimeFormat('he-IL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-function strokeFor(state: TileState, theme: Theme): string
+/** Palette key for the line: it follows the tile's state so the graph and glyph agree. */
+export function sparklinePaletteKey(state: TileState): 'error' | 'warning' | 'success'
 {
     switch (state)
     {
-        case 'down': return theme.palette.error.main;
-        case 'degraded': return theme.palette.warning.main;
-        default: return theme.palette.success.main;
+        case 'down': return 'error';
+        case 'degraded': return 'warning';
+        default: return 'success';
     }
 }
+
+/** Chart series from probe history; unreachable probes stay null so the line breaks there. */
+export function sparklineSeries(history: LatencySample[]): { data: (number | null)[]; times: number[]; }
+{
+    return { data: history.map((s) => s.latencyMs), times: history.map((s) => s.at) };
+}
+
+export const formatProbeTime = (at: number) => PROBE_TIME_FORMAT.format(at);
 
 /**
  * Latency over time for one service. Unreachable probes (`latencyMs: null`) break
@@ -29,17 +38,18 @@ export default function LatencySparkline({ history, state }: { history: LatencyS
 {
     const theme = useTheme();
     if (history.length < 2) return null;
+    const { data, times } = sparklineSeries(history);
 
     return (
         <Box sx={ { width: SPARKLINE_W, height: SPARKLINE_H, flexShrink: 0, direction: 'ltr' } } data-testid="latency-sparkline">
             <SparkLineChart
                 // Nulls are gaps at runtime; the prop is typed number[] only.
-                data={ history.map((s) => s.latencyMs) as number[] }
-                xAxis={ { data: history.map((s) => s.at), valueFormatter: (at: number) => PROBE_TIME_FORMAT.format(at) } }
+                data={ data as number[] }
+                xAxis={ { data: times, valueFormatter: formatProbeTime } }
                 yAxis={ { min: 0 } }
                 width={ SPARKLINE_W }
                 height={ SPARKLINE_H }
-                color={ strokeFor(state, theme) }
+                color={ theme.palette[ sparklinePaletteKey(state) ].main }
                 curve="linear"
                 area
                 showTooltip
