@@ -2,11 +2,10 @@ name: E2E Tests
 
 on:
   workflow_dispatch:
-  # Master only, deliberately. This suite boots a full Hive stack on the
-  # org's single self-hosted box and runs for the best part of an hour.
-  # Per-pull-request runs spent that shared box on branches that get
-  # force-pushed and rebased, while three other repos queued behind it.
-  # Use workflow_dispatch to run it against a branch on purpose.
+  # Master only. Runs against the persistent shared Hive (see
+  # System-B90/.github CLAUDE.md, "Shared persistent Hive"): one job at a time
+  # across the org, 25 minutes each, so keep this suite small and
+  # non-destructive. Use workflow_dispatch to run it against a branch.
   push:
     branches: [master]
     tags: ["v*"]
@@ -15,13 +14,19 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: read
+  # shared-hive-acquire cancels this run if it holds Hive past 25 minutes.
+  actions: write
+
 jobs:
   e2e:
-    name: Full E2E Tests (with Hive SSO)
-    # The org is out of GitHub-hosted Actions minutes — everything runs on the
-    # self-hosted pool.
-    runs-on: [self-hosted, dind]
-    timeout-minutes: 45
+    name: E2E Tests (shared Hive)
+    runs-on: [self-hosted, shared-hive]
+    # Build (before the lock) + queueing for the lock + the 25m Hive budget.
+    # The budget itself is enforced by shared-hive-acquire.
+    timeout-minutes: 75
     env:
       NPM_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
@@ -29,30 +34,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-
-      # ── Hive (SSO identity provider + organizational data) ────────────
-      # Shared org action: disk cleanup, token verify, Hive checkout,
-      # commit-keyed image cache (or registry pull once Hive publishes
-      # images), boot + init, readiness check. Hive repo/ref defaults
-      # live in the action — one place to update for all consumer repos.
-      - name: Set up Hive
-        uses: System-B90/.github/actions/setup-hive@main
-        with:
-          hive-token: ${{ secrets.CLASSIC_ACCESS_TOKEN || secrets.HIVE_REPO_TOKEN || secrets.ACCESS_TOKEN }}
-          image-source: registry
-          extra-hosts: 127.0.0.8 madash.dev
-
+      # ── Everything slow happens before taking the shared Hive ─────────
       - name: Install Python dependencies
         run: pip install -r scripts/requirements.txt
-
-      - name: Verify Hive admin login via pyhive
-        run: |
-          python - <<'PY'
-          from pyhive import HiveClient
-
-          with HiveClient("admin", "Password1", "https://hive.org", verify=False, timeout=30) as client:
-              print("Hive admin login OK. API version:", client.get_hive_version())
-          PY
 
       # ── Madash environment & local stack ──────────────────────────────
       - name: Generate self-signed SSL certificates
@@ -66,15 +50,27 @@ jobs:
         with:
           node-version: "22"
 
+      # NEXT_PUBLIC_* values are inlined at build time and are fixed, so the
+      # build needs no Hive. SSO credentials are generated after acquiring it.
+      - name: Build Next.js app
+        run: npm run build
+        env:
+          NEXT_PUBLIC_HIVE_URL: https://hive.org
+          NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_HOST: madash.dev
+          NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_PORT: "443"
+
+      # ── Shared Hive: exclusive, reset, 25-minute budget ──────────────
+      - name: Acquire shared Hive
+        uses: System-B90/.github/actions/shared-hive-acquire@main
+
       - name: Register SSO and generate .env
         run: python scripts/ci_setup.py
 
       # `npm run session:start`/`next start` are plain host processes, not
       # docker-composed — they don't auto-load `.env` the way `next build`
-      # does (Next has built-in dotenv support; tsx/session-server doesn't).
-      # Promote every generated var to the job environment so every later
-      # step (including the session server, which hard-asserts on
-      # WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY) actually sees it.
+      # does. Promote every generated var to the job environment so later
+      # steps (including the session server, which hard-asserts on
+      # WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY) actually see it.
       - name: Export generated .env into the job environment
         run: |
           while IFS='=' read -r key value; do
@@ -82,19 +78,13 @@ jobs:
             echo "$key=$value" >> "$GITHUB_ENV"
           done < .env
 
-      - name: Build Next.js app
-        run: npm run build
-
       - name: Start WebSocket session server
         run: npm run session:start &
 
       - name: Start Next.js server
         run: npm run start &
 
-      # Hive's own nginx container binds 0.0.0.0:80/443, which reserves those
-      # ports on every local address — including 127.0.0.8 — so the Madash
-      # proxy can't also bind :80/:443 without a host-level conflict. Use
-      # distinct host ports here instead of fighting over 80/443.
+      # Kept off :80/:443 so it can never contend with Hive's nginx.
       - name: Start Nginx proxy
         run: |
           MADASH_PROXY_BIND_IP=127.0.0.8 MADASH_PROXY_HTTP_PORT=8080 MADASH_PROXY_HTTPS_PORT=8443 \
@@ -102,13 +92,13 @@ jobs:
 
       - name: Wait for Madash to be ready
         run: |
-          for i in $(seq 1 90); do
+          for i in $(seq 1 60); do
             code=$(curl -ks -o /dev/null -w "%{http_code}" https://madash.dev:8443/ || true)
             if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then
               echo "Madash is up (HTTP $code)"
               exit 0
             fi
-            echo "Attempt $i/90 - Madash not ready yet (HTTP $code), waiting 5s..."
+            echo "Attempt $i/60 - Madash not ready yet (HTTP $code), waiting 5s..."
             sleep 5
           done
           echo "::error::Madash failed to become ready in time"
@@ -120,6 +110,33 @@ jobs:
         env:
           CI: true
           BASE_URL: https://madash.dev:8443
+
+      - name: Dump Container Logs
+        if: failure()
+        run: |
+          mkdir -p container-logs
+          for c in $(docker ps -aq --filter "name=^/madash-") $(docker ps -aq --filter "name=^/hive-core$"); do
+            name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
+            docker logs "$c" > "container-logs/$name.log" 2>&1 || true
+          done
+          # Dump proxy logs to stdout for quick diagnosis
+          echo "::group::Proxy logs"
+          docker logs madash-proxy-local || true
+          echo "::endgroup::"
+
+      # Stop the app before releasing, so nothing talks to Hive while it is
+      # reset. Only this app's stack — never prune here: the shared Hive's
+      # containers are briefly stopped during a reset and a container prune
+      # would delete them.
+      - name: Stop Madash
+        if: always()
+        # The host Next/session processes are reaped by the runner at job end;
+        # no pkill — other jobs on this host run as the same user.
+        run: docker compose -f deploy/docker-compose.local.yml down -v --remove-orphans || true
+
+      - name: Release shared Hive
+        if: always()
+        uses: System-B90/.github/actions/shared-hive-release@main
 
       # ── Artifacts ──────────────────────────────────────────────────────
       - name: Upload Playwright Report
@@ -138,20 +155,6 @@ jobs:
           path: test-results/
           retention-days: 7
 
-      - name: Dump Container Logs
-        if: failure()
-        run: |
-          mkdir -p container-logs
-          docker ps -a
-          for c in $(docker ps -aq); do
-            name=$(docker inspect --format '{{.Name}}' "$c" | tr -d '/')
-            docker logs "$c" > "container-logs/$name.log" 2>&1 || true
-          done
-          # Dump proxy logs to stdout for quick diagnosis
-          echo "::group::Proxy logs"
-          docker logs madash-proxy-local || true
-          echo "::endgroup::"
-
       - name: Upload Container Logs
         uses: actions/upload-artifact@v6
         if: failure()
@@ -159,25 +162,3 @@ jobs:
           name: container-logs
           path: container-logs/
           retention-days: 7
-
-      # ── Release the shared box ─────────────────────────────────────────
-      # Runs even when the tests fail: otherwise a dead Hive stack occupies the
-      # shared runner until the next job happens to clear it
-      # (System-B90/.github#12). Best-effort throughout — cleanup must not turn
-      # a green run red.
-      - name: Tear down Hive and reclaim disk
-        if: always()
-        run: |
-          # Best-effort: GitHub runs this under `bash -e`, where a bare
-          # command substitution from a dead docker daemon would abort the
-          # step before `exit 0`. Cleanup must never fail the job.
-          set +e
-          docker compose -f deploy/docker-compose.local.yml down -v --remove-orphans || true
-          docker compose -f hive/docker-compose.yaml down -v --remove-orphans || true
-          leftovers=$(docker ps -aq --filter "name=^/hive-")
-          if [ -n "$leftovers" ]; then docker rm -f $leftovers || true; fi
-          docker container prune -f || true
-          docker volume prune -f || true
-          docker builder prune -f --keep-storage 10GB || true
-          df -h / || true
-          exit 0
