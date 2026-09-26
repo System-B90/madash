@@ -14,7 +14,7 @@ test.describe("Journal Integration", () => {
         await expect(page.getByText('יומן מדר"ת')).toBeVisible();
 
         // Verify date navigator is rendered (look for date navigation button or input)
-        const prevButton = page.locator("button:has-text('יום קודם'), button:has(svg[data-testid='ArrowBackIcon']), button:has(svg[data-testid='ChevronRightIcon'])").first();
+        const prevButton = page.locator("button:has(svg[data-testid='ChevronLeftIcon']), button:has(svg[data-testid='ChevronRightIcon'])").first();
         await expect(prevButton).toBeVisible();
     });
 
