@@ -6,6 +6,7 @@ import { Box } from '@mui/material';
 import CollapsableCard from '@/components/collapsable-card';
 import HiveHealthRow from '@/components/system-status-board/hive-health-row';
 import MadashLinkRow from '@/components/system-status-board/madash-link-row';
+import MonitoredServiceRows from '@/components/system-status-board/monitored-service-rows';
 
 const SERVICE_STACK_GAP = 0.625;
 
@@ -28,6 +29,7 @@ function SystemStatusBoardContent()
         >
             <MadashLinkRow />
             <HiveHealthRow />
+            <MonitoredServiceRows />
         </Box>
     );
 }
