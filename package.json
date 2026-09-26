@@ -49,6 +49,8 @@
     "notistack": "^3.0.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "stylis": "4.2.0",
     "stylis-plugin-rtl": "^2.1.1",
     "ws": "^8.18.2"
