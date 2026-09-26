@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { RingBuffer } from '@/api-shared/ring-buffer';
+import type { LatencySample } from '@/api-shared/service-health';
 import { useAuth } from '@/components/auth-provider';
 import { MessageHandlerType } from '@/components/session-ws';
+import LatencySparkline from '@/components/system-status-board/latency-sparkline';
 import { ServiceHealthTile, ServiceIcon, type TileState } from '@/components/system-status-board/shared-ui';
 import { MessageTypes } from '@/settings';
 
@@ -12,6 +15,9 @@ const DEGRADED_SILENCE_MS = 2000;
 const DOWN_SILENCE_MS = 5000;
 /** Round-trip at/above which the live link counts as slow even while pongs keep arriving. */
 const DEGRADED_RTT_MS = 1000;
+/** One sample per 5 pings → the graph spans the last ~5 minutes. */
+const HISTORY_EVERY_N_TICKS = 5;
+const HISTORY_CAPACITY = 60;
 
 export function madashLinkState(silenceMs: number, rttMs: number | null): TileState
 {
@@ -35,6 +41,9 @@ export default function MadashLinkRow()
     const lastPongAt = useRef(0);
     const lastPingAt = useRef<number | null>(null);
     const lastRtt = useRef<number | null>(null);
+    const historyBuffer = useRef(new RingBuffer<LatencySample>(HISTORY_CAPACITY));
+    const tickCount = useRef(0);
+    const [ history, setHistory ] = useState<LatencySample[]>([]);
     const { addMessageHandler, sendMessage, ws } = useAuth();
 
     const onPong = useCallback<MessageHandlerType>((messageType) =>
@@ -63,7 +72,13 @@ export default function MadashLinkRow()
                 lastPingAt.current ??= Date.now();
                 sendMessage({ type: MessageTypes.PING });
             }
-            setState(madashLinkState(Date.now() - lastPongAt.current, lastRtt.current));
+            const next = madashLinkState(Date.now() - lastPongAt.current, lastRtt.current);
+            setState(next);
+            if (tickCount.current++ % HISTORY_EVERY_N_TICKS === 0)
+            {
+                historyBuffer.current.push({ at: Date.now(), latencyMs: next === 'down' ? null : lastRtt.current });
+                setHistory(historyBuffer.current.toArray());
+            }
         };
         tick();
         const interval = setInterval(tick, PING_INTERVAL_MS);
@@ -82,6 +97,7 @@ export default function MadashLinkRow()
             state={ state }
             detail={ MADASH_DETAIL[ state ] }
             latencyMs={ rttMs }
+            mid={ <LatencySparkline history={ history } state={ state } /> }
         />
     );
 }

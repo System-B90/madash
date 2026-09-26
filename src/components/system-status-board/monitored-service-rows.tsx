@@ -7,6 +7,7 @@ import {
     type ServiceHealth,
     type ServicesHealthResponse,
 } from '@/api-shared/service-health';
+import LatencySparkline from '@/components/system-status-board/latency-sparkline';
 import { DEFAULT_STATE_DETAIL, ServiceHealthTile, ServiceIcon } from '@/components/system-status-board/shared-ui';
 import { usePolling } from '@/components/system-status-board/use-polling';
 
@@ -57,7 +58,7 @@ function checksTooltip(health: ServiceHealth): string | undefined
 function allDown(): ServicesHealthResponse
 {
     const checkedAt = Date.now();
-    return MONITORED_SERVICE_IDS.map((id) => ({ id, state: 'down', latencyMs: null, reason: 'unreachable', checkedAt }));
+    return MONITORED_SERVICE_IDS.map((id) => ({ id, state: 'down', latencyMs: null, reason: 'unreachable', checkedAt, history: [] }));
 }
 
 export default function MonitoredServiceRows()
@@ -81,6 +82,7 @@ export default function MonitoredServiceRows()
                     detail={ describe(health) }
                     latencyMs={ health.latencyMs }
                     glyphTitle={ checksTooltip(health) }
+                    mid={ <LatencySparkline history={ health.history } state={ health.state } /> }
                 />
             )
             : <ServiceHealthTile key={ id } { ...common } state="loading" />;
