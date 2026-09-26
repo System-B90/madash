@@ -1,0 +1,63 @@
+{
+  "cookies": [
+    {
+      "name": "__Host-next-auth.csrf-token",
+      "value": "fcf5001f31d5859953e22a5528a4f0052043739c76ca9a4bba8da719175d4fe4%7C1cf701cb1630e537eac9c6b328a9080761fb9f1283166ef41c8d7df1df5b893e",
+      "domain": "madash.dev",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__Secure-next-auth.callback-url",
+      "value": "https%3A%2F%2Fmadash.dev%2F",
+      "domain": "madash.dev",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzkxMDU2MjQzLCJpYXQiOjE3OTA0NTYyNDMsImp0aSI6IjMxN2EzM2Q2MDNiNzRhY2FiNmJhZjhjZTBiZDViMDcxIiwidXNlcm5hbWUiOiJhZG1pbiIsImNsZWFyYW5jZSI6NSwicHJvZ3JhbSI6bnVsbCwidXNlcl9pZCI6OH0.IW6GdrDHOo02p12jODnZd7fH9tNS8NM9snwxar6gGF0",
+      "domain": "hive.org",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__Secure-next-auth.session-token",
+      "value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..DSnWin9nX3bhSkDB.ZxkNQvhcHrTz0d5zb9V8d_mzUP7kLR0IbWw7x7DASvV7ckxQfLp4yoTqTmgwgAehBcoMUTScOHaM0G61E_JabdSRF02Qo_yPN_hRuYXeES-GhlObtu6qfdEPTCGv8_LdC5j1mrbM8YSNvPIARvGXFubKvOimTxNez0LIt_1zr0HVPmC3BbJPC0flCV00d2EHteoPAjpjBLaJ5rTwStIRkKYwkkpILjHAvtbntLlYMbqMnw7P6jamryfvnAzGya3sdKHRgVnBERcbuRYt8FxuGXFmY4tYY01oEffpF4WjhhdFHRsVgP9Ws2es-3rY8ERp2XixqELXKkFCpNToOuPY954ufhXoLRzbZxoD3knj0zMo75t4WholSaGcK5jTuKjhxTfqCKAos9tSyZKxFCV0OYq4mGHctiVfkkWa00CxhjkcKQGJu_K7OXPxx4iJ5T7KtHc0pA3Dmn-U9Gctmhf8YTURhvIO--bje3iFZx-b71EP0KFGGV4OaJxHZAa96JJ_ljs2Xxx0XqiusB7ncziWXm_jrpi1awNkyzJfQxPIHLj_RGv0Ex4cE_hzOYEl-jfLZ2ku91MMio88TeEtJHGxzgKOnxW6zqSRJjjiM0Faza0Sa0maIo08Vfdt12rllYgJzwJfQuBk-AMudSPL7RcHrMw-76Qp_t3zxcESg2U9OE0WkIWGtUOS-myY_q8I11mw2cCSms9BxWnd3EoZDG8hH1gkpZ_uWGpiLscFzce7rN6kpgM_SGsULgshgQcUDwJ80SbZHU-Uo7eKaB1ccRO298b9AaSqDT-vB-zvdf8e8NihXwSxSQAEiyeYZDc_-ttKgchQeksPbt8QpOTBwq-uo8Fl72gFrsprvrGZBp1Z9XjWYciEDnuCq_MHE_wwyLTi21xqmC7Ex2BAgHePFQZGkUSIm-G8rohsw5VEOhjx0CYHMxeQoLbu3XaN5J5VIgv2ipjcui3N3qXrZDJUXCjooykeYL36HEHH_oVPo7cNsH0xTzmVDKiQXmrQPwX44KKqy05dh9q_p3awP3vn9aABbB1VlBAUaKywn_brw539beAreyrdIL_jYygOHqe7rY_UXD2oDVgh7aLuH8sSOZ1WGht6uWZpNu-E7vVGOcppkiJCpsqF4kk5HQO8A-hvkBCgH6_QOgwcXpUc4xnmZVb7YQWXASsa.MPDEzdW-fxzmtQSH6y3sug",
+      "domain": "madash.dev",
+      "path": "/",
+      "expires": 1793048246.074656,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://hive.org",
+      "localStorage": [
+        {
+          "name": "authorized",
+          "value": "{\"jwtAuth\":{\"name\":\"jwtAuth\",\"schema\":{\"type\":\"http\",\"scheme\":\"bearer\",\"bearerFormat\":\"JWT\"},\"value\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzkxMDU2MjQzLCJpYXQiOjE3OTA0NTYyNDMsImp0aSI6IjMxN2EzM2Q2MDNiNzRhY2FiNmJhZjhjZTBiZDViMDcxIiwidXNlcm5hbWUiOiJhZG1pbiIsImNsZWFyYW5jZSI6NSwicHJvZ3JhbSI6bnVsbCwidXNlcl9pZCI6OH0.IW6GdrDHOo02p12jODnZd7fH9tNS8NM9snwxar6gGF0\"}}"
+        },
+        {
+          "name": "token",
+          "value": "{\"refresh\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc5MTMyMDI0MywiaWF0IjoxNzkwNDU2MjQzLCJqdGkiOiI4YmI3NTllOTYxYjE0NmEwOWRiMTM1ZGYyODI5YzdkMCIsInVzZXJuYW1lIjoiYWRtaW4iLCJjbGVhcmFuY2UiOjUsInByb2dyYW0iOm51bGwsInVzZXJfaWQiOjh9.vBRmxsmNJBaAzFEIYuWgN8bw1kicLqMrAoNlthhRH1Y\",\"access\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzkxMDU2MjQzLCJpYXQiOjE3OTA0NTYyNDMsImp0aSI6IjMxN2EzM2Q2MDNiNzRhY2FiNmJhZjhjZTBiZDViMDcxIiwidXNlcm5hbWUiOiJhZG1pbiIsImNsZWFyYW5jZSI6NSwicHJvZ3JhbSI6bnVsbCwidXNlcl9pZCI6OH0.IW6GdrDHOo02p12jODnZd7fH9tNS8NM9snwxar6gGF0\"}"
+        },
+        {
+          "name": "persist:root",
+          "value": "{\"filters\":\"{\\\"objectPrograms\\\":[],\\\"userPrograms\\\":[],\\\"userClasses\\\":[],\\\"userMentor\\\":null,\\\"objectProgramIds\\\":[],\\\"userProgramIds\\\":[],\\\"userClassIds\\\":[],\\\"userMentorId\\\":null,\\\"assignmentStatuses\\\":[\\\"New\\\",\\\"Work In Progress\\\",\\\"Redo\\\",\\\"Submitted\\\",\\\"AutoChecked\\\",\\\"Done\\\"]}\",\"_persist\":\"{\\\"version\\\":-1,\\\"rehydrated\\\":true}\"}"
+        }
+      ]
+    }
+  ]
+}
