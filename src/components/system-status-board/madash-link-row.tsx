@@ -36,45 +36,36 @@ export default function MadashLinkRow()
 {
     const [ health, setHealth ] = useState<LinkHealth>('ok');
     const lastPongAt = useRef(0);
-    const pingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const { addMessageHandler, sendMessage } = useAuth();
+    const { addMessageHandler, sendMessage, ws } = useAuth();
 
     const onPong = useCallback<MessageHandlerType>((messageType) =>
     {
         if (messageType !== MessageTypes.PONG) return;
-
-        const now = Date.now();
-        const prev = lastPongAt.current;
-        lastPongAt.current = now;
-
-        if (prev === 0)
-        {
-            setHealth('ok');
-        } else
-        {
-            const latency = now - prev;
-            if (latency > 5000) setHealth('error');
-            else if (latency > 2000) setHealth('degraded');
-            else setHealth('ok');
-        }
-
-        if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
-        pingTimeoutRef.current = setTimeout(() =>
-        {
-            sendMessage({ type: MessageTypes.PING });
-        }, 1000);
-    }, [ sendMessage ]);
+        lastPongAt.current = Date.now();
+        setHealth('ok');
+    }, []);
 
     useEffect(() =>
     {
-        sendMessage({ type: MessageTypes.PING });
         const unsub = addMessageHandler(onPong);
+        lastPongAt.current = Date.now();
+        const tick = () =>
+        {
+            // The socket is null while connecting/reconnecting; sending then only logs an error.
+            if (ws.current?.readyState === WebSocket.OPEN) sendMessage({ type: MessageTypes.PING });
+
+            const silence = Date.now() - lastPongAt.current;
+            if (silence > 5000) setHealth('error');
+            else if (silence > 2000) setHealth('degraded');
+        };
+        tick();
+        const interval = setInterval(tick, 1000);
         return () =>
         {
-            if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
+            clearInterval(interval);
             unsub();
         };
-    }, [ onPong, addMessageHandler, sendMessage ]);
+    }, [ onPong, addMessageHandler, sendMessage, ws ]);
 
     return (
         <ServiceStatusTile

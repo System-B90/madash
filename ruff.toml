@@ -1,7 +1,7 @@
 extend-exclude = [".agents", ".agent"]
 
 [lint]
-# Pinned explicitly rather than inherited. release-pipeline.yml installs ruff
+# Pinned explicitly rather than inherited. release.yml installs ruff
 # unpinned (`pip install ruff`), and ruff 0.16 widened its default rule set —
 # this unchanged tree lints clean on 0.15.8 and reports 11 errors on 0.16.1.
 # Selecting the rules here makes the result depend on this file instead of on

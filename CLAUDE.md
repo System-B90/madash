@@ -39,7 +39,7 @@ utils used by both. Don't cross the boundary — no DB queries here since there'
 ## Release bundles
 
 Built by the shared sb90-deploy (System-B90/deploy-py, org `craft-release` action) from
-`deploy/app.json` — add bundle files there, not in `release-pipeline.yml`. The bundle's
+`deploy/app.json` — add bundle files there, not in `release.yml`. The bundle's
 compose file is `deploy/docker-compose.release.yml` (images only, `.env` beside it),
 never the dev `deploy/docker-compose.yml`.
 
