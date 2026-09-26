@@ -1,6 +1,6 @@
 import os
-import sys
 import secrets
+import sys
 from pathlib import Path
 
 # Add pyhive to python path if we need to import it
@@ -29,7 +29,7 @@ def main():
             hive_client_id = sso_credentials["client_id"]
             hive_client_secret = sso_credentials["client_secret"]
             print(f"SSO Registration successful. Client ID: {hive_client_id}")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure here must abort CI setup
         print(f"Failed to register SSO with Hive: {e}")
         sys.exit(1)
 
