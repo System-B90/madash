@@ -20,16 +20,20 @@
 services:
   ui:
     networks:
-      - madash_net
-      - hive_net
+      madash_net: {}
+      # Hive's network is shared with other stacks (bluz-ui, peekaboo-ui), all
+      # of which get a "ui" alias there. Add an unambiguous one to address this
+      # container by; never resolve bare `ui` on hive_net.
+      hive_net:
+        aliases: !override
+          - madash-ui
     # The base file pins hive.org to the host gateway. /etc/hosts beats DNS, so
     # clear it and let hive_net's alias win.
     extra_hosts: !reset []
 
-  proxy:
-    networks:
-      - madash_net
-      - hive_net
+  # proxy is deliberately NOT on hive_net: it only talks to ui/sessions, and on
+  # a shared network its `ui:3000` upstream could resolve to another stack's ui
+  # (this served Peek-a-Boo at madash.dev).
 
 networks:
   hive_net:
