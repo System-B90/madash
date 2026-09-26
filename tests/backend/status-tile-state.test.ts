@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MONITORED_SERVICE_IDS, type ServiceHealth } from "@/api-shared/service-health";
+import { compactStatuses } from "@/components/system-status-board";
+import { compactDotPalette } from "@/components/system-status-board/compact-status-strip";
 import { hiveTileState } from "@/components/system-status-board/hive-health-row";
 import { madashLinkState } from "@/components/system-status-board/madash-link-row";
 import { formatProbeTime, sparklinePaletteKey, sparklineSeries } from "@/components/system-status-board/latency-sparkline";
@@ -122,5 +124,30 @@ describe("startPolling", () => {
         resolve(7);
         await vi.advanceTimersByTimeAsync(5000);
         expect(values).toEqual([]);
+    });
+});
+
+describe("collapsed status strip", () => {
+    it("maps states to a status dot colour, neutral while unknown", () => {
+        expect(compactDotPalette("up")).toBe("success");
+        expect(compactDotPalette("degraded")).toBe("warning");
+        expect(compactDotPalette("down")).toBe("error");
+        expect(compactDotPalette("loading")).toBeNull();
+        expect(compactDotPalette("unconfigured")).toBeNull();
+    });
+
+    it("summarises all four services in board order, loading until the backend answers", () => {
+        const link = { state: "up" as const, rttMs: 20, history: [] };
+        const hive = { state: "degraded" as const, detail: "", helps: 0, helpsLoading: false };
+        const pending = compactStatuses({ link, hive, services: null });
+        expect(pending.map((s) => [ s.id, s.state ])).toEqual([
+            [ "madash", "up" ], [ "hive", "degraded" ], [ "bluz", "loading" ], [ "peekaboo", "loading" ],
+        ]);
+
+        const services: ServiceHealth[] = [
+            { id: "bluz", state: "up", latencyMs: 80, checkedAt: 0, history: [] },
+            { id: "peekaboo", state: "down", latencyMs: null, checkedAt: 0, history: [] },
+        ];
+        expect(compactStatuses({ link, hive, services }).slice(2).map((s) => s.state)).toEqual([ "up", "down" ]);
     });
 });

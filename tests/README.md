@@ -36,12 +36,12 @@ Keep component logic in exported pure functions (e.g. `service-health-text.ts`,
 
 ## End-to-end tests (`tests/*.spec.ts`, Playwright)
 
-| Test File         | Covers                                                                                                                                                                                              |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `login.spec.ts`   | Login page render, SSO redirect/button                                                                                                                                                              |
-| `hadas.spec.ts`   | Call-to-Hadas flow — calling/removing students and groups                                                                                                                                           |
-| `journal.spec.ts` | Journal page — task list, date navigation                                                                                                                                                           |
-| `status.spec.ts`  | System status board — every tile + icon, Madash link up with RTT, `/api/status/services` contract, latency/sparkline, down/degraded rendering (mocked payloads), endpoint failure, Hive helps gauge |
+| Test File         | Covers                                                                                                                                                                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `login.spec.ts`   | Login page render, SSO redirect/button                                                                                                                                                                                       |
+| `hadas.spec.ts`   | Call-to-Hadas flow — calling/removing students and groups                                                                                                                                                                    |
+| `journal.spec.ts` | Journal page — task list, date navigation                                                                                                                                                                                    |
+| `status.spec.ts`  | System status board — every tile + icon, Madash link up with RTT, `/api/status/services` contract, latency/sparkline, down/degraded rendering (mocked payloads), endpoint failure, Hive helps gauge, collapsed compact strip |
 
 Plus `auth.setup.ts` (Hive SSO login, saves `tests/.auth/user.json`) and
 `fixtures.ts` (shared helpers).

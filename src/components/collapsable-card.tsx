@@ -9,12 +9,15 @@ export default function CollapsableCard({
     mainColor,
     content,
     contentSx,
+    collapsedSummary,
 }: {
     name: string,
     icon: ElementType,
     mainColor: SvgIconProps[ 'color' ],
     content: ReactNode;
     contentSx?: SxProps<Theme>;
+    /** Shown in the header only while collapsed (e.g. a compact status line). */
+    collapsedSummary?: ReactNode;
 })
 {
     const [ collapsed, setCollapsed ] = useState<boolean>(false);
@@ -55,6 +58,8 @@ export default function CollapsableCard({
                 <Typography variant="subtitle1" fontWeight={ 700 } color="text.primary" sx={ { flexGrow: 1, letterSpacing: '-0.01em' } }>
                     { name }
                 </Typography>
+
+                { collapsed && collapsedSummary }
 
                 <ExpandMoreIcon
                     sx={ {

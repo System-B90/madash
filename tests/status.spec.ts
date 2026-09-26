@@ -108,4 +108,27 @@ test.describe("System status board", () => {
         await gotoAppHome(page);
         await expect(tile(page, "hive")).toContainText("הלפים");
     });
+
+    test("collapsed board shows a compact up/down strip for all four services", async ({ page }) => {
+        await mockServices(page, [
+            { id: "bluz", state: "up", latencyMs: 87, checkedAt: Date.now(), history: [] },
+            { id: "peekaboo", state: "down", reason: "unreachable", latencyMs: null, checkedAt: Date.now(), history: [] },
+        ]);
+        await gotoAppHome(page);
+        const strip = page.getByTestId("status-strip");
+        await expect(strip).toHaveCount(0);
+
+        await page.getByText("מצב העולם").click();
+        await expect(strip).toBeVisible();
+        await expect(tile(page, "bluz")).toHaveCount(0);
+        for (const id of TILE_IDS) await expect(page.getByTestId(`status-strip-${id}`)).toBeVisible();
+        await expect(page.getByTestId("status-strip-peekaboo")).toHaveAttribute("data-state", "down");
+        await expect(page.getByTestId("status-strip-bluz")).toHaveAttribute("data-state", "up");
+        // Monitoring keeps running while collapsed (the Madash link settles to up on its own).
+        await expect(page.getByTestId("status-strip-madash")).toHaveAttribute("data-state", "up", { timeout: 15_000 });
+
+        await page.getByText("מצב העולם").click();
+        await expect(strip).toHaveCount(0);
+        await expect(tile(page, "peekaboo")).toHaveAttribute("data-state", "down");
+    });
 });

@@ -34,7 +34,18 @@ const MADASH_DETAIL: Record<TileState, string> = {
     down: 'אין תגובה מהשרת',
 };
 
-export default function MadashLinkRow()
+export interface MadashLinkHealth
+{
+    state: TileState;
+    rttMs: number | null;
+    history: LatencySample[];
+}
+
+export const MADASH_LABEL = 'מדש';
+export const MadashServiceIcon = () => <ServiceIcon src="/Madash.svg" />;
+
+/** WebSocket ping/pong link monitor. Lives at board level so it keeps running while the card is collapsed. */
+export function useMadashLink(): MadashLinkHealth
 {
     const [ state, setState ] = useState<TileState>('up');
     const [ rttMs, setRttMs ] = useState<number | null>(null);
@@ -89,15 +100,20 @@ export default function MadashLinkRow()
         };
     }, [ onPong, addMessageHandler, sendMessage, ws ]);
 
+    return { state, rttMs, history };
+}
+
+export default function MadashLinkRow({ link }: { link: MadashLinkHealth; })
+{
     return (
         <ServiceHealthTile
             testId="service-tile-madash"
-            label="מדש"
-            icon={ <ServiceIcon src="/Madash.svg" /> }
-            state={ state }
-            detail={ MADASH_DETAIL[ state ] }
-            latencyMs={ rttMs }
-            mid={ <LatencySparkline history={ history } state={ state } /> }
+            label={ MADASH_LABEL }
+            icon={ <MadashServiceIcon /> }
+            state={ link.state }
+            detail={ MADASH_DETAIL[ link.state ] }
+            latencyMs={ link.rttMs }
+            mid={ <LatencySparkline history={ link.history } state={ link.state } /> }
         />
     );
 }

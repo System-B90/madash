@@ -28,7 +28,19 @@ export function hiveTileState(data: HivePrometheusStatus | null): TileState
 
 const HIVE_DOWN: HivePrometheusStatus = { configured: true, reachable: false, overloaded: false };
 
-export default function HiveHealthRow()
+export interface HiveHealth
+{
+    state: TileState;
+    detail: string;
+    helps: number | null;
+    helpsLoading: boolean;
+}
+
+export const HIVE_LABEL = 'הייב';
+export const HiveServiceIcon = () => <ServiceIcon src={ HIVE_ICON_URL } icon={ HiveGenericIcon } imgSx={ HIVE_ICON_SX } />;
+
+/** Hive's own (separate) health sources: Prometheus load + open helps. */
+export function useHiveHealth(): HiveHealth
 {
     const status = usePolling(apiGetHivePrometheusStatus, HIVE_HEALTH_POLL_MS, () => HIVE_DOWN);
     // Wrapped so "not fetched yet" (null) stays distinct from "fetch failed" ({ count: null }).
@@ -49,14 +61,19 @@ export default function HiveHealthRow()
     const detailBase = state === 'degraded' ? 'עומס גבוה על התשתית' : DEFAULT_STATE_DETAIL[ state ];
     const detail = helpsDanger ? `${detailBase} · יותר מדי הלפים` : detailBase;
 
+    return { state, detail, helps, helpsLoading };
+}
+
+export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
+{
     return (
         <ServiceHealthTile
             testId="service-tile-hive"
-            label="הייב"
-            icon={ <ServiceIcon src={ HIVE_ICON_URL } icon={ HiveGenericIcon } imgSx={ HIVE_ICON_SX } /> }
-            state={ state }
-            detail={ detail }
-            mid={ <OpenHelpsGauge openHelpsCount={ helps } helpsLoading={ helpsLoading } /> }
+            label={ HIVE_LABEL }
+            icon={ <HiveServiceIcon /> }
+            state={ hive.state }
+            detail={ hive.detail }
+            mid={ <OpenHelpsGauge openHelpsCount={ hive.helps } helpsLoading={ hive.helpsLoading } /> }
         />
     );
 }
