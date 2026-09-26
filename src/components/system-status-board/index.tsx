@@ -1,7 +1,7 @@
 'use client';
 
 import DnsIcon from '@mui/icons-material/Dns';
-import { alpha, Box } from '@mui/material';
+import { Box } from '@mui/material';
 
 import CollapsableCard from '@/components/collapsable-card';
 import HiveHealthRow from '@/components/system-status-board/hive-health-row';
@@ -45,7 +45,7 @@ export default function SystemStatusBoard()
                 pt: 1,
                 minHeight: 0,
                 background: (theme) =>
-                    `linear-gradient(165deg, ${alpha(theme.palette.secondary.main, theme.palette.mode === 'dark' ? 0.07 : 0.05)} 0%, ${theme.palette.background.default} 42%, ${theme.palette.background.default} 100%)`,
+                    `linear-gradient(165deg, rgba(${theme.vars!.palette.secondary.mainChannel} / 0.05) 0%, ${theme.vars!.palette.background.default} 42%, ${theme.vars!.palette.background.default} 100%)`,
             } }
         />
     );

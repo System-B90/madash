@@ -87,11 +87,11 @@ export function ServiceStatusTile({
                 borderRadius: 1.5,
                 border: '1px solid',
                 borderColor: 'divider',
-                bgcolor: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.06 : 0.04),
+                bgcolor: (theme) => `rgba(${theme.vars!.palette.primary.mainChannel} / 0.05)`,
                 transition: 'border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease',
                 '&:hover': {
-                    borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
-                    boxShadow: (theme) => `0 2px 8px ${alpha(theme.palette.common.black, theme.palette.mode === 'dark' ? 0.3 : 0.06)}`,
+                    borderColor: (theme) => `rgba(${theme.vars!.palette.primary.mainChannel} / 0.35)`,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 },
                 ...rootSx,
             } }
