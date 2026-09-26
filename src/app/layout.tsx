@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { resolveWebSocketClientConfig } from "@/api-shared/websocket-config";
 import { MuiEmotionCacheProvider } from "@/components/mui-emotion-cache-provider";
 import { MadashThemeProvider } from "@/components/theme/ThemeProvider";
 import { WebSocketConfigProvider } from "@/components/websocket-config-provider";
@@ -19,8 +20,10 @@ export default function RootLayout({
 {
     // Read the runtime environment variable securely on the server
     const wsHost = process.env.WEBSOCKET_SESSION_SERVER_HOST || "localhost";
-    const wsProtcol = WEBSOCKET_PROTOCOL || "ws";
-    const wsPortSuffix = WEBSOCKET_PORT_SUFFIX || ":28199";
+    const { protocol: wsProtcol, portSuffix: wsPortSuffix } = resolveWebSocketClientConfig({
+        protocol: WEBSOCKET_PROTOCOL,
+        portSuffix: WEBSOCKET_PORT_SUFFIX,
+    });
 
     return (
         <html lang="he" dir="rtl" suppressHydrationWarning>
