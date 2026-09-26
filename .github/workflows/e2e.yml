@@ -87,11 +87,17 @@ jobs:
             echo "$key=$value" >> "$GITHUB_ENV"
           done < .env
 
+      # Both bind 0.0.0.0: the proxy container reaches them through
+      # host-gateway, which on the shared-hive (Docker Desktop + WSL) host
+      # only forwards to IPv4-wildcard listeners — Next's default `::` is
+      # unreachable from there.
       - name: Start WebSocket session server
         run: npm run session:start &
+        env:
+          WEBSOCKET_SESSION_SERVER_BIND_HOST: 0.0.0.0
 
       - name: Start Next.js server
-        run: npm run start &
+        run: npm run start -- -H 0.0.0.0 &
 
       # Kept off :80/:443 so it can never contend with Hive's nginx.
       - name: Start Nginx proxy
