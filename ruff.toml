@@ -1,15 +1,9 @@
+# Org-wide baseline (System-B90): keep the shared section identical in every repo.
+# Rules = ruff's default set for the pinned version + I, W, B, UP. The ruff pin
+# (requirements / pyproject `lint` extra / CI) is what keeps the default set stable;
+# bump it deliberately and fix what the new version flags in the same change.
+line-length = 88
 extend-exclude = [".agents", ".agent"]
 
 [lint]
-# Pinned explicitly rather than inherited. release.yml installs ruff
-# unpinned (`pip install ruff`), and ruff 0.16 widened its default rule set —
-# this unchanged tree lints clean on 0.15.8 and reports 11 errors on 0.16.1.
-# Selecting the rules here makes the result depend on this file instead of on
-# whichever ruff pip resolved that morning. peek-a-boo hit this for real
-# (28 errors, CI red on an unrelated PR); this is the same fix, applied before
-# it bites.
-#
-# This list is ruff's own default through 0.15, so it preserves exactly what the
-# repo has been linting under — it is not a relaxation. Widen it deliberately
-# when someone is ready to work through what 0.16's broader defaults flag.
-select = ["E4", "E7", "E9", "F"]
+extend-select = ["I", "W", "B", "UP"]
