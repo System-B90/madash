@@ -99,6 +99,7 @@ Root `.env`, generated via `scripts/setup.py` / `scripts/ci_setup.py`. Notable o
 | `NEXT_PUBLIC_HIVE_URL`, `HIVE_CLIENT_ID`, `HIVE_CLIENT_SECRET`                                               | Hive + SSO                               |
 | `HIVE_URL`                                                                                                   | Server-side Hive base URL (avatar proxy) |
 | `HIVE_PROMETHEUS_URL`, `HIVE_PROMETHEUS_OVERLOAD_QUERY_THRESHOLD`                                            | Hive infra health monitoring             |
+| `BLUZ_URL`, `PEEKABOO_URL`, `SERVICE_HEALTH_DEGRADED_LATENCY_MS`                                             | Status board sibling-service probes      |
 | `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, `JWT_SECRET`, `SYM_ENC_KEY`                                               | Auth & session crypto                    |
 | `WEBSOCKET_SESSION_SERVER_HOST`, `WEBSOCKET_SESSION_SERVER_PORT`, `WEBSOCKET_SESSION_SERVER_SENDER_AUTH_KEY` | WebSocket session server                 |
 
