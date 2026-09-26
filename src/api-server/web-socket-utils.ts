@@ -1,7 +1,10 @@
+import { ticketSubprotocol } from "@system-b90/session-ws/protocol";
+
 import {
     getWsAuthKey,
     MessageTypes,
     NEXT_PUBLIC_WEBSOCKET_SESSION_SERVER_CONN_STRING,
+    signWsTicket,
     WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC,
 } from "@/settings";
 
@@ -18,7 +21,9 @@ function getOrCreateWebSocket(): WebSocket
         return sharedWs;
     }
 
-    const ws = new WebSocket(TARGET_WS_URL);
+    // The session server rejects any socket without a valid ticket, so this
+    // sender must present one too (a fresh one per connect; they expire in 30s).
+    const ws = new WebSocket(TARGET_WS_URL, ticketSubprotocol(signWsTicket(WEBSOCKET_SESSION_SERVER_SENDER_SERVER_MAGIC)));
     sharedWs = ws;
 
     ws.onopen = () =>

@@ -26,13 +26,14 @@ export type AuthContextState = {
     canEdit: boolean;
     addMessageHandler: (handler: MessageHandlerType) => () => void;
     sendMessage: (data: WebSocketSessionMessage) => void;
+    ws: ReturnType<typeof useSessionWebSocketContext>['ws'];
 };
 
 const AuthContext = createContext<AuthContextState | undefined>(undefined);
 
 export const AuthProvider = ({ children, userData }: { children: React.ReactNode; userData: AuthSessionUser; }) =>
 {
-    const { addMessageHandler, sendMessage } = useSessionWebSocketContext();
+    const { addMessageHandler, sendMessage, ws } = useSessionWebSocketContext();
 
     const canEdit: boolean = !!userData;
 
@@ -58,7 +59,8 @@ export const AuthProvider = ({ children, userData }: { children: React.ReactNode
         canEdit,
         addMessageHandler,
         sendMessage,
-    }), [ logout, userData, canEdit, addMessageHandler, sendMessage ]);
+        ws,
+    }), [ logout, userData, canEdit, addMessageHandler, sendMessage, ws ]);
 
     return (
         <AuthContext.Provider value={ contextValue }>
