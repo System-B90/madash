@@ -2,12 +2,16 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/api-server/hive/session-client", () => ({ default: vi.fn() }));
+vi.mock("next-auth", () => ({ getServerSession: vi.fn() }));
+vi.mock("@/api-server/hive/sso", () => ({ authOptions: {} }));
 
 import createHiveClient from "@/api-server/hive/session-client";
 import { ClassTypeEnum, Clearance, StatusEnum } from "@/api-shared/hive-types";
 import type { Class, CourseUser } from "@/api-shared/hive-types";
 import { buildMentionDirectory, searchMentions, statusBreakdown, type StaffMember } from "@/api-shared/mentions";
 import { GET as staffGET } from "@/app/api/hive/staff/route";
+
+import { refusal, signIn, signOut } from "./session-harness";
 
 const student = (id: number, name: string, status: StatusEnum = StatusEnum.Present, mentor?: number) =>
     ({ id, display_name: name, status, status_date: "2026-09-27T08:15:00Z", mentor, clearance: Clearance.Hanich }) as unknown as CourseUser;
@@ -105,7 +109,19 @@ describe("statusBreakdown", () => {
 });
 
 describe("GET /api/hive/staff", () => {
-    beforeEach(() => vi.mocked(createHiveClient).mockReset());
+    beforeEach(() =>
+    {
+        vi.mocked(createHiveClient).mockReset();
+        signIn();
+    });
+
+    it("refuses an unauthenticated caller without touching Hive (madash#30)", async () => {
+        signOut();
+        const { httpStatus, body } = await refusal(await staffGET(new NextRequest("https://madash.test/api/hive/staff")));
+        expect(httpStatus).toBe(401);
+        expect(body.status).toBe(-1);
+        expect(createHiveClient).not.toHaveBeenCalled();
+    });
 
     it("requests checkers, segel and admins, trimmed to the card fields", async () => {
         const getUsers = vi.fn().mockResolvedValue([ {
