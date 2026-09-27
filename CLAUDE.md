@@ -77,6 +77,20 @@ See [`tests/README.md`](tests/README.md) for the test suite's functionality map.
 
 **Regression tests for bugs:** Every closed bug issue must have a dedicated regression test committed alongside the fix. The test must fail on the pre-fix code and pass after. This prevents bugs from silently resurfacing.
 
+## Release screenshots
+
+Every release ships with screenshots of the app, captured automatically in CI:
+
+- `tests/screenshots.spec.ts` captures the main screens (login, home, home dark, journal)
+  into `release-screenshots/` on every E2E run. `e2e.yml` uploads them as the
+  `release-screenshots` artifact, and on a `v*` tag attaches them to that tag's GitHub
+  Release. Don't take or commit screenshots by hand.
+- **Rule:** when a PR adds or visibly changes a user-facing page or card, add or update
+  its shot in `tests/screenshots.spec.ts` in the same PR. Before tagging, check the latest
+  master E2E run's `release-screenshots` artifact to see what the release will ship.
+- The shots aren't assertions. A screen that fails to render shows up as a bad image, so
+  look at them rather than relying on a green run.
+
 ## Key directories
 
 | Path              | Contains                                                       |

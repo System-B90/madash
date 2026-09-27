@@ -15,7 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  # write: attaches release screenshots to the GitHub Release on v* tags.
+  contents: write
   packages: read
   # shared-hive-acquire cancels this run if it holds Hive past 25 minutes.
   actions: write
@@ -174,6 +175,33 @@ jobs:
           name: test-results
           path: test-results/
           retention-days: 7
+
+      # Written by tests/screenshots.spec.ts (see CLAUDE.md, "Release screenshots").
+      - name: Upload Release Screenshots
+        uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
+        with:
+          name: release-screenshots
+          path: release-screenshots/
+          if-no-files-found: warn
+          retention-days: ${{ startsWith(github.ref, 'refs/tags/v') && 90 || 14 }}
+
+      # release.yml's craft-release job creates the GitHub Release for the same
+      # tag; the two workflows run in parallel, so wait for it (up to 30 min).
+      - name: Attach screenshots to GitHub Release
+        if: ${{ success() && startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          shopt -s nullglob
+          shots=(release-screenshots/*.png)
+          if [ ${#shots[@]} -eq 0 ]; then echo "::warning::No screenshots captured"; exit 0; fi
+          for i in $(seq 1 60); do
+            gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 && break
+            echo "Waiting for release $TAG ($i/60)..."; sleep 30
+          done
+          gh release upload "$TAG" "${shots[@]}" --clobber -R "$GITHUB_REPOSITORY"
 
       - name: Upload Container Logs
         uses: actions/upload-artifact@v6
