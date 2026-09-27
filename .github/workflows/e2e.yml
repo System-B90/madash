@@ -46,11 +46,10 @@ jobs:
         run: pip install -r scripts/requirements.txt
 
       # ── Madash environment & local stack ──────────────────────────────
-      - name: Generate self-signed SSL certificates
+      - name: Install the default dev SSL certificate
         run: |
           mkdir -p ssl
-          openssl req -x509 -newkey rsa:4096 -keyout ssl/key.pem \
-            -out ssl/cert.pem -sha256 -days 30 -nodes -subj "/CN=madash.dev"
+          cp nginx/ssl-default/cert.pem nginx/ssl-default/key.pem ssl/
 
       - name: Set up Node + Playwright
         uses: System-B90/.github/actions/setup-playwright@main
