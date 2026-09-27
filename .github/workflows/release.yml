@@ -240,9 +240,15 @@ jobs:
           tag: ${{ github.ref_name }}
           out: .
 
+      # Hand-written highlights (with screenshots) go above the generated PR list.
+      # {{TAG}} pins image URLs to this tag's copy of docs/release-notes/assets.
+      - name: Render release highlights
+        run: sed "s/{{TAG}}/${{ github.ref_name }}/g" docs/release-notes/UNRELEASED.md > release-body.md
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          body_path: release-body.md
           files: |
             madash-online-${{ github.ref_name }}.tar.gz
             madash-offline-${{ github.ref_name }}.tar.gz
