@@ -1,5 +1,6 @@
 import { safeApiFetcher } from "@/api-client/common";
 import { CourseUser, Class } from "@/api-shared/hive-types";
+import type { StaffMember } from '@/api-shared/mentions';
 import type { ToiletQueue } from '@/api-shared/toilet-queue';
 
 export async function apiGetStudents()
@@ -20,4 +21,9 @@ export async function apiGetOpenHelpsCount(): Promise<{ count: number; }>
 export async function apiGetToiletQueue(): Promise<ToiletQueue>
 {
     return (await safeApiFetcher('/api/status/hive/toilet-queue')) as ToiletQueue;
+}
+
+export async function apiGetStaff()
+{
+    return (await safeApiFetcher('/api/hive/staff')) as Array<StaffMember>;
 }

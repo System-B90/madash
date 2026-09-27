@@ -20,6 +20,10 @@ export type StudentsContextState = {
     isLoading: boolean;
     students: Array<StudentData>;
     rooms: Array<Room>;
+    /** Every Hive class (rooms and student groups), unfiltered. */
+    classes: Array<Class>;
+    /** The Hive users behind `students` (status, mentor, …). */
+    rawStudents: Array<CourseUser>;
     getStudent: (studentResolveableData: ResolvableStudent | number) => StudentData | undefined;
 };
 
@@ -168,8 +172,10 @@ export const StudentsProvider = ({ children }: { children: React.ReactNode; }) =
         isLoading,
         students,
         rooms,
+        classes: state.classes,
+        rawStudents: state.rawStudents,
         getStudent,
-    }), [ isLoading, students, rooms, getStudent ]);
+    }), [ isLoading, students, rooms, state.classes, state.rawStudents, getStudent ]);
 
     return (
         <StudentsContext.Provider value={ contextValue }>

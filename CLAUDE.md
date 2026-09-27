@@ -43,6 +43,10 @@ Built by the shared sb90-deploy (System-B90/deploy-py, org `craft-release` actio
 compose file is `deploy/docker-compose.release.yml` (images only, `.env` beside it),
 never the dev `deploy/docker-compose.yml`.
 
+Release notes = `docs/release-notes/UNRELEASED.md` (hand-written highlights + screenshots,
+`{{TAG}}` placeholder) prepended to GitHub's generated PR list — see
+[`docs/release-notes/README.md`](docs/release-notes/README.md). Reset it after each tag.
+
 ## Run locally
 
 Route `madash.dev` to `127.0.0.8` in your hosts file, then:
