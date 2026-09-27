@@ -70,4 +70,18 @@ describe("api auth proxy (madash#30)", () => {
             expect(response.status).toBe(401);
         }
     });
+
+    it("never gates the healthcheck or the CLI code redemption", async () => {
+        // Both are unauthenticated by design: Docker/deploy probe /api/health,
+        // and the CLI redeems its login code before it has a session.
+        withToken(null);
+
+        for (const path of [ "/api/health", "/api/cli-auth/redeem" ]) {
+            const response = await proxy(request(path));
+            expect(response.headers.get("x-middleware-next")).toBe("1");
+        }
+        // The exemption is exact: the rest of cli-auth stays gated.
+        expect((await proxy(request("/api/cli-auth/other"))).status).toBe(401);
+        expect((await proxy(request("/api/healthz"))).status).toBe(401);
+    });
 });

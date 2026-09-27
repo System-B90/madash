@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest } from "next/server";
 
+import { denyUnauthenticated } from "@/api-server/auth-gate";
 import { ApiSuccess, catchHandler } from "@/api-server/common";
 import createHiveClient from "@/api-server/hive/session-client";
 import { Clearance } from "@/api-shared/hive-types";
@@ -12,6 +13,9 @@ export async function GET(
     request: NextRequest
 )
 {
+    const denied = await denyUnauthenticated();
+    if (denied) return denied;
+
     try
     {
         const hiveClient = await createHiveClient();

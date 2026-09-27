@@ -23,6 +23,12 @@ import { getToken } from "next-auth/jwt";
 const PUBLIC_API_PREFIXES = [
     // NextAuth's own endpoints must stay reachable, or nobody can ever log in.
     "/api/auth",
+    // Container/deploy healthchecks (docker-compose, deploy/app.json) probe this
+    // with no session; gating it marks a healthy UI container as down.
+    "/api/health",
+    // The CLI redeems a one-time login code here before it has any session —
+    // the short-lived, single-use code is the credential (see the route).
+    "/api/cli-auth/redeem",
 ];
 
 export async function proxy(request: NextRequest)
