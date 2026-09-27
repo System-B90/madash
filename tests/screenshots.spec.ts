@@ -1,15 +1,36 @@
 import type { Page } from "@playwright/test";
 
-import { test, gotoAppHome, waitForAppLoad, SELECTORS } from "./fixtures";
+import { test, expect, waitForAppLoad, SELECTORS } from "./fixtures";
 
 /**
- * Release screenshots. Not assertions: captures the main screens into
- * `release-screenshots/`, which e2e.yml uploads as an artifact on every run
- * and attaches to the GitHub Release on `v*` tags. Keep the list in step
- * with the app's user-facing pages (see CLAUDE.md, "Release screenshots").
+ * Release screenshots. Captures the main screens into `release-screenshots/`,
+ * which e2e.yml uploads as an artifact on every run and attaches to the GitHub
+ * Release on `v*` tags. Keep the list in step with the app's user-facing pages
+ * (see CLAUDE.md, "Release screenshots").
+ *
+ * The only assertion is that the page was actually served: a 5xx (e.g. an
+ * nginx 502 page) fails the test instead of shipping as a "screenshot".
  */
 
 const OUT_DIR = "release-screenshots";
+
+/** Navigates, retrying 5xx responses for up to ~30s while the stack warms up. */
+async function open(page: Page, url: string): Promise<void>
+{
+    let status = 0;
+    for (let attempt = 0; attempt < 10; attempt++)
+    {
+        const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
+        status = res?.status() ?? 0;
+        if (status > 0 && status < 500)
+        {
+            break;
+        }
+        await page.waitForTimeout(3_000);
+    }
+    expect(status, `${url} was not served (HTTP ${status})`).toBeLessThan(500);
+    await waitForAppLoad(page);
+}
 
 async function shoot(page: Page, name: string): Promise<void>
 {
@@ -19,23 +40,23 @@ async function shoot(page: Page, name: string): Promise<void>
 }
 
 test.describe("Release screenshots", () => {
-    test.describe.configure({ timeout: 60_000 });
+    test.describe.configure({ timeout: 90_000 });
 
     test("login", async ({ browser }) => {
         const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
         const page = await context.newPage();
-        await page.goto("/login", { waitUntil: "domcontentloaded" });
+        await open(page, "/login");
         await shoot(page, "01-login");
         await context.close();
     });
 
     test("home", async ({ page }) => {
-        await gotoAppHome(page);
+        await open(page, "/");
         await shoot(page, "02-home");
     });
 
     test("home (dark)", async ({ page }) => {
-        await gotoAppHome(page);
+        await open(page, "/");
         const toggle = page.locator(SELECTORS.themeToggle).first();
         if (await toggle.isVisible())
         {
@@ -45,8 +66,7 @@ test.describe("Release screenshots", () => {
     });
 
     test("journal", async ({ page }) => {
-        await page.goto("/journal", { waitUntil: "commit", timeout: 60_000 });
-        await waitForAppLoad(page);
+        await open(page, "/journal");
         await shoot(page, "04-journal");
     });
 });
