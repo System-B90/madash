@@ -32,6 +32,13 @@ async function open(page: Page, url: string): Promise<void>
     await waitForAppLoad(page);
 }
 
+/** Logged-in screens: a redirect to /login means the SSO auth state is missing. */
+async function openAuthed(page: Page, url: string): Promise<void>
+{
+    await open(page, url);
+    await expect(page, `${url} redirected to login (auth state missing)`).not.toHaveURL(/\/login/);
+}
+
 async function shoot(page: Page, name: string): Promise<void>
 {
     // Let polling tiles and fonts settle so the shot isn't a loading skeleton.
@@ -51,12 +58,12 @@ test.describe("Release screenshots", () => {
     });
 
     test("home", async ({ page }) => {
-        await open(page, "/");
+        await openAuthed(page, "/");
         await shoot(page, "02-home");
     });
 
     test("home (dark)", async ({ page }) => {
-        await open(page, "/");
+        await openAuthed(page, "/");
         const toggle = page.locator(SELECTORS.themeToggle).first();
         if (await toggle.isVisible())
         {
@@ -66,7 +73,7 @@ test.describe("Release screenshots", () => {
     });
 
     test("journal", async ({ page }) => {
-        await open(page, "/journal");
+        await openAuthed(page, "/journal");
         await shoot(page, "04-journal");
     });
 });
