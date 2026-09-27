@@ -51,7 +51,9 @@ describe("sso callbacks", () => {
                 account: null,
                 profile: undefined,
             } as SignInArgs);
-            expect(allowed).toBe(false);
+            // Rejection redirects to the access-denied page (hive-nextauth 0.2)
+            // rather than returning false, so the page can tailor its copy.
+            expect(allowed).toBe(`/access-denied?reason=clearance&clearance=${ Clearance.Hanich }&gender=${ GenderEnum.Male }`);
         });
 
         it("rejects Checker clearance", async () => {
@@ -60,7 +62,9 @@ describe("sso callbacks", () => {
                 account: null,
                 profile: undefined,
             } as SignInArgs);
-            expect(allowed).toBe(false);
+            // Rejection redirects to the access-denied page (hive-nextauth 0.2)
+            // rather than returning false, so the page can tailor its copy.
+            expect(allowed).toBe(`/access-denied?reason=clearance&clearance=${ Clearance.Checker }&gender=${ GenderEnum.Male }`);
         });
     });
 
