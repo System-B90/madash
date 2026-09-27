@@ -59,7 +59,13 @@ export default function CollapsableCard({
                     { name }
                 </Typography>
 
-                { collapsed && collapsedSummary }
+                {/* Horizontal collapse: in RTL the inner content stays pinned to the growing edge,
+                    so the summary slides in from (and back out to) the left, next to the chevron. */ }
+                { collapsedSummary && (
+                    <Collapse in={ collapsed } orientation="horizontal" unmountOnExit>
+                        <Box sx={ { paddingInlineEnd: 1 } }>{ collapsedSummary }</Box>
+                    </Collapse>
+                ) }
 
                 <ExpandMoreIcon
                     sx={ {
