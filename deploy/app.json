@@ -7,12 +7,21 @@
   "health": { "service": "ui", "url": "http://127.0.0.1:3000/api/health" },
   "containers": { "ui": "madash-ui", "proxy": "madash-proxy" },
   "state": ["ssl"],
+  "venv_packages": ["madash-cli"],
+  "release": {
+    "manifests": [
+      "package.json",
+      { "path": "package-lock.json", "count": 2 },
+      { "path": "cli/madash_cli/__init__.py", "format": "python" }
+    ]
+  },
   "bundle": {
     "dir": "madash",
     "files": {
       "docker-compose.yml": "deploy/docker-compose.release.yml",
       "docker-compose.hive-local.yml": "deploy/docker-compose.hive-local.yml",
       "setup.py": "scripts/setup.py"
-    }
+    },
+    "local_wheels": ["cli/dist/*.whl"]
   }
 }

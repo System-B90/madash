@@ -75,6 +75,7 @@ npm run test            # Full pipeline: unit + e2e
 npm run test:unit       # Vitest only
 npm run test:e2e        # Playwright e2e
 npm run test:e2e:ui     # Playwright interactive UI runner
+pytest -q               # scripts/tests + cli/tests (pip install -e ./cli first)
 ```
 
 See [`tests/README.md`](tests/README.md) for the test suite's functionality map.
@@ -83,16 +84,17 @@ See [`tests/README.md`](tests/README.md) for the test suite's functionality map.
 
 ## Key directories
 
-| Path              | Contains                                                       |
-| ----------------- | -------------------------------------------------------------- |
-| `src/api-client/` | Client-side fetch wrappers. Browser-only, no secrets.          |
-| `src/app/api/`    | Next.js route handlers — thin controllers.                     |
-| `src/api-server/` | Hive client + in-memory state. Server-only.                    |
-| `src/api-shared/` | Shared types/contracts, pure utils. No side effects.           |
-| `src/components/` | React UI: `journal`, `system-status-board`, `header`, `theme`. |
-| `session-server/` | Standalone WebSocket server, own `package.json`.               |
-| `scripts/`        | `setup.py` (on sb90-deploy) / `ci_setup.py` — env generation.  |
-| `tests/`          | Vitest backend tests + Playwright e2e specs.                   |
+| Path              | Contains                                                            |
+| ----------------- | ------------------------------------------------------------------- |
+| `src/api-client/` | Client-side fetch wrappers. Browser-only, no secrets.               |
+| `src/app/api/`    | Next.js route handlers — thin controllers.                          |
+| `src/api-server/` | Hive client + in-memory state. Server-only.                         |
+| `src/api-shared/` | Shared types/contracts, pure utils. No side effects.                |
+| `src/components/` | React UI: `journal`, `system-status-board`, `header`, `theme`.      |
+| `cli/`            | `madash-cli` (Typer), mirrors Bluz's `cli/`. Login via `/cli-auth`. |
+| `session-server/` | Standalone WebSocket server, own `package.json`.                    |
+| `scripts/`        | `setup.py` (on sb90-deploy) / `ci_setup.py` — env generation.       |
+| `tests/`          | Vitest backend tests + Playwright e2e specs.                        |
 
 ## Environment variables
 
@@ -110,6 +112,12 @@ Root `.env`, generated via `scripts/setup.py` / `scripts/ci_setup.py`. Notable o
 `NEXT_PUBLIC_*` vars are exposed to the browser — never put secrets behind that prefix.
 
 ## Gotchas
+
+- **UI feature → CLI command.** Anything possible from the UI should be possible from
+  `madash` (`cli/`, see its README) — e.g. `madash madrat watch` shows the madrat message
+  live. A new route or UI action needs its command and a wire test in
+  `cli/tests/test_command_requests.py`. The CLI's version is bumped with the app by
+  `python -m sb90_deploy publish` and published to the org pip index on release.
 
 - **No database.** If a task seems to need persistence, that's a sign to re-check the
   design intent (see `docs/architecture.md`) before adding one — madash's statelessness

@@ -3,6 +3,7 @@ import { Alert, Box, Typography } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
+import { safeCallbackUrl } from '@/api-shared/callback-url';
 import LoginWithHive from '@/app/(themed)/login/login-with-hive-button';
 
 // NextAuth redirects failed sign-ins to /login?error=<code>:
@@ -16,6 +17,12 @@ const SIGN_IN_ERROR_MESSAGES: Record<string, string> = {
 };
 
 const DEFAULT_SIGN_IN_ERROR_MESSAGE = 'התחברות נכשלה: אירעה שגיאה לא צפויה. נסו שוב.';
+
+function LoginWithHiveReturning()
+{
+    const searchParams = useSearchParams();
+    return <LoginWithHive callbackUrl={ safeCallbackUrl(searchParams.get('callbackUrl')) } />;
+}
 
 function SignInErrorAlert()
 {
@@ -87,7 +94,9 @@ function LoginWidget()
             </Suspense>
 
             <Box mt={ 0 }>
-                <LoginWithHive />
+                <Suspense fallback={ <LoginWithHive /> }>
+                    <LoginWithHiveReturning />
+                </Suspense>
             </Box>
         </Box>
     );

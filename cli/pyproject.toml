@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "madash-cli"
+dynamic = ["version"]
+description = "Madash command-line tool — drive Madash from your terminal."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Michael K. Steinberg", email = "m.kuper.steinberg@gmail.com" }]
+license = { text = "Proprietary" }
+keywords = ["madash", "cli", "dashboard", "madrat"]
+
+dependencies = [
+    "typer>=0.20.0",
+    "InquirerPy>=0.3.4",
+    "httpx>=0.28.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.0.0",
+    "tqdm>=4.65.0",
+]
+
+[project.scripts]
+madash = "madash_cli.main:run"
+
+[project.urls]
+Homepage = "https://github.com/system-b90/madash"
+Repository = "https://github.com/system-b90/madash"
+
+[tool.hatch.build.targets.wheel]
+packages = ["madash_cli"]
+
+[tool.hatch.version]
+path = "madash_cli/__init__.py"
