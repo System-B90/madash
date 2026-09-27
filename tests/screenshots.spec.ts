@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 
 import { test, expect, waitForAppLoad, SELECTORS } from "./fixtures";
+import { editor, mockRoster, preview, startEditing } from "./madrat-helpers";
 
 /**
  * Release screenshots. Captures the main screens into `release-screenshots/`,
@@ -75,5 +76,53 @@ test.describe("Release screenshots", () => {
     test("journal", async ({ page }) => {
         await openAuthed(page, "/journal");
         await shoot(page, "04-journal");
+    });
+
+    // #58: the board must lay out cleanly on a regular HD screen, not only ultrawide.
+    test("status board at 1366x768", async ({ page }) => {
+        await page.setViewportSize({ width: 1366, height: 768 });
+        await openAuthed(page, "/");
+        const board = page.locator(".MuiPaper-root", { has: page.getByTestId("service-tile-madash") });
+        await expect(board).toBeVisible();
+        await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
+        await board.screenshot({ path: `${OUT_DIR}/05-status-board-1366.png` });
+    });
+
+    // Madrat message: Markdown preview with @ mentions, and a mention's hover card.
+    // Mock roster, so the shots never carry real student names.
+    test("madrat message with mentions", async ({ page }) => {
+        await mockRoster(page);
+        await openAuthed(page, "/");
+        const original = await (await page.request.get("/api/madrat")).json().then((b) => b.data ?? "").catch(() => "");
+        try
+        {
+            await startEditing(page);
+            await editor(page).fill([
+                "## הודעות להיום",
+                "",
+                "- **08:30** — מסדר בוקר, צוות בדיקה מתייצב בחדר מבחן 1",
+                "- טסטר תלמידה לעדכן את מדריכת טסט לפני ההפסקה",
+                "- בודק טסט עובר על תרגיל 3 אחרי הצהריים",
+            ].join("\n"));
+            await page.getByText("מצב העולם").click();
+            await expect(preview(page).getByTestId("mention").first()).toBeVisible();
+            // Crop to the rendered text, and keep the Next.js dev badge out of it.
+            await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+            const box = (await preview(page).boundingBox())!;
+            const content = (await preview(page).locator("> div").first().boundingBox())!;
+            await page.screenshot({
+                path: `${OUT_DIR}/06-madrat-mentions.png`,
+                clip: { x: box.x, y: box.y, width: box.width, height: content.y + content.height + 20 - box.y },
+            });
+
+            await preview(page).locator("[data-testid=mention][data-kind=room]").first().hover();
+            const card = page.locator("[data-testid=mention-card][data-kind=room]");
+            await expect(card).toBeVisible();
+            await page.locator(".MuiTooltip-tooltip", { has: card }).screenshot({ path: `${OUT_DIR}/07-mention-card-room.png` });
+        }
+        finally
+        {
+            await page.request.post("/api/madrat", { data: original, headers: { "content-type": "text/plain" } });
+        }
     });
 });
