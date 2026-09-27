@@ -1,19 +1,43 @@
 'use client';
 
-import { Box, ListItemText, MenuItem, MenuList, Paper, Popper, TextField } from "@mui/material";
+import { Box, ListItemIcon, ListItemText, ListSubheader, MenuItem, MenuList, Paper, Popper, TextField } from "@mui/material";
 import { enqueueSnackbar } from 'notistack';
-import { ChangeEventHandler, KeyboardEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEventHandler, Fragment, KeyboardEventHandler, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from '@/api-client/common';
 import { apiGetMadratMessage, apiPostMadratMessage } from '@/api-client/madrat';
+import { MENTION_KIND_LABELS, type MentionDirectory, type MentionEntity, searchMentions, STATUS_LABELS } from '@/api-shared/mentions';
 import { useAuth } from '@/components/auth-provider';
-import MuiMarkdown, { type HighlightedName } from '@/components/mui-markdown';
+import { caretRect } from '@/components/mentions/caret-rect';
+import MentionChip from '@/components/mentions/mention-chip';
+import { MENTION_KIND_STYLE } from '@/components/mentions/mention-kinds';
+import { useMentionDirectory } from '@/components/mentions/use-mention-directory';
+import MuiMarkdown from '@/components/mui-markdown';
 import { MessageHandlerType } from '@/components/session-ws';
-import { useStudents } from '@/components/students-provider';
 import { MessageTypes } from '@/settings';
 import '@/style/madrat-message-box.css';
 
-const MAX_MENTION_OPTIONS = 8;
+/** One-line context under each picker option, so same-looking names are easy to tell apart. */
+function mentionHint(entity: MentionEntity, dir: MentionDirectory): string
+{
+    switch (entity.kind)
+    {
+        case 'student':
+        {
+            const rooms = dir.roomsOf(entity.id).map((r) => r.name);
+            return rooms.length ? rooms.join(', ') : 'לא משובץ לחדר';
+        }
+        case 'room':
+        case 'group':
+            return `${dir.membersOf(entity.id).students.length} חניכים`;
+        case 'segel':
+        case 'checker':
+        {
+            const person = dir.person(entity.id);
+            return person ? STATUS_LABELS[ person.status ] : '';
+        }
+    }
+}
 
 /** The `@query` being typed right before the caret, if any (names may contain spaces). */
 export function activeMention(text: string, caret: number): { start: number; query: string; } | null
@@ -26,13 +50,18 @@ export default function MadratMessageBox()
 {
     const [ message, setMessage ] = useState<string>('');
     const [ isDirty, setIsDirty ] = useState(false);
+    // Read by async callbacks: a fetch started before the writer began typing must not see a stale `false`.
+    const isDirtyRef = useRef(false);
     const [ isEditing, setIsEditing ] = useState(false);
     const dirtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const isFirstLoad = useRef(true);
 
     const { canEdit, addMessageHandler } = useAuth();
-    const { students } = useStudents();
-    const highlightNames = useMemo<HighlightedName[]>(() => students.map((s) => ({ id: s.hiveId, name: s.name, hint: s.room === 'Unknown' ? 'לא משובץ לחדר' : `חדר: ${s.room}` })), [ students ]);
+    const directory = useMentionDirectory();
+    const renderHighlight = useCallback((key: string, children: ReactNode) =>
+    {
+        const entity = directory.byKey.get(key);
+        return entity ? <MentionChip entity={ entity } dir={ directory }>{ children }</MentionChip> : children;
+    }, [ directory ]);
 
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     const [ mention, setMention ] = useState<{ start: number; query: string; } | null>(null);
@@ -40,41 +69,41 @@ export default function MadratMessageBox()
     const mentionOptions = useMemo(() =>
     {
         if (!mention) return [];
-        const q = mention.query.trim();
-        return students.filter((s) => s.name.includes(q)).slice(0, MAX_MENTION_OPTIONS);
-    }, [ mention, students ]);
+        return searchMentions(directory.entities, mention.query);
+    }, [ mention, directory ]);
 
     const slowLoadMessageData = useCallback(async () =>
     {
         return apiGetMadratMessage()
             .then((data) =>
             {
-                if (isFirstLoad.current || !isDirty)
+                // Never clobber text the writer has already started typing.
+                if (!isDirtyRef.current)
                 {
                     setMessage(data);
-                    isFirstLoad.current = false;
                 }
             })
             .catch((error) =>
             {
                 enqueueApiErrorSnackbar(enqueueSnackbar, 'טעינת הודעות המדר"ת נכשלה!', error);
             });
-    }, [ setMessage, isDirty ]);
+    }, [ setMessage ]);
 
     // Handle live updates from the server
     const madratTextChangeHandler: MessageHandlerType = useCallback((messageType, data) =>
     {
         if (messageType !== MessageTypes.MADRAT_TEXT_UPDATE) return;
-        if (!isDirty)
+        if (!isDirtyRef.current)
         {
             setMessage(data as string);
         }
-    }, [ isDirty ]);
+    }, []);
 
     // Apply a local edit: debounce isDirty and push to the server
     const applyValue = useCallback((value: string) =>
     {
         setMessage(value);
+        isDirtyRef.current = true;
         setIsDirty(true);
 
         // Reset debounce timeout
@@ -84,6 +113,7 @@ export default function MadratMessageBox()
         }
         dirtyTimeoutRef.current = setTimeout(() =>
         {
+            isDirtyRef.current = false;
             setIsDirty(false);
 
         }, 1000); // 1 second(s) of inactivity
@@ -102,7 +132,7 @@ export default function MadratMessageBox()
         setMentionIndex(0);
     }, [ applyValue ]);
 
-    // Replace the typed `@query` with the student's plain name (rendered highlighted in the preview).
+    // Replace the typed `@query` with the tagged name as plain text (rendered highlighted in the preview).
     const insertMention = useCallback((name: string) =>
     {
         const input = inputRef.current;
@@ -140,17 +170,23 @@ export default function MadratMessageBox()
         }
     }, [ mention, mentionOptions, mentionIndex, insertMention ]);
 
+    // Keep the keyboard-selected option visible in the (scrollable) picker.
+    useEffect(() =>
+    {
+        document.querySelector('[data-testid=mention-options] .Mui-selected')?.scrollIntoView({ block: 'nearest' });
+    }, [ mentionIndex ]);
+
     // Register message handler for server pushes
     useEffect(() =>
     {
         return addMessageHandler(madratTextChangeHandler);
     }, [ addMessageHandler, madratTextChangeHandler ]);
 
-    // Load initial content from server
+    // Load on mount, and re-sync once the writer pauses (picks up edits pushed meanwhile)
     useEffect(() =>
     {
-        slowLoadMessageData();
-    }, [ slowLoadMessageData ]);
+        if (!isDirty) slowLoadMessageData();
+    }, [ isDirty, slowLoadMessageData ]);
 
     // Cleanup the timeout on unmount
     useEffect(() =>
@@ -204,19 +240,35 @@ export default function MadratMessageBox()
                         },
                     } }
                 />
-                <Popper open={ mentionOptions.length > 0 } anchorEl={ () => inputRef.current! } placement="bottom-start" sx={ { zIndex: 'modal' } }>
+                <Popper
+                    open={ mentionOptions.length > 0 }
+                    // Open at the `@` being typed, not at the (tall) textarea's edge.
+                    anchorEl={ mention ? { getBoundingClientRect: () => caretRect(inputRef.current!, mention.start) } : null }
+                    placement="bottom-start"
+                    modifiers={ [ { name: 'flip', enabled: true }, { name: 'preventOverflow', options: { padding: 8 } } ] }
+                    sx={ { zIndex: 'modal' } }
+                >
                     <Paper elevation={ 8 }>
-                        <MenuList dense data-testid="mention-options" aria-label="בחירת חניך">
-                            { mentionOptions.map((s, i) => (
-                                <MenuItem
-                                    key={ s.hiveId }
-                                    selected={ i === mentionIndex }
-                                    // mousedown, not click: keep focus in the textarea so onBlur doesn't leave edit mode.
-                                    onMouseDown={ (e) => { e.preventDefault(); insertMention(s.name); } }
-                                >
-                                    <ListItemText primary={ s.name } secondary={ s.room } />
-                                </MenuItem>
-                            )) }
+                        <MenuList dense data-testid="mention-options" aria-label="תיוג" sx={ { maxHeight: 360, overflowY: 'auto', minWidth: 260 } }>
+                            { mentionOptions.map((entity, i) =>
+                            {
+                                const { icon: Icon, palette } = MENTION_KIND_STYLE[ entity.kind ];
+                                const firstOfKind = i === 0 || mentionOptions[ i - 1 ].kind !== entity.kind;
+                                return (
+                                    <Fragment key={ entity.key }>
+                                        { firstOfKind && <ListSubheader sx={ { lineHeight: '28px' } }>{ MENTION_KIND_LABELS[ entity.kind ] }</ListSubheader> }
+                                        <MenuItem
+                                            data-kind={ entity.kind }
+                                            selected={ i === mentionIndex }
+                                            // mousedown, not click: keep focus in the textarea so onBlur doesn't leave edit mode.
+                                            onMouseDown={ (e) => { e.preventDefault(); insertMention(entity.name); } }
+                                        >
+                                            <ListItemIcon sx={ { color: `${palette}.main` } }><Icon fontSize="small" /></ListItemIcon>
+                                            <ListItemText primary={ entity.name } secondary={ mentionHint(entity, directory) } />
+                                        </MenuItem>
+                                    </Fragment>
+                                );
+                            }) }
                         </MenuList>
                     </Paper>
                 </Popper>
@@ -242,7 +294,7 @@ export default function MadratMessageBox()
                     } }
                 >
                     { message
-                        ? <MuiMarkdown highlightNames={ highlightNames }>{ message }</MuiMarkdown>
+                        ? <MuiMarkdown highlights={ directory.highlightable } renderHighlight={ renderHighlight }>{ message }</MuiMarkdown>
                         : <Box component="span" sx={ { color: 'text.disabled' } }>אין הודעות...</Box> }
                 </Box>
             ) }

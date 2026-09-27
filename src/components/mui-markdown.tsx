@@ -1,25 +1,24 @@
 'use client';
 
-import { Box, Checkbox, Tooltip, Divider, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, Checkbox, Divider, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import type { Element, ElementContent, Root } from 'hast';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-export interface HighlightedName
+export interface Highlight
 {
-    id: number;
+    /** Opaque id handed back to `renderHighlight`. */
+    key: string;
     name: string;
-    /** Shown on hover (e.g. the student's current room). */
-    hint?: string;
 }
 
 const SKIP_TAGS = new Set([ 'code', 'pre', 'a' ]);
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const NO_NAMES: HighlightedName[] = [];
+const NO_HIGHLIGHTS: Highlight[] = [];
 
-/** Rehype plugin: wraps every occurrence of a known name in `<span data-student-id>` (not inside code or links). */
-function rehypeHighlightNames(names: HighlightedName[])
+/** Rehype plugin: wraps every occurrence of a known name in `<span data-highlight-key>` (not inside code or links). */
+function rehypeHighlightNames(names: Highlight[])
 {
     const byName = new Map(names.filter((n) => n.name.trim()).map((n) => [ n.name, n ]));
     // Longest first, so "דנה כהן לוי" wins over "דנה כהן".
@@ -34,7 +33,7 @@ function rehypeHighlightNames(names: HighlightedName[])
         for (const m of value.matchAll(pattern!))
         {
             if (m.index > last) out.push({ type: 'text', value: value.slice(last, m.index) });
-            out.push({ type: 'element', tagName: 'span', properties: { dataStudentId: byName.get(m[ 0 ])!.id, title: byName.get(m[ 0 ])!.hint }, children: [ { type: 'text', value: m[ 0 ] } ] });
+            out.push({ type: 'element', tagName: 'span', properties: { dataHighlightKey: byName.get(m[ 0 ])!.key }, children: [ { type: 'text', value: m[ 0 ] } ] });
             last = m.index + m[ 0 ].length;
         }
         if (last < value.length) out.push({ type: 'text', value: value.slice(last) });
@@ -68,11 +67,12 @@ const COMPONENTS: Components = {
     p: ({ children }) => <Typography variant="body1" component="p" sx={ { marginBlock: 0.75 } }>{ children }</Typography>,
     // Links open without also toggling an enclosing click-to-edit surface.
     a: ({ href, children }) => <Link href={ href } target="_blank" rel="noopener noreferrer" onClick={ (e) => e.stopPropagation() }>{ children }</Link>,
-    ul: ({ children }) => <Box component="ul" sx={ { paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
-    ol: ({ children }) => <Box component="ol" sx={ { paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
+    // Explicit list styles: the Tailwind preflight resets them to none.
+    ul: ({ children }) => <Box component="ul" sx={ { listStyleType: 'disc', paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
+    ol: ({ children }) => <Box component="ol" sx={ { listStyleType: 'decimal', paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
     li: ({ children }) => <Typography component="li" variant="body1">{ children }</Typography>,
     blockquote: ({ children }) => (
-        <Box component="blockquote" sx={ { marginInline: 0, paddingInlineStart: 2, borderInlineStart: 3, borderColor: 'secondary.main', color: 'text.secondary' } }>
+        <Box component="blockquote" sx={ { marginInline: 0, paddingInlineStart: 2, borderInlineStart: '3px solid', borderColor: 'secondary.main', color: 'text.secondary' } }>
             { children }
         </Box>
     ),
@@ -91,39 +91,31 @@ const COMPONENTS: Components = {
     tr: ({ children }) => <TableRow>{ children }</TableRow>,
     th: ({ children }) => <TableCell sx={ { fontWeight: 700 } }>{ children }</TableCell>,
     td: ({ children }) => <TableCell>{ children }</TableCell>,
-    span: ({ node: _node, children, ...props }) =>
-    {
-        const { 'data-student-id': studentId, title, ...rest } = props as Record<string, unknown>;
-        if (studentId === undefined) return <span { ...rest }>{ children }</span>;
-        const mention = (
-            <Box
-                component="span"
-                data-testid="student-mention"
-                data-student-id={ String(studentId) }
-                sx={ {
-                    paddingInline: 0.5,
-                    borderRadius: 0.75,
-                    fontWeight: 600,
-                    color: 'primary.main',
-                    bgcolor: (theme) => `rgba(${theme.vars!.palette.primary.mainChannel} / 0.14)`,
-                } }
-            >
-                { children }
-            </Box>
-        );
-        return title ? <Tooltip title={ String(title) } arrow placement="top">{ mention }</Tooltip> : mention;
-    },
     input: ({ type, checked }) => (type === 'checkbox'
         ? <Checkbox size="small" checked={ !!checked } disabled sx={ { p: 0, marginInlineEnd: 0.5 } } />
         : null),
 };
 
-export default function MuiMarkdown({ children, highlightNames = NO_NAMES }: { children: string; highlightNames?: HighlightedName[]; })
+export default function MuiMarkdown({ children, highlights = NO_HIGHLIGHTS, renderHighlight }: {
+    children: string;
+    /** Names to mark up wherever they appear in the text. */
+    highlights?: Highlight[];
+    renderHighlight?: (key: string, children: ReactNode) => ReactNode;
+})
 {
-    const rehypePlugins = useMemo(() => [ rehypeHighlightNames(highlightNames) ], [ highlightNames ]);
+    const rehypePlugins = useMemo(() => [ rehypeHighlightNames(highlights) ], [ highlights ]);
+    const components = useMemo<Components>(() => ({
+        ...COMPONENTS,
+        span: ({ node: _node, children: spanChildren, ...props }) =>
+        {
+            const { 'data-highlight-key': key, ...rest } = props as Record<string, unknown>;
+            if (typeof key === 'string' && renderHighlight) return renderHighlight(key, spanChildren);
+            return <span { ...rest }>{ spanChildren }</span>;
+        },
+    }), [ renderHighlight ]);
     return (
         <Box sx={ { color: 'text.primary', overflowWrap: 'break-word', '& > :first-child': { marginBlockStart: 0 }, '& > :last-child': { marginBlockEnd: 0 } } }>
-            <Markdown remarkPlugins={ [ remarkGfm ] } rehypePlugins={ rehypePlugins } components={ COMPONENTS }>{ children }</Markdown>
+            <Markdown remarkPlugins={ [ remarkGfm ] } rehypePlugins={ rehypePlugins } components={ components }>{ children }</Markdown>
         </Box>
     );
 }
