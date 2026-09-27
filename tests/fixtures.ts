@@ -33,7 +33,7 @@ export const SELECTORS = {
     studentChip: ".MuiChip-root",
     
     /** Theme toggle icon */
-    themeToggle: "button:has(svg[data-testid='Brightness4Icon']), button:has(svg[data-testid='Brightness7Icon'])",
+    themeToggle: "button[aria-label='Toggle theme']",
     
     /** Snackbar notification */
     snackbar: ".notistack-SnackbarContainer",

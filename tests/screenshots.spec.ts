@@ -41,13 +41,17 @@ async function openAuthed(page: Page, url: string): Promise<void>
 
 async function shoot(page: Page, name: string): Promise<void>
 {
-    // Let polling tiles and fonts settle so the shot isn't a loading skeleton.
+    // Let data loads and polling tiles settle so the shot isn't a loading
+    // skeleton. Bounded: a tile that never resolves still gets captured.
     await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
+    await expect(page.locator(".MuiSkeleton-root, [role='progressbar'], :text('בודק זמינות')"))
+        .toHaveCount(0, { timeout: 30_000 })
+        .catch(() => {});
     await page.screenshot({ path: `${OUT_DIR}/${name}.png`, fullPage: true });
 }
 
 test.describe("Release screenshots", () => {
-    test.describe.configure({ timeout: 90_000 });
+    test.describe.configure({ timeout: 120_000 });
 
     test("login", async ({ browser }) => {
         const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
@@ -64,11 +68,8 @@ test.describe("Release screenshots", () => {
 
     test("home (dark)", async ({ page }) => {
         await openAuthed(page, "/");
-        const toggle = page.locator(SELECTORS.themeToggle).first();
-        if (await toggle.isVisible())
-        {
-            await toggle.click();
-        }
+        await page.locator(SELECTORS.themeToggle).first().click();
+        await expect(page.locator("html")).toHaveClass(/dark/);
         await shoot(page, "03-home-dark");
     });
 
