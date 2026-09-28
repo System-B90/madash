@@ -64,13 +64,14 @@ const COMPONENTS: Components = {
     h4: ({ children }) => <Typography variant="subtitle2" component="h4" fontWeight={ 700 } gutterBottom>{ children }</Typography>,
     h5: ({ children }) => <Typography variant="subtitle2" component="h5" gutterBottom>{ children }</Typography>,
     h6: ({ children }) => <Typography variant="subtitle2" component="h6" gutterBottom>{ children }</Typography>,
-    p: ({ children }) => <Typography variant="body1" component="p" sx={ { marginBlock: 0.75 } }>{ children }</Typography>,
+    // pre-wrap: a single newline typed in the editor is a line break here, not a space.
+    p: ({ children }) => <Typography variant="body1" component="p" sx={ { marginBlock: 0.75, whiteSpace: 'pre-wrap' } }>{ children }</Typography>,
     // Links open without also toggling an enclosing click-to-edit surface.
     a: ({ href, children }) => <Link href={ href } target="_blank" rel="noopener noreferrer" onClick={ (e) => e.stopPropagation() }>{ children }</Link>,
     // Explicit list styles: the Tailwind preflight resets them to none.
     ul: ({ children }) => <Box component="ul" sx={ { listStyleType: 'disc', paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
     ol: ({ children }) => <Box component="ol" sx={ { listStyleType: 'decimal', paddingInlineStart: 3, marginBlock: 0.75 } }>{ children }</Box>,
-    li: ({ children }) => <Typography component="li" variant="body1">{ children }</Typography>,
+    li: ({ children }) => <Typography component="li" variant="body1" sx={ { whiteSpace: 'pre-wrap' } }>{ children }</Typography>,
     blockquote: ({ children }) => (
         <Box component="blockquote" sx={ { marginInline: 0, paddingInlineStart: 2, borderInlineStart: '3px solid', borderColor: 'secondary.main', color: 'text.secondary' } }>
             { children }
@@ -90,7 +91,7 @@ const COMPONENTS: Components = {
     tbody: ({ children }) => <TableBody>{ children }</TableBody>,
     tr: ({ children }) => <TableRow>{ children }</TableRow>,
     th: ({ children }) => <TableCell sx={ { fontWeight: 700 } }>{ children }</TableCell>,
-    td: ({ children }) => <TableCell>{ children }</TableCell>,
+    td: ({ children }) => <TableCell sx={ { whiteSpace: 'pre-wrap' } }>{ children }</TableCell>,
     input: ({ type, checked }) => (type === 'checkbox'
         ? <Checkbox size="small" checked={ !!checked } disabled sx={ { p: 0, marginInlineEnd: 0.5 } } />
         : null),
