@@ -1,6 +1,7 @@
 'use client';
 import { Box } from "@mui/material";
 
+import { CalledStudentCommands } from "@/components/app-commands/CalledStudentCommands";
 import { StudentCommands } from "@/components/app-commands/StudentCommands";
 import { CalledEntitiesProvider } from "@/components/called-students-provider";
 import MadratMessageBox from "@/components/madrat-message-box";
@@ -16,6 +17,8 @@ export default function Home()
             <StudentCommands />
             <div className="flex flex-row w-full h-full box-border">
                 <CalledEntitiesProvider>
+                    { /* Open calls: mark told / cancel from the palette (#53). */ }
+                    <CalledStudentCommands />
                     <SideBar />
                 </CalledEntitiesProvider>
                 <Box
