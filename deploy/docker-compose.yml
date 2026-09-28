@@ -86,6 +86,6 @@ networks:
     driver: bridge
 
 secrets:
-  # Build-time only; scripts/with-npm-token.sh exports NPM_TOKEN (falls back to `gh auth token`).
+  # Build-time only; `python -m sb90_devops.with_npm_token` exports NPM_TOKEN (env, ~/.npmrc, then `gh auth token`).
   npm_token:
     environment: NPM_TOKEN
