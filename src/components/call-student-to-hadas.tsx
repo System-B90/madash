@@ -37,6 +37,14 @@ dayjs.extend(relativeTime);
 dayjs.locale("he");
 
 
+/** Chip label for a call's expiry time: expired at or before `now` (to the minute), else how long is left. */
+export function getExpiryStatus(time: Dayjs | null, now: Dayjs)
+{
+    if (!time) return null;
+    if (time.diff(now, 'minute') <= 0) return { label: "פג תוקף", color: "error" as const };
+    return { label: `בעוד ${time.from(now, true)}`, color: "info" as const };
+}
+
 interface AlarmClockTimePickerFormProps extends BoxProps
 {
     time: Dayjs | null;
@@ -58,15 +66,7 @@ function AlarmClockTimePickerForm({ time, setTime, ...props }: AlarmClockTimePic
         setAnchorEl(null);
     }, []);
 
-    const expiryStatus = useMemo(() =>
-    {
-        if (!time) return null;
-        const now = dayjs();
-        const diff = time.diff(now, 'minute');
-
-        if (diff <= 0) return { label: "פג תוקף", color: "error" as const };
-        return { label: `בעוד ${time.fromNow(true)}`, color: "info" as const };
-    }, [ time ]);
+    const expiryStatus = useMemo(() => getExpiryStatus(time, dayjs()), [ time ]);
 
     return (
         <Box { ...props } className="flex flex-col items-center">
