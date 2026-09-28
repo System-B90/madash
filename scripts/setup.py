@@ -15,6 +15,7 @@ Runs from the bundle root (./install.sh runs it; re-run with
 with sb90-deploy installed from scripts/requirements.txt).
 """
 
+import shutil
 import sys
 from pathlib import Path
 
@@ -39,12 +40,29 @@ def _spec() -> AppSpec:
     raise SystemExit("app.json not found next to setup.py or in deploy/")
 
 
+def _seed_default_cert(ssl_dir: Path) -> None:
+    """In a checkout, start from the committed dev cert (System-B90 Dev Root CA,
+    covers madash.dev / madash.localhost). w.tls keeps it when it covers the
+    chosen domain and issues a fresh one otherwise. Release bundles don't ship
+    nginx/ssl-default, so production always gets its own cert."""
+    default = Path(__file__).resolve().parent.parent / "nginx" / "ssl-default"
+    if not default.is_dir():
+        return
+    if (ssl_dir / "cert.pem").exists() or (ssl_dir / "key.pem").exists():
+        return
+    ssl_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("cert.pem", "key.pem"):
+        shutil.copy2(default / name, ssl_dir / name)
+    print("Copied the default dev cert (System-B90 Dev Root CA) to ssl/.")
+
+
 def main() -> None:
     w = Wizard(_spec())
 
     domain = w.domain(example="madash.example.com")
     w.ports()
     # nginx reads /etc/nginx/ssl/{cert,key}.pem, mounted from ./ssl.
+    _seed_default_cert(Path("ssl"))
     w.tls(domain, ssl_dir="ssl", cert_name="cert.pem", key_name="key.pem")
 
     hive_url = w.ask(

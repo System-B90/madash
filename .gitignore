@@ -26,6 +26,8 @@
 # misc
 .DS_Store
 *.pem
+# Default dev cert signed by the System-B90 Dev Root CA (public, dev-only).
+!nginx/ssl-default/*.pem
 
 # debug
 npm-debug.log*
