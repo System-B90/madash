@@ -36,7 +36,8 @@ const DateNavigator: React.FC<DateNavigatorProps> = ({ selectedDate, onDateChang
           backgroundColor: theme.palette.background.default,
         }}
       >
-        <IconButton onClick={handlePrevDay}>
+        {/* Labelled: icon data-testids are stripped from production builds (#6). */}
+        <IconButton onClick={handlePrevDay} aria-label="יום קודם">
           <ChevronLeftIcon />
         </IconButton>
         <DatePicker
@@ -44,7 +45,7 @@ const DateNavigator: React.FC<DateNavigatorProps> = ({ selectedDate, onDateChang
           value={selectedDate}
           onChange={onDateChange}
         />
-        <IconButton onClick={handleNextDay}>
+        <IconButton onClick={handleNextDay} aria-label="יום הבא">
           <ChevronRightIcon />
         </IconButton>
       </Box>
