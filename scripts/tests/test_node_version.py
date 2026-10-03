@@ -42,4 +42,7 @@ def test_docker_images_use_node_24() -> None:
 
 def test_types_node_matches_runtime() -> None:
     pkg = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
-    assert re.sub(r"^\D*", "", pkg["devDependencies"]["@types/node"]).split(".")[0] == NODE_MAJOR
+    assert (
+        re.sub(r"^\D*", "", pkg["devDependencies"]["@types/node"]).split(".")[0]
+        == NODE_MAJOR
+    )
