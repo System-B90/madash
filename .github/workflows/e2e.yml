@@ -54,7 +54,7 @@ jobs:
       - name: Set up Node + Playwright
         uses: System-B90/.github/actions/setup-playwright@main
         with:
-          node-version: "22"
+          node-version: "24"
 
       # NEXT_PUBLIC_* values are inlined at build time and are fixed, so the
       # build needs no Hive. SSO credentials are generated after acquiring it.
