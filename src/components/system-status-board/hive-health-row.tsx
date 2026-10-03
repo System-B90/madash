@@ -3,12 +3,13 @@
 import type { SxProps, Theme } from '@mui/material/styles';
 
 import { apiGetOpenHelpsCount, apiGetToiletQueue } from '@/api-client/hive';
-import { apiGetHivePrometheusStatus } from '@/api-client/hive-prometheus-status';
-import type { HivePrometheusStatus } from '@/api-shared/hive-prometheus-status';
+import type { ServiceHealth, ServicesHealthResponse } from '@/api-shared/service-health';
 import type { ToiletQueue } from '@/api-shared/toilet-queue';
 import HiveGenericIcon from '@/components/icons/hive';
 import { useStudents } from '@/components/students-provider';
+import LatencySparkline from '@/components/system-status-board/latency-sparkline';
 import OpenHelpsGauge, { HELPS_PER_STUDENT_DANGER } from '@/components/system-status-board/open-helps-gauge';
+import { describeServiceHealth } from '@/components/system-status-board/service-health-text';
 import { DEFAULT_STATE_DETAIL, ServiceHealthTile, ServiceIcon, type TileState } from '@/components/system-status-board/shared-ui';
 import ToiletQueueIndicator from '@/components/system-status-board/toilet-queue-indicator';
 import { usePolling } from '@/components/system-status-board/use-polling';
@@ -19,21 +20,23 @@ const HIVE_HEALTH_POLL_MS = 20_000;
 const HIVE_ICON_SX: SxProps<Theme> = (theme) => theme.applyStyles('light', { filter: 'brightness(0)' });
 const HIVE_ICON_URL = `${(process.env.NEXT_PUBLIC_HIVE_URL ?? '').replace(/\/$/, '')}/static/icon.svg`;
 
-export function hiveTileState(data: HivePrometheusStatus | null): TileState
+/** Hive's entry in the unified services response (#54); null until it answers. */
+export function hiveServiceHealth(services: ServicesHealthResponse | null): ServiceHealth | null
 {
-    if (data === null) return 'loading';
-    if (!data.configured) return 'unconfigured';
-    if (!data.reachable) return 'down';
-    if (data.overloaded) return 'degraded';
-    return 'up';
+    return services?.find((s) => s.id === 'hive') ?? null;
 }
 
-const HIVE_DOWN: HivePrometheusStatus = { configured: true, reachable: false, overloaded: false };
+export function hiveTileState(health: ServiceHealth | null): TileState
+{
+    return health?.state ?? 'loading';
+}
 
 export interface HiveHealth
 {
     state: TileState;
     detail: string;
+    /** Latency + history from the unified backend; null until it answers. */
+    health: ServiceHealth | null;
     helps: number | null;
     helpsLoading: boolean;
     /** Null when the count failed to load. */
@@ -44,10 +47,10 @@ export interface HiveHealth
 export const HIVE_LABEL = 'הייב';
 export const HiveServiceIcon = () => <ServiceIcon src={ HIVE_ICON_URL } icon={ HiveGenericIcon } imgSx={ HIVE_ICON_SX } />;
 
-/** Hive's own (separate) health sources: Prometheus load + open helps. */
-export function useHiveHealth(): HiveHealth
+/** Hive's health from the unified backend, plus its own widgets' sources: open helps + toilet queue. */
+export function useHiveHealth(services: ServicesHealthResponse | null): HiveHealth
 {
-    const status = usePolling(apiGetHivePrometheusStatus, HIVE_HEALTH_POLL_MS, () => HIVE_DOWN);
+    const health = hiveServiceHealth(services);
     // Wrapped so "not fetched yet" (null) stays distinct from "fetch failed" ({ count: null }).
     const helpsResult = usePolling(
         async (): Promise<{ count: number | null; }> => ({ count: (await apiGetOpenHelpsCount()).count }),
@@ -64,15 +67,15 @@ export function useHiveHealth(): HiveHealth
     );
 
     const { students, isLoading: studentsLoading } = useStudents();
-    const state = hiveTileState(status);
+    const state = hiveTileState(health);
 
     const studentsKnown = !(studentsLoading && students.length === 0);
     const helpsDanger = helps !== null && studentsKnown && helps / Math.max(students.length, 1) > HELPS_PER_STUDENT_DANGER;
 
-    const detailBase = state === 'degraded' ? 'עומס גבוה על התשתית' : DEFAULT_STATE_DETAIL[ state ];
+    const detailBase = health ? describeServiceHealth(health) : DEFAULT_STATE_DETAIL[ state ];
     const detail = helpsDanger ? `${detailBase} · יותר מדי הלפים` : detailBase;
 
-    return { state, detail, helps, helpsLoading, toiletQueue: toiletResult?.queue ?? null, toiletLoading: toiletResult === null };
+    return { state, detail, health, helps, helpsLoading, toiletQueue: toiletResult?.queue ?? null, toiletLoading: toiletResult === null };
 }
 
 export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
@@ -84,8 +87,10 @@ export default function HiveHealthRow({ hive }: { hive: HiveHealth; })
             icon={ <HiveServiceIcon /> }
             state={ hive.state }
             detail={ hive.detail }
+            latencyMs={ hive.health?.latencyMs }
             mid={ (
                 <>
+                    { hive.health && <LatencySparkline history={ hive.health.history } state={ hive.health.state } /> }
                     <ToiletQueueIndicator queue={ hive.toiletQueue } loading={ hive.toiletLoading } />
                     <OpenHelpsGauge openHelpsCount={ hive.helps } helpsLoading={ hive.helpsLoading } />
                 </>

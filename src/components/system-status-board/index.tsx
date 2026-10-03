@@ -70,7 +70,8 @@ export default function SystemStatusBoard()
 {
     // Polled here, not in the rows: the card unmounts its content when collapsed,
     // and the collapsed summary still needs live states.
-    const data: BoardData = { link: useMadashLink(), hive: useHiveHealth(), services: useMonitoredServices() };
+    const services = useMonitoredServices();
+    const data: BoardData = { link: useMadashLink(), hive: useHiveHealth(services), services };
 
     return (
         <CollapsableCard

@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { StatusEnum } from "@/api-shared/hive-types";
-import { MONITORED_SERVICE_IDS, type ServiceHealth } from "@/api-shared/service-health";
+import { HEALTH_SERVICE_IDS, type ServiceHealth } from "@/api-shared/service-health";
 import { countToiletQueue } from "@/api-shared/toilet-queue";
 import { compactStatuses } from "@/components/system-status-board";
 import { compactDotPalette } from "@/components/system-status-board/compact-status-strip";
-import { hiveTileState } from "@/components/system-status-board/hive-health-row";
+import { hiveServiceHealth, hiveTileState } from "@/components/system-status-board/hive-health-row";
 import { madashLinkState } from "@/components/system-status-board/madash-link-row";
 import { formatProbeTime, sparklinePaletteKey, sparklineSeries } from "@/components/system-status-board/latency-sparkline";
 import {
@@ -18,12 +18,17 @@ import { toiletQueueTooltip } from "@/components/system-status-board/toilet-queu
 import { startPolling } from "@/components/system-status-board/use-polling";
 
 describe("hiveTileState", () => {
-    it("maps the Prometheus probe onto the shared tile states", () => {
-        expect(hiveTileState(null)).toBe("loading");
-        expect(hiveTileState({ configured: false })).toBe("unconfigured");
-        expect(hiveTileState({ configured: true, reachable: false, overloaded: false })).toBe("down");
-        expect(hiveTileState({ configured: true, reachable: true, overloaded: true })).toBe("degraded");
-        expect(hiveTileState({ configured: true, reachable: true, overloaded: false })).toBe("up");
+    it("reads Hive's state from the unified services response (#54)", () => {
+        expect(hiveTileState(hiveServiceHealth(null))).toBe("loading");
+        expect(hiveTileState(hiveServiceHealth([]))).toBe("loading");
+        const services: ServiceHealth[] = [
+            { id: "hive", state: "degraded", reason: "overloaded", latencyMs: 40, checkedAt: 0, history: [] },
+            { id: "bluz", state: "up", latencyMs: 80, checkedAt: 0, history: [] },
+        ];
+        const health = hiveServiceHealth(services);
+        expect(health?.latencyMs).toBe(40);
+        expect(hiveTileState(health)).toBe("degraded");
+        expect(describeServiceHealth(health!)).toBe("עומס גבוה על התשתית");
     });
 });
 
@@ -70,7 +75,7 @@ describe("service tile text", () => {
 
     it("marks every monitored service unreachable when the route itself fails", () => {
         const all = allServicesUnreachable(42);
-        expect(all.map((s) => s.id)).toEqual([ ...MONITORED_SERVICE_IDS ]);
+        expect(all.map((s) => s.id)).toEqual([ ...HEALTH_SERVICE_IDS ]);
         expect(all.every((s) => s.state === "down" && s.reason === "unreachable" && s.checkedAt === 42 && s.history.length === 0)).toBe(true);
     });
 });
@@ -141,7 +146,7 @@ describe("collapsed status strip", () => {
 
     it("summarises all four services in board order, loading until the backend answers", () => {
         const link = { state: "up" as const, rttMs: 20, history: [] };
-        const hive = { state: "degraded" as const, detail: "", helps: 0, helpsLoading: false, toiletQueue: null, toiletLoading: false };
+        const hive = { state: "degraded" as const, detail: "", health: null, helps: 0, helpsLoading: false, toiletQueue: null, toiletLoading: false };
         const pending = compactStatuses({ link, hive, services: null });
         expect(pending.map((s) => [ s.id, s.state ])).toEqual([
             [ "madash", "up" ], [ "hive", "degraded" ], [ "bluz", "loading" ], [ "peekaboo", "loading" ],

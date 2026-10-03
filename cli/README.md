@@ -21,7 +21,7 @@ madash madrat watch   # the madrat message, updating live
 | `madash hadas call <student>... --reason R [--expires +2h\|HH:MM\|ISO] [--group]`        | Call students (Hive id, number or username)                                              |
 | `madash hadas told <callId>` / `state <callId> <state>` / `remove <callId>`              | Board actions                                                                            |
 | `madash journal get [-d DATE]` / `rename NAME` / `done ID` / `undo ID` / `update FILE`   | Journal                                                                                  |
-| `madash status services\|prometheus\|toilet-queue\|open-helps\|all`                      | System status board                                                                      |
+| `madash status services\|toilet-queue\|open-helps\|all`                                  | System status board                                                                      |
 | `madash hive students [--room R] [--status S] [--raw]` / `classes` / `avatar ID -o FILE` | Hive data behind the board                                                               |
 | `madash open [dashboard\|journal]`                                                       | Open a page in the browser                                                               |
 | `madash health`                                                                          | Container liveness probe                                                                 |
