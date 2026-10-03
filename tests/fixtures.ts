@@ -1,7 +1,33 @@
-import { Page } from "@playwright/test";
-import { test, expect } from "@system-b90/test-kit/fixtures";
+import type { BrowserContext, Page } from "@playwright/test";
+import { test as base, expect } from "@system-b90/test-kit/fixtures";
 
-export { test, expect };
+/** localStorage key and tour ids of the onboarding tours (#77, src/components/onboarding/tours.ts). */
+export const ONBOARDING_KEY = "madash:onboarding:completions:v1";
+export const TOUR_IDS = [ "home.intro", "journal.intro" ] as const;
+
+/**
+ * Marks every tour as seen before any page script runs, so an auto-starting
+ * tour never covers the screen a spec is testing. onboarding.spec.ts opts out.
+ */
+export async function skipTours(context: BrowserContext): Promise<void>
+{
+    await context.addInitScript(({ key, ids }) =>
+    {
+        const seen = Object.fromEntries(ids.map((id) => [ id, { version: 999, at: "", reason: "dismissed" } ]));
+        localStorage.setItem(key, JSON.stringify(seen));
+    }, { key: ONBOARDING_KEY, ids: [ ...TOUR_IDS ] });
+}
+
+export const test = base.extend<{ withTours: boolean; }>({
+    withTours: [ false, { option: true } ],
+    context: async ({ context, withTours }, use) =>
+    {
+        if (!withTours) await skipTours(context);
+        await use(context);
+    },
+});
+
+export { expect };
 
 /**
  * Shared test fixtures and helper utilities for MADASH integration tests.
@@ -51,19 +77,11 @@ export async function gotoAppHome(page: Page): Promise<void> {
 
 export async function waitForAppLoad(page: Page): Promise<void> {
     await page.waitForLoadState("domcontentloaded");
-    // The collapsable status card serves as a signal the app is loaded.
-    // Known flaky/broken render — https://github.com/System-B90/madash/issues/4.
-    // Non-blocking here so unrelated tests using this helper aren't dragged down by it;
-    // tests that actually depend on this card assert on it explicitly and are skipped separately.
-    // Bounded well under the 15s default test/hook timeout (tests/playwright.config.ts) so a
-    // timeout here doesn't blow the whole beforeEach hook's budget and abort the test outright.
-    try {
-        await expect(page.locator(SELECTORS.calledToHadasCard).first()).toBeVisible({
-            timeout: 5_000,
-        });
-    } catch (error) {
-        console.warn("calledToHadasCard did not become visible on app load (see issue #4):", error);
-    }
+    // The collapsable status card is the signal the app is loaded. A hard
+    // gate (#4): a dashboard that never renders must fail, not warn.
+    await expect(page.locator(SELECTORS.calledToHadasCard).first()).toBeVisible({
+        timeout: 10_000,
+    });
 }
 
 /**

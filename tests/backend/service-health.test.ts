@@ -11,8 +11,8 @@ function jsonResponse(status: number, body: unknown)
     return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-const BLUZ: MonitoredServiceDefinition = { id: "bluz", baseUrlEnv: "BLUZ_URL", healthPath: "/api/health", interpret: bluzInterpreter };
-const PAB: MonitoredServiceDefinition = { id: "peekaboo", baseUrlEnv: "PEEKABOO_URL", healthPath: "/api/health", interpret: livenessInterpreter };
+const BLUZ: MonitoredServiceDefinition = { id: "bluz", baseUrlEnv: [ "BLUZ_URL" ], healthPath: "/api/health", interpret: bluzInterpreter };
+const PAB: MonitoredServiceDefinition = { id: "peekaboo", baseUrlEnv: [ "PEEKABOO_URL" ], healthPath: "/api/health", interpret: livenessInterpreter };
 
 describe("RingBuffer", () => {
     it("overwrites the oldest item once full, keeping capacity fixed", () => {

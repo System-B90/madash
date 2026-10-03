@@ -43,10 +43,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           # No `cache:` on purpose. The self-hosted runners have persistent
           # disk, so the npm cache already survives between runs — the
           # actions/cache save is pure cost, and it is what left a
@@ -101,10 +101,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 24
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           # No `cache:` on purpose. The self-hosted runners have persistent
           # disk, so the npm cache already survives between runs — the
           # actions/cache save is pure cost, and it is what left a

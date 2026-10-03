@@ -5,6 +5,9 @@ import { CalledStudentCommands } from "@/components/app-commands/CalledStudentCo
 import { StudentCommands } from "@/components/app-commands/StudentCommands";
 import { CalledEntitiesProvider } from "@/components/called-students-provider";
 import MadratMessageBox from "@/components/madrat-message-box";
+import { HomeOnboarding } from "@/components/onboarding/MadashOnboarding";
+import { TourAnchor } from "@/components/onboarding/TourAnchor";
+import { ANCHORS } from "@/components/onboarding/tours";
 import SideBar from "@/components/side-bar";
 import { StudentsProvider } from "@/components/students-provider";
 import SystemStatusBoard from "@/components/system-status-board/index";
@@ -15,6 +18,7 @@ export default function Home()
         <StudentsProvider>
             { /* Inside StudentsProvider — the roster is what it contributes. */ }
             <StudentCommands />
+            <HomeOnboarding />
             <div className="flex flex-row w-full h-full box-border">
                 <CalledEntitiesProvider>
                     { /* Open calls: mark told / cancel from the palette (#53). */ }
@@ -24,8 +28,12 @@ export default function Home()
                 <Box
                     className='w-full min-h-0 gap-4 flex-col flex px-2 py-4 h-full grow'
                 >
-                    <SystemStatusBoard />
-                    <MadratMessageBox />
+                    <TourAnchor id={ ANCHORS.statusBoard }>
+                        <SystemStatusBoard />
+                    </TourAnchor>
+                    <TourAnchor id={ ANCHORS.madratMessage } className="flex flex-col flex-1 min-h-0">
+                        <MadratMessageBox />
+                    </TourAnchor>
                 </Box>
             </div>
         </StudentsProvider>

@@ -1,11 +1,11 @@
 import { type HealthBodyInterpreter, livenessInterpreter } from '@/api-server/service-health/probe';
-import type { MonitoredServiceId, ServiceHealth } from '@/api-shared/service-health';
+import type { HealthServiceId, ServiceHealth } from '@/api-shared/service-health';
 
 export interface MonitoredServiceDefinition
 {
-    id: MonitoredServiceId;
-    /** Env var holding the service's public base URL; unset → `unconfigured`. */
-    baseUrlEnv: string;
+    id: HealthServiceId;
+    /** Env vars holding the service's base URL, first set wins; none set → `unconfigured`. */
+    baseUrlEnv: readonly string[];
     healthPath: string;
     interpret: HealthBodyInterpreter;
 }
@@ -34,15 +34,26 @@ export const bluzInterpreter: HealthBodyInterpreter = (httpStatus, body) =>
     }
 };
 
+/**
+ * Hive has no public health endpoint. The probe is unauthenticated, because its
+ * result is cached and shared by every viewer, so Django answering at all (even
+ * 401/403) means Hive is up. Only a 5xx or no answer is down. Prometheus load
+ * is a per-viewer, token-authenticated overlay (see hive-load.ts).
+ */
+export const hiveInterpreter: HealthBodyInterpreter = (httpStatus) => ({
+    state: httpStatus > 0 && httpStatus < 500 ? 'up' : 'down',
+});
+
 export const MONITORED_SERVICES: readonly MonitoredServiceDefinition[] = [
-    { id: 'bluz', baseUrlEnv: 'BLUZ_URL', healthPath: '/api/health', interpret: bluzInterpreter },
+    { id: 'hive', baseUrlEnv: [ 'HIVE_URL', 'NEXT_PUBLIC_HIVE_URL' ], healthPath: '/api/core/time/', interpret: hiveInterpreter },
+    { id: 'bluz', baseUrlEnv: [ 'BLUZ_URL' ], healthPath: '/api/health', interpret: bluzInterpreter },
     // Peek-a-Boo's endpoint is pure liveness by design (it never touches Hive).
-    { id: 'peekaboo', baseUrlEnv: 'PEEKABOO_URL', healthPath: '/api/health', interpret: livenessInterpreter },
+    { id: 'peekaboo', baseUrlEnv: [ 'PEEKABOO_URL' ], healthPath: '/api/health', interpret: livenessInterpreter },
 ];
 
 export function healthUrlFor(def: MonitoredServiceDefinition): string | null
 {
-    const base = process.env[ def.baseUrlEnv ]?.trim();
+    const base = def.baseUrlEnv.map((name) => process.env[ name ]?.trim()).find(Boolean);
     if (!base) return null;
     return `${base.replace(/\/$/, '')}${def.healthPath}`;
 }
