@@ -14,7 +14,7 @@ const SETTLED_STATES = /^(unconfigured|up|degraded|down)$/;
 const tile = (page: Page, id: string) => page.getByTestId(`service-tile-${id}`);
 
 /** Serve a fixed /api/status/services payload so UI assertions don't depend on which siblings are running. */
-async function mockServices(page: Page, mocked: Array<{ id: string; }>)
+async function mockServices(page: Page, mocked: Array<{ id: string; [ key: string ]: unknown; }>)
 {
     // Hive comes from the same endpoint since #54; default it to up.
     const services = mocked.some((s) => s.id === "hive")
