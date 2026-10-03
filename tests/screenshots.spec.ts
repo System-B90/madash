@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
 
 import { test, expect, waitForAppLoad, SELECTORS } from "./fixtures";
 import { editor, mockRoster, preview, startEditing } from "./madrat-helpers";
@@ -30,7 +31,8 @@ async function open(page: Page, url: string): Promise<void>
         await page.waitForTimeout(3_000);
     }
     expect(status, `${url} was not served (HTTP ${status})`).toBeLessThan(500);
-    await waitForAppLoad(page);
+    // Only the dashboard has the status card that waitForAppLoad gates on (#4).
+    if (url === "/") await waitForAppLoad(page);
 }
 
 /** Logged-in screens: a redirect to /login means the SSO auth state is missing. */
@@ -71,6 +73,18 @@ test.describe("Release screenshots", () => {
             await toggle.click();
         }
         await shoot(page, "03-home-dark");
+    });
+
+    // #77: the first step of the guided home tour.
+    test("home tour", async ({ browser }) => {
+        const context = await browser.newContext({ storageState: AUTH_STATE_PATH });
+        const page = await context.newPage();
+        await openAuthed(page, "/");
+        await expect(page.getByRole("dialog", { name: "ברוכים הבאים למדש" })).toBeVisible({ timeout: 10_000 });
+        await page.keyboard.press("Enter");
+        await expect(page.getByRole("dialog", { name: 'קריאה לחד"ס' })).toBeVisible();
+        await shoot(page, "08-home-tour");
+        await context.close();
     });
 
     test("journal", async ({ page }) => {
