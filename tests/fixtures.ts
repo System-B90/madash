@@ -1,7 +1,33 @@
-import { Page } from "@playwright/test";
-import { test, expect } from "@system-b90/test-kit/fixtures";
+import type { BrowserContext, Page } from "@playwright/test";
+import { test as base, expect } from "@system-b90/test-kit/fixtures";
 
-export { test, expect };
+/** localStorage key and tour ids of the onboarding tours (#77, src/components/onboarding/tours.ts). */
+export const ONBOARDING_KEY = "madash:onboarding:completions:v1";
+export const TOUR_IDS = [ "home.intro", "journal.intro" ] as const;
+
+/**
+ * Marks every tour as seen before any page script runs, so an auto-starting
+ * tour never covers the screen a spec is testing. onboarding.spec.ts opts out.
+ */
+export async function skipTours(context: BrowserContext): Promise<void>
+{
+    await context.addInitScript(({ key, ids }) =>
+    {
+        const seen = Object.fromEntries(ids.map((id) => [ id, { version: 999, at: "", reason: "dismissed" } ]));
+        localStorage.setItem(key, JSON.stringify(seen));
+    }, { key: ONBOARDING_KEY, ids: [ ...TOUR_IDS ] });
+}
+
+export const test = base.extend<{ withTours: boolean; }>({
+    withTours: [ false, { option: true } ],
+    context: async ({ context, withTours }, use) =>
+    {
+        if (!withTours) await skipTours(context);
+        await use(context);
+    },
+});
+
+export { expect };
 
 /**
  * Shared test fixtures and helper utilities for MADASH integration tests.

@@ -1,6 +1,6 @@
 import { AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
 
-import { test, expect, SELECTORS, gotoAppHome, testId } from "./fixtures";
+import { test, expect, SELECTORS, gotoAppHome, skipTours, testId } from "./fixtures";
 
 test.describe("Hadas Calls Integration", () => {
     test.beforeEach(async ({ page }) => {
@@ -94,6 +94,7 @@ test.describe("Hadas Calls Integration", () => {
     // reloading -- the only path for that is the WebSocket session server.
     test("a second client sees a call-to-hadas change over the WebSocket session", async ({ page, browser }) => {
         const observerContext = await browser.newContext({ storageState: AUTH_STATE_PATH });
+        await skipTours(observerContext);
         const observer = await observerContext.newPage();
         try {
             await gotoAppHome(observer);
