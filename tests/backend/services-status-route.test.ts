@@ -12,6 +12,8 @@ const request = () => new NextRequest("https://madash.test/api/status/services")
 describe("GET /api/status/services", () => {
     beforeEach(() => {
         vi.mocked(getServerSession).mockReset();
+        vi.stubEnv("HIVE_URL", "");
+        vi.stubEnv("NEXT_PUBLIC_HIVE_URL", "");
         vi.stubEnv("BLUZ_URL", "");
         vi.stubEnv("PEEKABOO_URL", "");
     });
@@ -32,6 +34,7 @@ describe("GET /api/status/services", () => {
         const body = await (await GET(request())).json();
         expect(body.status).toBe(0);
         expect(body.data.map((s: { id: string; state: string; }) => [ s.id, s.state ])).toEqual([
+            [ "hive", "unconfigured" ],
             [ "bluz", "unconfigured" ],
             [ "peekaboo", "unconfigured" ],
         ]);

@@ -521,7 +521,6 @@ def test_status_services_drops_the_latency_history_in_tables(stub_app, run_cli_t
 @pytest.mark.parametrize(
     ("command", "path"),
     [
-        ("prometheus", "/api/status/hive-prometheus"),
         ("toilet-queue", "/api/status/hive/toilet-queue"),
         ("open-helps", "/api/status/hive/open-helps"),
     ],
@@ -537,7 +536,6 @@ def test_status_single_tiles(stub_app, run_cli, command, path):
 def test_status_all(stub_app, run_cli):
     stub = stub_app()
     stub.envelope("GET", "/api/status/services", SERVICES)
-    stub.envelope("GET", "/api/status/hive-prometheus", {"configured": False})
     stub.envelope("GET", "/api/status/hive/toilet-queue", {"waiting": 1, "out": 2})
     stub.envelope("GET", "/api/status/hive/open-helps", {"count": 3})
 
@@ -545,7 +543,6 @@ def test_status_all(stub_app, run_cli):
 
     assert board == {
         "services": SERVICES,
-        "prometheus": {"configured": False},
         "toiletQueue": {"waiting": 1, "out": 2},
         "openHelps": 3,
     }

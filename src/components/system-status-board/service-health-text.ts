@@ -1,5 +1,5 @@
 import {
-    MONITORED_SERVICE_IDS,
+    HEALTH_SERVICE_IDS,
     type ServiceHealth,
     type ServicesHealthResponse,
 } from '@/api-shared/service-health';
@@ -25,6 +25,7 @@ export function describeServiceHealth(health: ServiceHealth): string
     switch (health.reason)
     {
         case 'slow': return 'זמן תגובה ארוך מהרגיל';
+        case 'overloaded': return 'עומס גבוה על התשתית';
         case 'dependency':
             return failing.length ? `תקלה ב־${failing.join(', ')}` : DEFAULT_STATE_DETAIL[ health.state ];
         default: return DEFAULT_STATE_DETAIL[ health.state ];
@@ -43,5 +44,5 @@ export function dependencyChecksTooltip(health: ServiceHealth): string | undefin
 /** The route itself failing (madash backend unreachable) → every service is unknown-down. */
 export function allServicesUnreachable(now = Date.now()): ServicesHealthResponse
 {
-    return MONITORED_SERVICE_IDS.map((id) => ({ id, state: 'down', latencyMs: null, reason: 'unreachable', checkedAt: now, history: [] }));
+    return HEALTH_SERVICE_IDS.map((id) => ({ id, state: 'down', latencyMs: null, reason: 'unreachable', checkedAt: now, history: [] }));
 }

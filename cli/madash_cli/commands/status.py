@@ -1,8 +1,8 @@
 """
 Name: status.py
-Purpose: `madash status` — the system status board ("מצב העולם"): sibling
-         service health, Hive Prometheus load, the toilet queue and open help
-         requests.
+Purpose: `madash status` — the system status board ("מצב העולם"): service
+         health (Hive, incl. its Prometheus load, and the siblings), the
+         toilet queue and open help requests.
 Created: 2026-09-27
 Author: Michael K. Steinberg
 """
@@ -19,7 +19,6 @@ from madash_cli.context import state
 app = typer.Typer(help="The system status board.", no_args_is_help=True)
 
 _SERVICES = "/api/status/services"
-_PROMETHEUS = "/api/status/hive-prometheus"
 _TOILET = "/api/status/hive/toilet-queue"
 _HELPS = "/api/status/hive/open-helps"
 
@@ -33,17 +32,10 @@ def _service_rows(services: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 @app.command("services")
 def services() -> None:
-    """Health of the sibling services (Bluz, Peek-a-boo)."""
+    """Health of Hive and the sibling services (Bluz, Peek-a-boo)."""
     with state.client() as client:
         data = client.get(_SERVICES) or []
     show(data if state.as_json else _service_rows(data), title="Services")
-
-
-@app.command("prometheus")
-def prometheus() -> None:
-    """Whether Hive's Prometheus is reachable and overloaded."""
-    with state.client() as client:
-        show(client.get(_PROMETHEUS), title="Hive Prometheus")
 
 
 @app.command("toilet-queue")
@@ -66,7 +58,6 @@ def all_status() -> None:
     with state.client() as client:
         board = {
             "services": client.get(_SERVICES) or [],
-            "prometheus": client.get(_PROMETHEUS),
             "toiletQueue": client.get(_TOILET),
             "openHelps": (client.get(_HELPS) or {}).get("count"),
         }

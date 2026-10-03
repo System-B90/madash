@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { resolveWebSocketClientConfig } from "@/api-shared/websocket-config";
 import { MuiEmotionCacheProvider } from "@/components/mui-emotion-cache-provider";
+import { MadashOnboardingProvider } from "@/components/onboarding/MadashOnboarding";
 import { MadashThemeProvider } from "@/components/theme/ThemeProvider";
 import { WebSocketConfigProvider } from "@/components/websocket-config-provider";
 import "@/style/globals.css";
@@ -34,7 +35,9 @@ export default function RootLayout({
                 <MuiEmotionCacheProvider>
                     <MadashThemeProvider>
                         <WebSocketConfigProvider host={ wsHost } protocol={ wsProtcol } portSuffix={ wsPortSuffix }>
-                            { children }
+                            <MadashOnboardingProvider>
+                                { children }
+                            </MadashOnboardingProvider>
                         </WebSocketConfigProvider>
                     </MadashThemeProvider>
                 </MuiEmotionCacheProvider>

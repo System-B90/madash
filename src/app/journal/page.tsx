@@ -18,6 +18,9 @@ import { Journal } from '@/api-shared/journal';
 import DateNavigator from '@/components/journal/DateNavigator';
 import JournalHeader from '@/components/journal/JournalHeader';
 import JournalList from '@/components/journal/JournalList';
+import { JournalOnboarding, MadashHelpButton } from '@/components/onboarding/MadashOnboarding';
+import { TourAnchor } from '@/components/onboarding/TourAnchor';
+import { ANCHORS } from '@/components/onboarding/tours';
 
 
 const JournalPage: React.FC = () => {
@@ -85,7 +88,11 @@ const JournalPage: React.FC = () => {
         minHeight: '100vh',
       }}
     >
+      <JournalOnboarding />
       <Stack spacing={3}>
+        <Box display="flex" justifyContent="flex-end">
+          <MadashHelpButton />
+        </Box>
         <Typography
           variant="h4"
           component="h1"
@@ -99,6 +106,7 @@ const JournalPage: React.FC = () => {
           {'יומן מדר"ת'}
         </Typography>
 
+        <TourAnchor id={ANCHORS.journalDate}>
         <Paper
           elevation={2}
           sx={{
@@ -109,6 +117,7 @@ const JournalPage: React.FC = () => {
         >
           <DateNavigator selectedDate={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
         </Paper>
+        </TourAnchor>
 
         {loading && (
           <Box display="flex" justifyContent="center">
@@ -119,6 +128,7 @@ const JournalPage: React.FC = () => {
         {error && <Alert severity="error">{error}</Alert>}
 
         {journal && !loading && (
+          <TourAnchor id={ANCHORS.journalTasks}>
           <Paper
             elevation={1}
             sx={{
@@ -140,6 +150,7 @@ const JournalPage: React.FC = () => {
               />
             </Stack>
           </Paper>
+          </TourAnchor>
         )}
       </Stack>
     </Container>

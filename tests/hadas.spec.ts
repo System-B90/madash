@@ -1,4 +1,6 @@
-import { test, expect, SELECTORS, gotoAppHome, testId } from "./fixtures";
+import { AUTH_STATE_PATH } from "@system-b90/test-kit/auth";
+
+import { test, expect, SELECTORS, gotoAppHome, skipTours, testId } from "./fixtures";
 
 test.describe("Hadas Calls Integration", () => {
     test.beforeEach(async ({ page }) => {
@@ -6,9 +8,7 @@ test.describe("Hadas Calls Integration", () => {
         await gotoAppHome(page);
     });
 
-    // Skipped: depends on the "סטטוס קריאות" status card, which doesn't reliably
-    // render post-login in CI — https://github.com/System-B90/madash/issues/4.
-    test.skip("performs a complete call-to-hadas workflow (create -> update state -> delete)", async ({ page }) => {
+    test("performs a complete call-to-hadas workflow (create -> update state -> delete)", async ({ page }) => {
         // 1. Verify widgets are visible
         const callCard = page.locator(SELECTORS.callStudentToHadasCard);
         await expect(callCard).toBeVisible();
@@ -76,9 +76,7 @@ test.describe("Hadas Calls Integration", () => {
         await expect(studentChip).not.toBeVisible();
     });
 
-    // Skipped: callStudentToHadasCard doesn't reliably render post-login in CI either —
-    // same root cause as https://github.com/System-B90/madash/issues/4.
-    test.skip("validates that submit is disabled without a student selected", async ({ page }) => {
+    test("validates that submit is disabled without a student selected", async ({ page }) => {
         const callCard = page.locator(SELECTORS.callStudentToHadasCard);
         const submitBtn = callCard.locator(SELECTORS.submitButton);
 
@@ -90,5 +88,42 @@ test.describe("Hadas Calls Integration", () => {
         await reasonInput.fill("סיבה בלי חניך");
 
         await expect(submitBtn).toBeDisabled();
+    });
+    // #32: the session broadcast works through the deployed stack. A second,
+    // independent browser context sees a call made by the first without
+    // reloading -- the only path for that is the WebSocket session server.
+    test("a second client sees a call-to-hadas change over the WebSocket session", async ({ page, browser }) => {
+        const observerContext = await browser.newContext({ storageState: AUTH_STATE_PATH });
+        await skipTours(observerContext);
+        const observer = await observerContext.newPage();
+        try {
+            await gotoAppHome(observer);
+            const observerStatus = observer.locator(SELECTORS.calledToHadasCard);
+
+            const callCard = page.locator(SELECTORS.callStudentToHadasCard);
+            await callCard.locator(".MuiSelect-select").click();
+            const option = page.getByRole("listbox").locator(".MuiMenuItem-root").first();
+            const studentName = (await option.textContent())?.trim() ?? "";
+            expect(studentName).not.toBe("");
+            await option.click();
+            await page.keyboard.press("Escape");
+            await callCard.locator(SELECTORS.reasonInput).fill(testId("סיבה לבדיקת סשן"));
+            await callCard.locator(SELECTORS.submitButton).click();
+            await expect(page.locator(SELECTORS.snackbar)).toContainText("נרשמה");
+
+            const observed = observerStatus.locator(SELECTORS.studentChip).filter({ hasText: studentName }).first();
+            await expect(observed).toBeVisible({ timeout: 10_000 });
+
+            // Clean up from the first client (requested -> told -> removed);
+            // the observer must see the removal too.
+            const own = page.locator(SELECTORS.calledToHadasCard).locator(SELECTORS.studentChip)
+                .filter({ hasText: studentName }).first();
+            await own.locator(".MuiChip-deleteIcon").click();
+            await expect(own).toHaveClass(/MuiChip-colorInfo/);
+            await own.locator(".MuiChip-deleteIcon").click();
+            await expect(observed).not.toBeVisible({ timeout: 10_000 });
+        } finally {
+            await observerContext.close();
+        }
     });
 });

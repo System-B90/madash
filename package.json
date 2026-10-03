@@ -40,6 +40,7 @@
     "@system-b90/command-palette": "^0.1.0",
     "@system-b90/hive-core": "^0.3.1",
     "@system-b90/hive-nextauth": "^0.2.0",
+    "@system-b90/onboarding": "^0.1.0",
     "@system-b90/session-ws": "^0.7.0",
     "@vercel/otel": "^1.12.0",
     "dayjs": "^1.11.13",
@@ -62,23 +63,36 @@
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
-    "@types/node": "^20",
+    "@types/node": "^24.19.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/stylis": "^4.2.7",
     "@types/ws": "^8.18.1",
-    "eslint": "^9",
+    "eslint": "^10.12.0",
     "eslint-config-next": "^16.2.2",
-    "eslint-plugin-import": "^2.32.0",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-unicorn": "^61.0.2",
+    "eslint-plugin-unicorn": "^76.0.0",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-import": {
+      "eslint": "$eslint"
+    },
+    "eslint-plugin-jsx-a11y": {
+      "eslint": "$eslint"
+    }
   }
 }

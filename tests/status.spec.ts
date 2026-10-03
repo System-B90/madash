@@ -14,8 +14,12 @@ const SETTLED_STATES = /^(unconfigured|up|degraded|down)$/;
 const tile = (page: Page, id: string) => page.getByTestId(`service-tile-${id}`);
 
 /** Serve a fixed /api/status/services payload so UI assertions don't depend on which siblings are running. */
-async function mockServices(page: Page, services: unknown[])
+async function mockServices(page: Page, mocked: Array<{ id: string; [ key: string ]: unknown; }>)
 {
+    // Hive comes from the same endpoint since #54; default it to up.
+    const services = mocked.some((s) => s.id === "hive")
+        ? mocked
+        : [ { id: "hive", state: "up", latencyMs: 30, checkedAt: Date.now(), history: [] }, ...mocked ];
     await page.route("**/api/status/services", (route) =>
         route.fulfill({ contentType: "application/json", body: JSON.stringify({ status: 0, data: services }) }));
 }
@@ -23,10 +27,7 @@ async function mockServices(page: Page, services: unknown[])
 const history = (latencies: Array<number | null>) =>
     latencies.map((latencyMs, i) => ({ at: Date.UTC(2026, 8, 26, 20, 0, i * 15), latencyMs }));
 
-// Skipped until #4 is fixed: after Hive SSO login in CI the dashboard never
-// renders (no cards, and /api/status/services comes back empty), so every
-// test here fails on its first assertion. Same gate as hadas/journal specs.
-test.describe.skip("System status board", () => {
+test.describe("System status board", () => {
     test("renders a tile with a service icon for every critical service", async ({ page }) => {
         await gotoAppHome(page);
         await expect(page.getByText("מצב העולם")).toBeVisible();
@@ -58,7 +59,7 @@ test.describe.skip("System status board", () => {
         const res = await page.request.get("/api/status/services");
         const body = await res.json();
         expect(body.status).toBe(0);
-        expect(body.data.map((s: { id: string; }) => s.id)).toEqual([ "bluz", "peekaboo" ]);
+        expect(body.data.map((s: { id: string; }) => s.id)).toEqual([ "hive", "bluz", "peekaboo" ]);
         for (const s of body.data)
         {
             expect(s.state).toMatch(SETTLED_STATES);
