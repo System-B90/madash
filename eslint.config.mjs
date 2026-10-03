@@ -3,8 +3,10 @@ import { fileURLToPath } from "url";
 
 import { defineConfig } from "eslint/config";
 import nextConfig from "eslint-config-next/core-web-vitals";
-import importPlugin from "eslint-plugin-import";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import importX from "eslint-plugin-import-x";
 import unicorn from "eslint-plugin-unicorn";
+import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath( import.meta.url );
 const __dirname = dirname( __filename );
@@ -14,17 +16,32 @@ export default defineConfig( [
   // This replaces both 'next/core-web-vitals' and 'next/typescript'
   nextConfig,
 
+  // Next parses JS with its bundled Babel parser, whose scope manager lacks
+  // addGlobals() (required since ESLint 10). typescript-eslint parses JS too.
+  {
+    files: [ "**/*.{js,mjs,cjs,jsx}" ],
+    languageOptions: { parser: tseslint.parser },
+  },
+
   // 2. Your custom overrides
   {
+    // eslint-plugin-import crashes on ESLint 10 (#59); import-x is its fork.
+    settings: {
+      ...importX.flatConfigs.typescript.settings,
+      "import-x/resolver": undefined,
+      "import-x/resolver-next": [ createTypeScriptImportResolver() ],
+      // Explicit: "detect" calls context.getFilename(), removed in ESLint 10.
+      react: { version: "19.2" },
+    },
     plugins: {
-      import: importPlugin,
+      "import-x": importX,
       unicorn,
     },
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
 
-      "import/no-cycle": "error",
+      "import-x/no-cycle": "error",
       "no-restricted-imports": [
         "error",
         {
@@ -37,7 +54,7 @@ export default defineConfig( [
           ],
         },
       ],
-      "import/order": [
+      "import-x/order": [
         "error",
         {
           groups: [ "builtin", "external", "internal", "parent", "sibling", "index" ],
@@ -77,7 +94,7 @@ export default defineConfig( [
       "**/app/**/route.ts",
       "**/*.config.{ts,js,mjs,mts}",
     ],
-    rules: { "import/no-cycle": "off" },
+    rules: { "import-x/no-cycle": "off" },
   },
 
   // 4. settings.ts intentionally re-exports session-server/session-common,
