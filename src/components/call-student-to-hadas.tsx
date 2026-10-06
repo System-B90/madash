@@ -268,7 +268,7 @@ export default function CallStudentToHadas()
     const [ isGroupCall, setIsGroupCall ] = useState<boolean>(false);
     const [ selectedStudents, setSelectedStudents ] = useState<Array<number>>([]);
     const [ reason, setReason ] = useState<string>('');
-    const [ expirationTime, setExpirationTime ] = useState<Dayjs | null>(
+    const [ expirationTime, setExpirationTime ] = useState<Dayjs | null>(() =>
         dayjs().add(6, 'hour').minute(dayjs().minute() + 4 - ((dayjs().minute() + 4) % 5))
     );
 

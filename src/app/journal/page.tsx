@@ -25,7 +25,7 @@ import { ANCHORS } from '@/components/onboarding/tours';
 
 const JournalPage: React.FC = () => {
   const theme = useTheme();
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs());
   const [journal, setJournal] = useState<Journal | null>(null);
   const [loadedDate, setLoadedDate] = useState<Dayjs | null>(null);
   const [error, setError] = useState<string | null>(null);
