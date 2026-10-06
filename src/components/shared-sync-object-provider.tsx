@@ -2,7 +2,7 @@
 import assert from "assert";
 
 import { useSnackbar } from "notistack";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { enqueueApiErrorSnackbar } from "@/api-client/common";
 import { useAuth, WebSocketSessionMessage } from "@/components/auth-provider";
@@ -196,8 +196,12 @@ export function useSharedSyncObject<T>(
         loadData(data as T | undefined);
     }, [ id, handledMessageTypes, loadData ]);
 
-    useMemo(() =>
+    // An effect, not useMemo: the returned cleanup has to run, or every change
+    // of these deps (an inline handledMessageTypes array changes each render)
+    // leaves the old handler registered and each message refetches N times.
+    useEffect(() =>
     {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- with no argument, loadData only sets state from the fetch's .then
         loadData();
 
         if (!addMessageHandler) { return; }
