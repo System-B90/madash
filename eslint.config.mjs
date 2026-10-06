@@ -1,43 +1,82 @@
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 
+import eslintReact from "@eslint-react/eslint-plugin";
+import nextPlugin from "@next/eslint-plugin-next";
 import { defineConfig } from "eslint/config";
-import nextConfig from "eslint-config-next/core-web-vitals";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import importX from "eslint-plugin-import-x";
+import jsxA11y from "eslint-plugin-jsx-a11y-x";
+import reactHooks from "eslint-plugin-react-hooks";
 import unicorn from "eslint-plugin-unicorn";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 const __filename = fileURLToPath( import.meta.url );
 const __dirname = dirname( __filename );
 
 export default defineConfig( [
-  // 1. Load the native flat config provided by Next.js 16
-  // This replaces both 'next/core-web-vitals' and 'next/typescript'
-  nextConfig,
-
-  // Next parses JS with its bundled Babel parser, whose scope manager lacks
-  // addGlobals() (required since ESLint 10). typescript-eslint parses JS too.
+  // 1. What eslint-config-next/core-web-vitals gave us, composed from plugins
+  // that support ESLint 10 (#79). Next's own config still pulls in
+  // eslint-plugin-react 7 and eslint-plugin-import 2, which don't, so it
+  // needed peer overrides and shims. Swaps: eslint-plugin-react ->
+  // @eslint-react, eslint-plugin-import -> import-x, eslint-plugin-jsx-a11y ->
+  // its ESLint 10 fork jsx-a11y-x, Next's Babel parser -> typescript-eslint.
   {
-    files: [ "**/*.{js,mjs,cjs,jsx}" ],
-    languageOptions: { parser: tseslint.parser },
+    name: "next/core-web-vitals",
+    files: [ "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}" ],
+    plugins: {
+      "@next/next": nextPlugin,
+      "react-hooks": reactHooks,
+      "jsx-a11y": jsxA11y,
+      "@typescript-eslint": tseslint.plugin,
+    },
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { sourceType: "module", ecmaFeatures: { jsx: true } },
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs[ "core-web-vitals" ].rules,
+      ...reactHooks.configs.recommended.rules,
+      "jsx-a11y/alt-text": [ "warn", { elements: [ "img" ], img: [ "Image" ] } ],
+      "jsx-a11y/aria-props": "warn",
+      "jsx-a11y/aria-proptypes": "warn",
+      "jsx-a11y/aria-unsupported-elements": "warn",
+      "jsx-a11y/role-has-required-aria-props": "warn",
+      "jsx-a11y/role-supports-aria-props": "warn",
+    },
+  },
+  {
+    files: [ "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}" ],
+    ...eslintReact.configs.recommended,
+    rules: {
+      ...eslintReact.configs.recommended.rules,
+      // React 19 style migrations eslint-plugin-react never asked for; not
+      // worth churning every provider over.
+      "@eslint-react/no-context-provider": "off",
+      "@eslint-react/no-use-context": "off",
+      "@eslint-react/naming-convention-ref-name": "off",
+      // Duplicates of the react-hooks rules above.
+      "@eslint-react/set-state-in-effect": "off",
+      "@eslint-react/rules-of-hooks": "off",
+    },
   },
 
   // 2. Your custom overrides
   {
-    // eslint-plugin-import crashes on ESLint 10 (#59); import-x is its fork.
     settings: {
       ...importX.flatConfigs.typescript.settings,
       "import-x/resolver": undefined,
       "import-x/resolver-next": [ createTypeScriptImportResolver() ],
-      // Explicit: "detect" calls context.getFilename(), removed in ESLint 10.
-      react: { version: "19.2" },
     },
     plugins: {
       "import-x": importX,
       unicorn,
     },
     rules: {
+      "import-x/no-anonymous-default-export": "warn",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
 
@@ -105,8 +144,16 @@ export default defineConfig( [
     rules: { "no-restricted-imports": "off" },
   },
 
-  // 4. Global ignores (Next.js 16 handles .next, but add extras here)
+  // 4. Global ignores
   {
-    ignores: [ ".next/*", "out/*", "dist/*", "tests/**", "session-server/**" ],
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "dist/**",
+      "next-env.d.ts",
+      "tests/**",
+      "session-server/**",
+    ],
   }
 ] );
