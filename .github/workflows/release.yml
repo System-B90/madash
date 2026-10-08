@@ -67,7 +67,7 @@ jobs:
       # Python test deps too, and pulls sb90-devops from the org pip index
       # (GitHub Pages) — tools_impl.py imports it, so pytest cannot collect
       # without it.
-      # ./cli is the madash-cli package cli/tests import.
+      # ./cli is the madash package cli/tests import.
       - name: Install Dependencies (Python)
         run: pip install -r scripts/requirements.txt ./cli
 
@@ -309,9 +309,9 @@ jobs:
 
       - name: Copy distributions and regenerate index
         run: |
-          mkdir -p org-github/pypi/madash-cli
-          cp cli/dist/* org-github/pypi/madash-cli/
-          python org-github/pypi/generate_index.py madash-cli
+          mkdir -p org-github/pypi/madash
+          cp cli/dist/* org-github/pypi/madash/
+          python org-github/pypi/generate_index.py madash
 
       - name: Commit and push index update
         working-directory: org-github
@@ -320,5 +320,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pypi/
           git diff --cached --quiet && exit 0
-          git commit -m "Vibe-Updated pip index for madash-cli ${{ github.ref_name }}"
+          git commit -m "Vibe-Updated pip index for madash ${{ github.ref_name }}"
           git push

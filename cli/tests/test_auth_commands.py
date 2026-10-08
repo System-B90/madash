@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 
-from madash_cli.config import Config, load_config
+from madash.config import Config, load_config
 
 
 def _json_out(result):
@@ -36,7 +36,7 @@ def test_logout_clears_the_token_but_keeps_the_url(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
     Config(url="https://madash.example.com", token="secret-token").save()
 
-    from madash_cli.main import app
+    from madash.main import app
     from typer.testing import CliRunner
 
     result = CliRunner().invoke(
@@ -55,8 +55,8 @@ def test_logout_does_not_persist_an_env_token_and_warns(tmp_path, monkeypatch):
     monkeypatch.setenv("MADASH_TOKEN", "env-token")
     monkeypatch.setenv("MADASH_URL", "https://other.example.com")
 
-    from madash_cli.config import _load_file
-    from madash_cli.main import app
+    from madash.config import _load_file
+    from madash.main import app
     from typer.testing import CliRunner
 
     result = CliRunner().invoke(app, ["auth", "logout"], catch_exceptions=False)
@@ -76,7 +76,7 @@ def test_config_masks_the_token_and_names_the_file(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
     saved = Config(url="https://madash.example.com", token="secret-token").save()
 
-    from madash_cli.main import app
+    from madash.main import app
     from typer.testing import CliRunner
 
     result = CliRunner().invoke(
@@ -95,7 +95,7 @@ def test_config_masks_the_token_and_names_the_file(tmp_path, monkeypatch):
 def test_config_reports_an_unset_token_as_null(tmp_path, monkeypatch):
     _isolate_config(tmp_path, monkeypatch)
 
-    from madash_cli.main import app
+    from madash.main import app
     from typer.testing import CliRunner
 
     result = CliRunner().invoke(
@@ -126,8 +126,8 @@ def test_login_redeems_a_pasted_handoff_code_when_automatic_login_fails(
     which it redeems for the real session token (Bluz#520)."""
     _isolate_config(tmp_path, monkeypatch)
 
-    from madash_cli.commands import auth
-    from madash_cli.main import app
+    from madash.commands import auth
+    from madash.main import app
     from typer.testing import CliRunner
 
     # The loopback server yields nothing.

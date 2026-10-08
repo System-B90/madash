@@ -1,10 +1,10 @@
-# madash-cli
+# madash
 
 Drive madash from the terminal: everything the dashboard does, scriptable — including a
 live view of the madrat message.
 
 ```bash
-pip install madash-cli --extra-index-url https://system-b90.github.io/.github/pypi/
+pip install madash --extra-index-url https://system-b90.github.io/.github/pypi/
 madash login          # opens the browser, hands the session back to the CLI
 madash madrat watch   # the madrat message, updating live
 ```
@@ -38,5 +38,5 @@ pip install -e ./cli
 pytest cli/tests -q
 ```
 
-The version lives in `madash_cli/__init__.py` and is bumped together with the app by
+The version lives in `madash/__init__.py` and is bumped together with the app by
 `python -m sb90_deploy publish` (see `deploy/app.json` `release.manifests`).

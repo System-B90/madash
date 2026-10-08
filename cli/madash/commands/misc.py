@@ -11,8 +11,8 @@ import webbrowser
 
 import typer
 
-from madash_cli.context import state
-from madash_cli.output import abort, success
+from madash.context import state
+from madash.output import abort, success
 
 # Page name -> path. Everything the pages show is also reachable through the
 # data commands; this is for putting the board itself on a screen.

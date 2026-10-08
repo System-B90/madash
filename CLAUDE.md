@@ -105,7 +105,7 @@ Every release ships with screenshots of the app, captured automatically in CI:
 | `src/api-server/` | Hive client + in-memory state. Server-only.                         |
 | `src/api-shared/` | Shared types/contracts, pure utils. No side effects.                |
 | `src/components/` | React UI: `journal`, `system-status-board`, `header`, `theme`.      |
-| `cli/`            | `madash-cli` (Typer), mirrors Bluz's `cli/`. Login via `/cli-auth`. |
+| `cli/`            | `madash` (Typer), mirrors Bluz's `cli/`. Login via `/cli-auth`. |
 | `session-server/` | Standalone WebSocket server, own `package.json`.                    |
 | `scripts/`        | `setup.py` (on sb90-deploy) / `ci_setup.py` — env generation.       |
 | `tests/`          | Vitest backend tests + Playwright e2e specs.                        |

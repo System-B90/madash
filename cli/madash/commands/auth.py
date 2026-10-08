@@ -24,17 +24,17 @@ import tqdm
 import typer
 from InquirerPy import inquirer
 
-from madash_cli.client import AppClient
-from madash_cli.config import (
+from madash.client import AppClient
+from madash.config import (
     ENV_TOKEN,
     Config,
     _load_file,
     config_location,
     load_config,
 )
-from madash_cli.context import state
-from madash_cli.errors import ApiError
-from madash_cli.output import success, warn
+from madash.context import state
+from madash.errors import ApiError
+from madash.output import success, warn
 
 app = typer.Typer(help="Authentication and CLI configuration.", no_args_is_help=True)
 
@@ -535,7 +535,7 @@ def logout() -> None:
 @app.command("config")
 def show_config() -> None:
     """Show the resolved configuration (token is masked)."""
-    from madash_cli.commands._common import show
+    from madash.commands._common import show
 
     config = load_config()
     data = {
@@ -556,7 +556,7 @@ def ws_ticket() -> None:
     logged-in user id, so a client cannot claim to be someone else. Useful
     for driving or debugging the real-time sync channel outside a browser.
     """
-    from madash_cli.commands._common import show
+    from madash.commands._common import show
 
     with state.client() as client:
         # Not client.get: /api/ws-ticket answers a bare { ticket } rather than
@@ -567,8 +567,8 @@ def ws_ticket() -> None:
 @app.command("whoami")
 def whoami() -> None:
     """Show who the stored session belongs to (the next-auth session route)."""
-    from madash_cli.commands._common import show
-    from madash_cli.errors import NotAuthenticatedError
+    from madash.commands._common import show
+    from madash.errors import NotAuthenticatedError
 
     with state.client() as client:
         # next-auth's own route: a bare session object, not the envelope, and

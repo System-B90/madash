@@ -1,4 +1,4 @@
-# Python build / cache artifacts for the madash-cli package
+# Python build / cache artifacts for the madash package
 __pycache__/
 *.py[cod]
 *.egg-info/

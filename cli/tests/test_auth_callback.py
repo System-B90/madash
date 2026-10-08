@@ -15,8 +15,8 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from madash_cli.commands import auth
-from madash_cli.errors import ApiError
+from madash.commands import auth
+from madash.errors import ApiError
 
 
 def _drive(

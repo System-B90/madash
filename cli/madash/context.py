@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from madash_cli.client import AppClient
-from madash_cli.config import Config, load_config
+from madash.client import AppClient
+from madash.config import Config, load_config
 
 
 @dataclass

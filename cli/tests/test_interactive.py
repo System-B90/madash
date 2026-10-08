@@ -14,10 +14,10 @@ from typing import Any
 
 import pytest
 import typer
-from madash_cli import interactive
-from madash_cli.context import configure
-from madash_cli.errors import CliError
-from madash_cli.main import app
+from madash import interactive
+from madash.context import configure
+from madash.errors import CliError
+from madash.main import app
 
 
 class ScriptedPrompter:

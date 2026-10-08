@@ -13,9 +13,9 @@ from typing import Any
 
 import typer
 
-from madash_cli.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
-from madash_cli.context import state
-from madash_cli.output import abort, success
+from madash.commands._common import LIMIT_OPTION, OFFSET_OPTION, show, write_file
+from madash.context import state
+from madash.output import abort, success
 
 app = typer.Typer(help="Hive students, classes and avatars.", no_args_is_help=True)
 

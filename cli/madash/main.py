@@ -15,7 +15,7 @@ import sys
 # cannot encode Hebrew text or Rich's Unicode glyphs (checkmarks, etc.) whenever
 # output isn't a real attached console — piped, redirected, or run from a script
 # or agent. Force UTF-8 here, before any Rich Console is constructed (commands
-# import madash_cli.output below, which instantiates Console at module load).
+# import madash.output below, which instantiates Console at module load).
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
         try:
@@ -25,16 +25,16 @@ for _stream in (sys.stdout, sys.stderr):
 
 import typer
 
-from madash_cli import __version__
-from madash_cli.clicktree import is_group, takes_a_value
-from madash_cli.commands import auth, hadas, hive, journal, madrat, misc, status
-from madash_cli.commands import (
+from madash import __version__
+from madash.clicktree import is_group, takes_a_value
+from madash.commands import auth, hadas, hive, journal, madrat, misc, status
+from madash.commands import (
     health as health_cmd,
 )
-from madash_cli.context import configure
-from madash_cli.errors import CliError
-from madash_cli.interactive import interactive as interactive_cmd
-from madash_cli.output import fail, warn
+from madash.context import configure
+from madash.errors import CliError
+from madash.interactive import interactive as interactive_cmd
+from madash.output import fail, warn
 
 app = typer.Typer(
     help="Madash CLI — the madrat message, call-to-Hadas board, journal and status board from the terminal.",
@@ -66,7 +66,7 @@ app.command("interactive")(interactive_cmd)
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(f"madash-cli {__version__}")
+        typer.echo(f"madash {__version__}")
         raise typer.Exit()
 
 
@@ -139,7 +139,7 @@ def main(
 @app.command()
 def version() -> None:
     """Print the CLI version."""
-    typer.echo(f"madash-cli {__version__}")
+    typer.echo(f"madash {__version__}")
 
 
 # Global flags Click only recognises before the subcommand. Recognised here so

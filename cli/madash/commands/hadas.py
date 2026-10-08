@@ -15,10 +15,10 @@ from typing import Any
 
 import typer
 
-from madash_cli.commands._common import show
-from madash_cli.commands.hive import fetch_students_with_rooms
-from madash_cli.context import state
-from madash_cli.output import abort, success
+from madash.commands._common import show
+from madash.commands.hive import fetch_students_with_rooms
+from madash.context import state
+from madash.output import abort, success
 
 app = typer.Typer(help="Call students to Hadas (the call board).", no_args_is_help=True)
 

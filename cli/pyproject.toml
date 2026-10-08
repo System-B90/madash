@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "madash-cli"
+name = "madash"
 dynamic = ["version"]
 description = "Madash command-line tool — drive Madash from your terminal."
 readme = "README.md"
@@ -22,14 +22,14 @@ dependencies = [
 ]
 
 [project.scripts]
-madash = "madash_cli.main:run"
+madash = "madash.main:run"
 
 [project.urls]
 Homepage = "https://github.com/system-b90/madash"
 Repository = "https://github.com/system-b90/madash"
 
 [tool.hatch.build.targets.wheel]
-packages = ["madash_cli"]
+packages = ["madash"]
 
 [tool.hatch.version]
-path = "madash_cli/__init__.py"
+path = "madash/__init__.py"
