@@ -16,7 +16,7 @@ from pathlib import Path
 import typer
 from dotenv import load_dotenv
 
-from madash_cli.errors import ConfigError
+from madash.errors import ConfigError
 
 # Madash authenticates browser requests with a next-auth session cookie. Over HTTPS
 # next-auth uses the "__Secure-" prefixed cookie; over plain HTTP it does not.

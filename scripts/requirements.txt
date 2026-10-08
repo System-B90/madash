@@ -23,5 +23,5 @@ tqdm>=4.68.3
 # linter version is pinned in one place with everything else.
 ruff==0.16.9
 pytest>=8.0.0
-# Builds the madash-cli wheel (cli/) in CI and the release workflow.
+# Builds the madash wheel (cli/) in CI and the release workflow.
 build>=1.2.0

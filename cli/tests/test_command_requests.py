@@ -120,7 +120,7 @@ def test_madrat_clear_posts_an_empty_body(stub_app, run_cli):
 
 @pytest.fixture
 def recorded_console(monkeypatch):
-    from madash_cli.commands import madrat
+    from madash.commands import madrat
 
     console = Console(record=True, width=80, force_terminal=True, color_system=None)
     monkeypatch.setattr(madrat, "console", console)
@@ -140,7 +140,7 @@ def _sequence(*answers):
 
 
 def test_watch_redraws_with_the_latest_message(recorded_console):
-    from madash_cli.commands import madrat
+    from madash.commands import madrat
 
     sleeps = []
     madrat.watch_loop(
@@ -159,8 +159,8 @@ def test_watch_redraws_with_the_latest_message(recorded_console):
 
 
 def test_watch_survives_a_failed_poll_and_keeps_the_last_message(recorded_console):
-    from madash_cli.commands import madrat
-    from madash_cli.errors import ApiError
+    from madash.commands import madrat
+    from madash.errors import ApiError
 
     madrat.watch_loop(
         interval=0,
@@ -176,7 +176,7 @@ def test_watch_survives_a_failed_poll_and_keeps_the_last_message(recorded_consol
 
 
 def test_watch_shows_an_empty_board(recorded_console):
-    from madash_cli.commands import madrat
+    from madash.commands import madrat
 
     madrat.watch_loop(
         interval=0, plain=False, fetch=_sequence(""), sleep=None, iterations=1
@@ -186,7 +186,7 @@ def test_watch_shows_an_empty_board(recorded_console):
 
 
 def test_watch_json_prints_one_line_per_change(capsys):
-    from madash_cli.commands import madrat
+    from madash.commands import madrat
 
     madrat.watch_json_lines(
         interval=0,
@@ -204,7 +204,7 @@ def test_watch_command_polls_the_server_until_interrupted(
     stub_app, run_cli_table, monkeypatch
 ):
     """End to end: the command fetches /api/madrat and Ctrl+C exits cleanly."""
-    from madash_cli.commands import madrat
+    from madash.commands import madrat
 
     stub = stub_app()
     stub.envelope("GET", "/api/madrat", "live!")
@@ -364,7 +364,7 @@ def test_hadas_remove(stub_app, run_cli):
 
 
 def test_hadas_errors_surface_the_server_message(stub_app, run_cli):
-    from madash_cli.errors import ApiError
+    from madash.errors import ApiError
 
     stub = stub_app()
     stub.route(
@@ -397,7 +397,7 @@ NOW = datetime(2030, 1, 1, 10, 2, tzinfo=timezone.utc)
     ],
 )
 def test_parse_expiry(value, expected):
-    from madash_cli.commands.hadas import parse_expiry
+    from madash.commands.hadas import parse_expiry
 
     assert parse_expiry(value, now=NOW) == expected
 
@@ -405,7 +405,7 @@ def test_parse_expiry(value, expected):
 @pytest.mark.parametrize("value", ["soon", "25:00", "+3d"])
 def test_parse_expiry_rejects_garbage(value):
     import typer
-    from madash_cli.commands.hadas import parse_expiry
+    from madash.commands.hadas import parse_expiry
 
     with pytest.raises(typer.BadParameter):
         parse_expiry(value, now=NOW)
@@ -607,7 +607,7 @@ def test_open_prints_page_urls(stub_app, run_cli, page, path):
 
 
 def test_open_launches_a_browser(stub_app, run_cli, monkeypatch):
-    from madash_cli.commands import misc
+    from madash.commands import misc
 
     opened = []
     monkeypatch.setattr(misc.webbrowser, "open", opened.append)
@@ -632,7 +632,7 @@ def test_health(stub_app, run_cli):
 
 
 def test_whoami(stub_app, run_cli):
-    from madash_cli.errors import NotAuthenticatedError
+    from madash.errors import NotAuthenticatedError
 
     stub = stub_app()
     stub.route("GET", "/api/auth/session", {"user": {"name": "מדריך"}})
@@ -651,7 +651,7 @@ def test_ws_ticket_reads_the_bare_ticket(stub_app, run_cli):
 
 
 def test_ws_ticket_unauthorized_means_not_logged_in(stub_app, run_cli):
-    from madash_cli.errors import NotAuthenticatedError
+    from madash.errors import NotAuthenticatedError
 
     stub = stub_app()
     stub.route("GET", "/api/ws-ticket", Raw(b"Unauthorized", "text/plain"), status=401)

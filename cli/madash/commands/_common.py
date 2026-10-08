@@ -14,8 +14,8 @@ from typing import Any
 
 import typer
 
-from madash_cli.context import state
-from madash_cli.output import abort, render
+from madash.context import state
+from madash.output import abort, render
 
 
 def parse_json(value: str | None, *, what: str = "value") -> Any:

@@ -21,10 +21,10 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
-from madash_cli.commands._common import show
-from madash_cli.context import state
-from madash_cli.errors import CliError
-from madash_cli.output import abort, console, success
+from madash.commands._common import show
+from madash.context import state
+from madash.errors import CliError
+from madash.output import abort, console, success
 
 app = typer.Typer(
     help="The madrat message (read, edit, watch live).", no_args_is_help=True

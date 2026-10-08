@@ -13,8 +13,8 @@ from typing import Any
 
 import typer
 
-from madash_cli.commands._common import show
-from madash_cli.context import state
+from madash.commands._common import show
+from madash.context import state
 
 app = typer.Typer(help="The system status board.", no_args_is_help=True)
 

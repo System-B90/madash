@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import typer
 
-from madash_cli.commands._common import show
-from madash_cli.context import state
+from madash.commands._common import show
+from madash.context import state
 
 _PATH = "/api/health"
 

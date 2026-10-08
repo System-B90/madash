@@ -7,12 +7,12 @@
   "health": { "service": "ui", "url": "http://127.0.0.1:3000/api/health" },
   "containers": { "ui": "madash-ui", "proxy": "madash-proxy" },
   "state": ["ssl"],
-  "venv_packages": ["madash-cli"],
+  "venv_packages": ["madash"],
   "release": {
     "manifests": [
       "package.json",
       { "path": "package-lock.json", "count": 2 },
-      { "path": "cli/madash_cli/__init__.py", "format": "python" }
+      { "path": "cli/madash/__init__.py", "format": "python" }
     ]
   },
   "bundle": {

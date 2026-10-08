@@ -1,6 +1,6 @@
 """
 Name: test_client_unit.py
-Purpose: Unit tests for the HTTP client core (madash_cli/client.py) — envelope
+Purpose: Unit tests for the HTTP client core (madash/client.py) — envelope
          unwrapping, error translation, redirect/401 handling and get_raw().
          Fully offline: every response comes from an httpx.MockTransport, so
          there is no server and no network.
@@ -15,11 +15,11 @@ from collections.abc import Callable
 from typing import Any
 
 import httpx
-import madash_cli.client as client_module
+import madash.client as client_module
 import pytest
-from madash_cli.client import AppClient
-from madash_cli.config import Config
-from madash_cli.errors import ApiError, NotAuthenticatedError
+from madash.client import AppClient
+from madash.config import Config
+from madash.errors import ApiError, NotAuthenticatedError
 
 
 def _client(

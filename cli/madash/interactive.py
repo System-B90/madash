@@ -16,10 +16,10 @@ from typing import Any, Protocol
 import typer
 from rich.panel import Panel
 
-from madash_cli.clicktree import choices_of, is_group, is_option, long_flag
-from madash_cli.context import state
-from madash_cli.errors import CliError
-from madash_cli.output import abort, console, fail, warn
+from madash.clicktree import choices_of, is_group, is_option, long_flag
+from madash.context import state
+from madash.errors import CliError
+from madash.output import abort, console, fail, warn
 
 
 def _click_exception_types() -> tuple[type[BaseException], ...]:
@@ -341,7 +341,7 @@ def interactive() -> None:
     """Browse and run Madash commands from a menu, prompting for each argument."""
     import sys
 
-    from madash_cli.main import app
+    from madash.main import app
 
     # A menu needs a keyboard. Piped or redirected, InquirerPy would fail on
     # its first prompt with a terminal error that says nothing useful — say
